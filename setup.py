@@ -21,9 +21,7 @@ setup(
     author_email='eatyourpeasapps@gmail.com',
     classifiers=[
         'Development Status :: 3 - Alpha',
-        'Intended Audience :: Families and professionals',
-        'Topic :: Software Development',
-
+        
         # Pick your license as you wish
         'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
         'Programming Language :: Python :: 3.8',
