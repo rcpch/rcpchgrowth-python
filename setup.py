@@ -21,11 +21,11 @@ setup(
     author_email='eatyourpeasapps@gmail.com',
     classifiers=[
         'Development Status :: 3 - Alpha',
-        
         # Pick your license as you wish
         'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3 :: Only',
+        'Topic :: Scientific/Engineering :: Medical Science Apps.'
     ],
     keywords='growth charts anthropometry SDS Centile',  # Optional
 
@@ -34,7 +34,7 @@ setup(
     package_dir={'': 'rcpchgrowth'},  # Optional
     packages=find_packages(where='rcpchgrowth'),  # Required
     python_requires='>=3.5, <4',
-    install_requires=['Flask', 'Numpy', 'SciPy'],  # Optional
+    install_requires=[],  # Optional
     extras_require={  # Optional
         'dev': ['check-manifest'],
         'test': ['coverage'],
