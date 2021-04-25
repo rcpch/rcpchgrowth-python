@@ -1,7 +1,1 @@
-recursive-include rcpchgrowth/data_tables/uk90_preterm.json
-recursive-include rcpchgrowth/data_tables/uk90_child.json
-recursive-include rcpchgrowth/data_tables/uk90_term.json
-recursive-include rcpchgrowth/data_tables/who_children.json
-recursive-include rcpchgrowth/data_tables/who_infants.json
-recursive-include rcpchgrowth/data_tables/trisomy_21.json
-recursive-include rcpchgrowth/data_tables/turner.json
+recursive-include rcpchgrowth/data_tables *
