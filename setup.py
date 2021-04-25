@@ -3,7 +3,6 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
-# Get the long description from the README file
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
@@ -16,8 +15,6 @@ setup(
     url='https://github.com/rcpch/digital-growth-charts/blob/master/README.md',
     author='@eatyourpeas, @marcusbaw @statist7 RCPCH',
 
-    # This should be a valid email address corresponding to the author listed
-    # above.
     author_email='eatyourpeasapps@gmail.com',
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -29,9 +26,6 @@ setup(
     ],
     keywords='growth charts anthropometry SDS Centile',  # Optional
 
-    # When your source code is in a subdirectory under the project root, e.g.
-    # `src/`, it is necessary to specify the `package_dir` argument.
-    package_dir={'': 'rcpchgrowth'},  # Optional
     packages=find_packages(),  # Required
     python_requires='>=3.5, <4',
     install_requires=[],  # Optional
