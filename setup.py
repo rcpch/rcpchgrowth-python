@@ -27,10 +27,10 @@ setup(
     packages=find_packages(),  
     python_requires='>=3.5, <4',
     install_requires=[
-        'marshmallow'
-        'numpy'
-        'python-dateutil'
-        "scipy"
+        'marshmallow',
+        'numpy',
+        'python-dateutil',
+        "scipy",
         'six'
     ],  
     extras_require={  
