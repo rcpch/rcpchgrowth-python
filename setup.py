@@ -8,7 +8,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='rcpchgrowth',
-    version='2.1.11',
+    version='2.1.12',
     description='SDS and Centile calculations for UK Growth Data',
     long_description="https://github.com/rcpch/digital-growth-charts/blob/master/README.md",
     url='https://github.com/rcpch/digital-growth-charts/blob/master/README.md',
@@ -32,7 +32,8 @@ setup(
         'python-dateutil',
         "scipy",
         'six',
-        'pytest'
+        'pytest',
+        'click'
     ],  
     extras_require={  
         'dev': ['check-manifest'],

@@ -190,22 +190,7 @@ def test_measurement_class_with_invalid_observation_value_height_low():
 
     assert m["child_observation_value"]["observation_value_error"] == "Height/length must be passed in cm, not metres"
 
-# def test_measurement_class_with_invalid_observation_value_gestation_weeks_low():
-#     """
-#     Should raise an (gestation_weeks range error)
-#     """
-#     m = Measurement(
-#         sex="male",
-#         birth_date=datetime.strptime("2020-06-01", "%Y-%m-%d"),
-#         observation_date=datetime.strptime("2020-07-01", "%Y-%m-%d"),
-#         measurement_method="height",
-#         observation_value=53,
-#         gestation_weeks=21,
-#         gestation_days=2,
-#         reference="uk-who"
-#     ).measurement
 
-#     assert m["child_observation_value"]["observation_value_error"] == "Height/length must be passed in cm, not metres" - returns {"gestation_weeks": ["Must be greater than or equal to 22 and less than or equal to 44."]} on the API?
 
 def test_measurement_class_with_invalid_gestation_weeks_type():
     """
