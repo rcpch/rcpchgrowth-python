@@ -24,12 +24,11 @@ def load_valid_data_set():
     """
     Loads in the testing data from JSON file
     """
-    # with open(os.path.abspath(os.path.dirname(__file__)) + "/validation_sds-2021.json") as f:
     with open(os.path.abspath(os.path.dirname(__file__)) + "/sds_age_validation_2021.json") as f:
         return json.load(f)
 
 
-# date_calculations
+# # date_calculations
 @pytest.mark.parametrize("line", load_valid_data_set())
 def test_chronological_decimal_age(line):
     """

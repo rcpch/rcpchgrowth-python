@@ -10150,7 +10150,7 @@
     "corrected_age": 0.065708419,
     "observation_value": 3.62,
     "corrected_sds": -0.618963838,
-    "chronological_sds": 0.549580634
+    "chronological_sds": 0.19919977
   },
   {
     "birth_date": "12/04/2012",
@@ -10163,7 +10163,7 @@
     "corrected_age": 0.065708419,
     "observation_value": 51.1,
     "corrected_sds": -0.912819505,
-    "chronological_sds": 0.551377654
+    "chronological_sds": 0.305680569
   },
   {
     "birth_date": "12/04/2012",
@@ -10189,7 +10189,7 @@
     "corrected_age": 0.065708419,
     "observation_value": 34.6,
     "corrected_sds": -1.272698402,
-    "chronological_sds": 0.528353751
+    "chronological_sds":0.182001024
   },
   {
     "birth_date": "28/03/2014",
@@ -30378,7 +30378,7 @@
     "corrected_age": -0.032854209,
     "observation_value": 3.71,
     "corrected_sds": 1.02978301,
-    "chronological_sds": 0.420462579
+    "chronological_sds": 0.285107481
   },
   {
     "birth_date": "29/05/2012",
@@ -30391,7 +30391,7 @@
     "corrected_age": -0.032854209,
     "observation_value": 52,
     "corrected_sds": 1.122352958,
-    "chronological_sds": 0.4347637
+    "chronological_sds": 0.44551425
   },
   {
     "birth_date": "29/05/2012",
@@ -30417,7 +30417,7 @@
     "corrected_age": -0.032854209,
     "observation_value": 35.6,
     "corrected_sds": 1.243301868,
-    "chronological_sds": 0.448764771
+    "chronological_sds": 0.537227055
   },
   {
     "birth_date": "13/01/2015",
@@ -33588,7 +33588,7 @@
     "chronological_age": 17.01300479,
     "corrected_age": 16.99931554,
     "observation_value": 60.0001,
-    "corrected_sds": null,
+    "corrected_sds": 3.2265366684075634,
     "chronological_sds": null
   },
   {
