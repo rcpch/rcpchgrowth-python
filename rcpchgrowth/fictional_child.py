@@ -22,7 +22,7 @@ def generate_fictional_child_data(
     reference = "uk-who"
 ):
   """
-  This function generates an array of meassurement objects based on the params
+  This function generates an array of meassurement objects based on the params:
   measurement_method: ['height', 'weight', 'ofc', 'bmi']
   sex: ['male', 'female']
   gestation_weeks
