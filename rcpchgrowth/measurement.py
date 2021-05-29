@@ -1,9 +1,5 @@
 # standard imports
 from datetime import date
-from pprint import pprint
-
-# third-party imports
-from marshmallow import ValidationError
 
 # rcpch imports
 from .bmi_functions import bmi_from_height_weight, weight_for_bmi_height
