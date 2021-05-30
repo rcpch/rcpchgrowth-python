@@ -1,4 +1,6 @@
 # from .measurement import Measurement
+# import pandas as pd
+import numpy as np
 import pandas as pd
 import os
 import math
@@ -115,9 +117,8 @@ def correlate_weight(measurements_array: list = []):
     # import the reference
     cwd = os.path.dirname(__file__)  # current location
     file_path = os.path.join(
-        cwd, './data_tables/RCPCH weight correlation matrix by month.csv')
+        cwd, './data_tables/uk-who_resources/RCPCH weight correlation matrix by month.csv')
     data_frame = pd.read_csv(file_path)
-
     parameter_list = []
 
     if len(measurements_array) < 2:
@@ -147,78 +148,60 @@ def correlate_weight(measurements_array: list = []):
             z2 = last_weight_sds_value
             z1 = penultimate_weight_sds_value
 
-            if penultimate_decimal_age.is_integer():
-                final_row = penultimate_decimal_age
-                if last_decimal_age.is_integer():
-                    final_column = last_decimal_age
-                    # we have both exact ages - can now look up r
-                    r = data_frame.at(final_row, final_column)
-                    # enough data to simplify formula
-                    return r_for_age(z1, z2, r)
-                else:
-                    # no match - need to interpolate most recent age
-                    last_age_age_below = math.floor(last_decimal_age)
-                    last_age_age_above = math.ceil(last_decimal_age)
-                    x_array = [last_age_age_below + 1, last_age_age_above + 1]
+            penultimate_months = penultimate_decimal_age * 12
+            last_months = last_decimal_age * 12
 
-                    # ..and associated r values
-                    last_r_below = data_frame.at[final_row,
-                                                 last_age_age_below + 1]
-                    last_r_above = data_frame.at[final_row,
-                                                 last_age_age_above + 1]
-                    y_array = [last_r_below, last_r_above]
-                    interpolate = interp1d(x_array, y_array)
-                    r = interpolate(last_decimal_age)
-                    # enough data to simplify formula
-                    return r_for_age(z1, z2, r)
-            else:
-                # no match in penultimate age - need to interpolate
-                # get age below penultimate age
-                penultimate_age_below = int(
-                    math.floor(penultimate_decimal_age))
-                penultimate_age_above = int(penultimate_age_below + 1)
-                if last_decimal_age.is_integer():
-                    # there is a match in last age
-                    x_array = [penultimate_age_below, penultimate_age_above]
-                    y_array = [data_frame.at[penultimate_age_below, last_decimal_age + 1],
-                               data_frame.at[penultimate_age_above, last_decimal_age + 1]]
-                    interpolate = interp1d(x_array, y_array)
-                    r = (penultimate_decimal_age)
-                    # enough data to simplify formula
-                    return r_for_age(z1, z2, r)
-                else:
-                    # will need bilinear interpolation
-                    last_age_below = int(math.floor(last_decimal_age))
-                    last_age_above = int(math.ceil(last_decimal_age))
-                    # ages between penultimate for lowest last age
-                    x_array = [penultimate_age_below, penultimate_age_above]
-                    y_array = [data_frame.iat[penultimate_age_below, last_age_below + 1],
-                               data_frame.iat[penultimate_age_above, last_age_below + 1]]
-                    interpolate = interp1d(x_array, y_array)
-                    lower_r_between_penultimate_ages = interpolate(
-                        penultimate_decimal_age)
+            if (last_months > 12):
+                raise Exception("Cannot calculate values beyond 12 mths.")
+            
+            """
+            bilinear interpolation will be used
+                xx      xx
+                    x
+                xx      xx
+                            last
+                        lower upper
+penultimate     lower    c1    c3
+                upper    c2    c4
+            
+            """
 
-                    ## ages between penultimate for highest last age##
-                    y_array = [data_frame.iat[penultimate_age_below, last_age_above + 1],
-                               data_frame.iat[penultimate_age_above, last_age_above + 1]]
-                    interpolate = interp1d(x_array, y_array)
-                    upper_r_between_penultimate_ages = interpolate(
-                        penultimate_decimal_age)
+            # indices of the last values
+            last_months_lower_index = math.floor(last_months)
+            last_months_upper_index = last_months_lower_index + 1
 
-                    # interpolate between r values against last_ages
-                    x_array = [last_age_below, last_age_above]
-                    y_array = [float(upper_r_between_penultimate_ages), float(
-                        lower_r_between_penultimate_ages)]
-                    interpolate = interp1d(x_array, y_array)
-                    r = interpolate(last_decimal_age)
+            # indices of the penultimate values
+            penultimate_months_lower_index = math.floor(penultimate_months)
+            penultimate_months_upper_index = penultimate_months_lower_index + 1
 
-                    return r_for_age(z1, z2, r)
+            # bilinear interpolation
+            penultimate_lower_lower = data_frame.iloc[penultimate_months_lower_index, last_months_lower_index]
+            penultimate_upper_lower = data_frame.iloc[penultimate_months_upper_index, last_months_lower_index]
+            intermediate_interpolated_penultimate = interp1d([penultimate_months, penultimate_months+1],[penultimate_lower_lower, penultimate_upper_lower])
+            interpolated_penultimate_lower = intermediate_interpolated_penultimate(penultimate_months)
+
+            last_upper_lower = data_frame.iloc[penultimate_months_lower_index, last_months_upper_index]
+            last_upper_upper = data_frame.iloc[penultimate_months_upper_index, last_months_upper_index]
+            intermediate_interpolated_last = interp1d([penultimate_months_lower_index, penultimate_months_upper_index], [last_upper_lower, last_upper_upper])
+            interpolated_penultimate_upper = intermediate_interpolated_last(penultimate_months)
+
+            intermediate_interpolated_last = interp1d([last_months_lower_index, last_months_upper_index],[interpolated_penultimate_lower, interpolated_penultimate_upper])
+            r = intermediate_interpolated_last(last_months)
+
+            r = r_for_age(z1, z2, r)
+
+            print(r)
 
 
 def r_for_age(z1, z2, r):
     """
     The formula for conditional weight gain is: (z2 – r x z1) / √1-r^2
-    Conditional reference charts to assess weight gain in British infants, T J Cole, Archives of Disease in Childhood 1995; 73: 8-16
+    Conditional reference charts to assess weight gain in British infants, T J Cole, Archives of Disease in Childhood 1995; 73: 8-16f
     """
     conditional_weight_gain = (z2 - (z1 * r)) / math.sqrt(1 - pow(r, 2))
     return conditional_weight_gain
+
+def find_nearest_index(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return idx
