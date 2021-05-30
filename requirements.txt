@@ -4,7 +4,7 @@ iniconfig==1.1.1
 marshmallow==3.11.1
 numpy==1.20.2
 packaging==20.9
-pandas==1.16.0
+pandas==1.2.4
 pluggy==0.13.1
 py==1.10.0
 pyparsing==2.4.7
