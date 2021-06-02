@@ -30,6 +30,7 @@ setup(
         'marshmallow',
         'numpy',
         'python-dateutil',
+        'pandas',
         "scipy",
         'six',
         'pytest',
