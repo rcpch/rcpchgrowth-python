@@ -27,7 +27,7 @@ WHO_CHILD_LOWER_THRESHOLD = 2.0  # 2 years as decimal age
 #  from the WHO cohorts were more accurate than the UK90 cohorts for this age group.
 #  The Term reference averaged all L, M and S from 37-42 weeks. This is now deprecated and therefore UK90 data is used
 # for all measurements across this age range
-# Caution is advised when interpreting serial measurements onver this time periods - babies are often measured inaccurately and
+# Caution is advised when interpreting serial measurements over this time periods - babies are often measured inaccurately and
 # up to 10% weight loss is expected in the first 2 weeks of life, and birthweight is often not regained until
 # 3 weeks of life
 
