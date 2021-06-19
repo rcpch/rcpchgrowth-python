@@ -100,7 +100,7 @@ def acceleration(parameter: str, measurements_array):
             return accleration
 
 
-def correlate_weight(measurements_array: list = []):  # Mutable default argument with empty list
+def correlate_weight(measurements_array: list = []):
     """
     Weight velocity of the individual child cannot be predicted without comparison against reference data velocity
     since weight velocity is age dependent. This uses a uses a correlation matrix to look up values against which
