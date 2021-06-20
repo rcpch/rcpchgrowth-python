@@ -2,6 +2,7 @@
 # import pandas as pd
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import os
 import math
 from scipy.interpolate import interp1d
@@ -95,32 +96,16 @@ def acceleration(parameter: str, measurements_array):
             latest_velocity = last_parameter_pair_difference / last_parameter_pair_time_elapsed
             penultimate_velocity = first_parameter_pair_difference / \
                 first_parameter_pair_time_elapsed
-            accleration = (latest_velocity - penultimate_velocity) / \
+            acceleration = (latest_velocity - penultimate_velocity) / \
                 last_parameter_pair_time_elapsed
-            return accleration
+            return acceleration
 
-
-def correlate_weight(measurements_array: list = []):
-    """
-    Weight velocity of the individual child cannot be predicted without comparison against reference data velocity
-    since weight velocity is age dependent. This uses a uses a correlation matrix to look up values against which
-    to compare the rate at which the child is gaining or losing weight.
-    The formula for conditional weight gain is: (z2 – r x z1) / √1-r^2
-    Conditional reference charts to assess weight gain in British infants, T J Cole, Archives of Disease in Childhood 1995; 73: 8-16
-    """
-
+def create_pairs(measurements_array: list = []):
     # test data
     """
     measurements = [{'birth_data': {'birth_date': 'Wed, 11 Apr 1759 00:00:00 GMT', 'gestation_weeks': 0, 'gestation_days': 0, 'estimated_date_delivery': 'None', 'estimated_date_delivery_string': '', 'sex': 'female'}, 'measurement_dates': {'observation_date': 'Wed, 25 Apr 1759 00:00:00 GMT', 'chronological_decimal_age': 0.038329911019849415, 'corrected_decimal_age': 0.038329911019849415, 'chronological_calendar_age': '2 weeks', 'corrected_calendar_age': '', 'corrected_gestational_age': {'corrected_gestation_weeks': None, 'corrected_gestation_days': None}, 'clinician_decimal_age_comment': 'Correction for gestational age is nolonger necessary after two years of age.', 'lay_decimal_age_comment': 'Your child is now old enough nolonger to need to take their prematurity into account when considering their growth.'}, 'child_measurement_value': {'height': None, 'weight': 4.111224921050807, 'bmi': 'None', 'ofc': None}, 'measurement_calculated_values': {'height_sds': 'None', 'height_centile': 'None', 'clinician_height_comment': '', 'lay_height_comment': '', 'weight_sds': 1.0020115566532506, 'weight_centile': 84.18309943393204, 'clinician_weight_comment': '', 'lay_weight_comment': '', 'bmi_sds': 'None', 'bmi_centile': 'None', 'clinician_bmi_comment': '', 'lay_bmi_comment': '', 'ofc_sds': 'None', 'ofc_centile': 'None', 'clinician_ofc_comment': '', 'lay_ofc_comment': ''}}, {'birth_data': {'birth_date': 'Wed, 11 Apr 1759 00:00:00 GMT', 'gestation_weeks': 0, 'gestation_days': 0, 'estimated_date_delivery': 'None', 'estimated_date_delivery_string': '', 'sex': 'female'}, 'measurement_dates': {'observation_date': 'Wed, 09 May 1759 00:00:00 GMT', 'chronological_decimal_age': 0.07665982203969883, 'corrected_decimal_age': 0.07665982203969883, 'chronological_calendar_age': '4 weeks', 'corrected_calendar_age': '', 'corrected_gestational_age': {'corrected_gestation_weeks': None, 'corrected_gestation_days': None}, 'clinician_decimal_age_comment': 'Correction for gestational age is nolonger necessary after two years of age.', 'lay_decimal_age_comment': 'Your child is now old enough nolonger to need to take their prematurity into account when considering their growth.'}, 'child_measurement_value': {'height': None, 'weight': 4.699038339425533, 'bmi': 'None', 'ofc': None}, 'measurement_calculated_values': {'height_sds': 'None', 'height_centile': 'None', 'clinician_height_comment': '', 'lay_height_comment': '', 'weight_sds': 1.002339620693291, 'weight_centile': 84.19102035307033, 'clinician_weight_comment': '', 'lay_weight_comment': '', 'bmi_sds': 'None', 'bmi_centile': 'None', 'clinician_bmi_comment': '', 'lay_bmi_comment': '', 'ofc_sds': 'None', 'ofc_centile': 'None', 'clinician_ofc_comment': '', 'lay_ofc_comment': ''}}, {'birth_data': {'birth_date': 'Wed, 11 Apr 1759 00:00:00 GMT', 'gestation_weeks': 0, 'gestation_days': 0, 'estimated_date_delivery': 'None', 'estimated_date_delivery_string': '', 'sex': 'female'}, 'measurement_dates': {'observation_date': 'Wed, 23 May 1759 00:00:00 GMT', 'chronological_decimal_age': 0.11498973305954825, 'corrected_decimal_age': 0.11498973305954825, 'chronological_calendar_age': '1 month, 1 week and 5 days', 'corrected_calendar_age': '', 'corrected_gestational_age': {'corrected_gestation_weeks': None, 'corrected_gestation_days': None}, 'clinician_decimal_age_comment': 'Correction for gestational age is nolonger necessary after two years of age.', 'lay_decimal_age_comment': 'Your child is now old enough nolonger to need to take their prematurity into account when considering their growth.'}, 'child_measurement_value': {'height': None, 'weight': 5.232213641808542, 'bmi': 'None', 'ofc': None}, 'measurement_calculated_values': {'height_sds': 'None', 'height_centile': 'None', 'clinician_height_comment': '', 'lay_height_comment': '', 'weight_sds': 1.0045936184500082, 'weight_centile': 84.24537143099158, 'clinician_weight_comment': '', 'lay_weight_comment': '', 'bmi_sds': 'None', 'bmi_centile': 'None', 'clinician_bmi_comment': '', 'lay_bmi_comment': '', 'ofc_sds': 'None', 'ofc_centile': 'None', 'clinician_ofc_comment': '', 'lay_ofc_comment': ''}}, {'birth_data': {'birth_date': 'Wed, 11 Apr 1759 00:00:00 GMT', 'gestation_weeks': 0, 'gestation_days': 0, 'estimated_date_delivery': 'None', 'estimated_date_delivery_string': '', 'sex': 'female'}, 'measurement_dates': {'observation_date': 'Wed, 06 Jun 1759 00:00:00 GMT', 'chronological_decimal_age': 0.15331964407939766, 'corrected_decimal_age': 0.15331964407939766, 'chronological_calendar_age': '1 month, 3 weeks and 5 days', 'corrected_calendar_age': '', 'corrected_gestational_age': {'corrected_gestation_weeks': None, 'corrected_gestation_days': None}, 'clinician_decimal_age_comment': 'Correction for gestational age is nolonger necessary after two years of age.', 'lay_decimal_age_comment': 'Your child is now old enough nolonger to need to take their prematurity into account when considering their growth.'}, 'child_measurement_value': {'height': None, 'weight': 5.692927141647227, 'bmi': 'None', 'ofc': None}, 'measurement_calculated_values': {'height_sds': 'None', 'height_centile': 'None', 'clinician_height_comment': '', 'lay_height_comment': '', 'weight_sds': 1.004963324529577, 'weight_centile': 84.25427448883711, 'clinician_weight_comment': '', 'lay_weight_comment': '', 'bmi_sds': 'None', 'bmi_centile': 'None', 'clinician_bmi_comment': '', 'lay_bmi_comment': '', 'ofc_sds': 'None', 'ofc_centile': 'None', 'clinician_ofc_comment': '', 'lay_ofc_comment': ''}}, {'birth_data': {'birth_date': 'Wed, 11 Apr 1759 00:00:00 GMT', 'gestation_weeks': 0, 'gestation_days': 0, 'estimated_date_delivery': 'None', 'estimated_date_delivery_string': '', 'sex': 'female'}, 'measurement_dates': {'observation_date': 'Wed, 20 Jun 1759 00:00:00 GMT', 'chronological_decimal_age': 0.19164955509924708, 'corrected_decimal_age': 0.19164955509924708, 'chronological_calendar_age': '2 months, 1 week and 2 days', 'corrected_calendar_age': '', 'corrected_gestational_age': {'corrected_gestation_weeks': None, 'corrected_gestation_days': None}, 'clinician_decimal_age_comment': 'Correction for gestational age is nolonger necessary after two years of age.', 'lay_decimal_age_comment': 'Your child is now old enough nolonger to need to take their prematurity into account when considering their growth.'}, 'child_measurement_value': {'height': None, 'weight': 6.099306464415924, 'bmi': 'None', 'ofc': None}, 'measurement_calculated_values': {'height_sds': 'None', 'height_centile': 'None', 'clinician_height_comment': '', 'lay_height_comment': '', 'weight_sds': 1.007109988748447, 'weight_centile': 84.30590392040097, 'clinician_weight_comment': '', 'lay_weight_comment': '', 'bmi_sds': 'None', 'bmi_centile': 'None', 'clinician_bmi_comment': '', 'lay_bmi_comment': '', 'ofc_sds': 'None', 'ofc_centile': 'None', 'clinician_ofc_comment': '', 'lay_ofc_comment': ''}}, {'birth_data': {'birth_date': 'Wed, 11 Apr 1759 00:00:00 GMT', 'gestation_weeks': 0, 'gestation_days': 0, 'estimated_date_delivery': 'None', 'estimated_date_delivery_string': '', 'sex': 'female'}, 'measurement_dates': {'observation_date': 'Wed, 04 Jul 1759 00:00:00 GMT', 'chronological_decimal_age': 0.2299794661190965, 'corrected_decimal_age': 0.2299794661190965, 'chronological_calendar_age': '2 months, 3 weeks and 2 days', 'corrected_calendar_age': '', 'corrected_gestational_age': {'corrected_gestation_weeks': None, 'corrected_gestation_days': None}, 'clinician_decimal_age_comment': 'Correction for gestational age is nolonger necessary after two years of age.', 'lay_decimal_age_comment': 'Your child is now old enough nolonger to need to take their prematurity into account when considering their growth.'}, 'child_measurement_value': {'height': None, 'weight': 6.461379695081464, 'bmi': 'None', 'ofc': None}, 'measurement_calculated_values': {'height_sds': 'None', 'height_centile': 'None', 'clinician_height_comment': '', 'lay_height_comment': '', 'weight_sds': 1.007475030461087, 'weight_centile': 84.31467244800477, 'clinician_weight_comment': '', 'lay_weight_comment': '', 'bmi_sds': 'None', 'bmi_centile': 'None', 'clinician_bmi_comment': '', 'lay_bmi_comment': '', 'ofc_sds': 'None', 'ofc_centile': 'None', 'clinician_ofc_comment': '', 'lay_ofc_comment': ''}}, {'birth_data': {'birth_date': 'Wed, 11 Apr 1759 00:00:00 GMT', 'gestation_weeks': 0, 'gestation_days': 0, 'estimated_date_delivery': 'None', 'estimated_date_delivery_string': '', 'sex': 'female'}, 'measurement_dates': {'observation_date': 'Wed, 18 Jul 1759 00:00:00 GMT', 'chronological_decimal_age': 0.2683093771389459, 'corrected_decimal_age': 0.2683093771389459, 'chronological_calendar_age': '3 months and 1 week', 'corrected_calendar_age': '', 'corrected_gestational_age': {'corrected_gestation_weeks': None, 'corrected_gestation_days': None}, 'clinician_decimal_age_comment': 'Correction for gestational age is nolonger necessary after two years of age.', 'lay_decimal_age_comment': 'Your child is now old enough nolonger to need to take their prematurity into account when considering their growth.'}, 'child_measurement_value': {'height': None, 'weight': 6.789203770743711, 'bmi': 'None', 'ofc': None}, 'measurement_calculated_values': {'height_sds': 'None', 'height_centile': 'None', 'clinician_height_comment': '', 'lay_height_comment': '', 'weight_sds': 1.009650708766674, 'weight_centile': 84.36686671210703, 'clinician_weight_comment': '', 'lay_weight_comment': '', 'bmi_sds': 'None', 'bmi_centile': 'None', 'clinician_bmi_comment': '', 'lay_bmi_comment': '', 'ofc_sds': 'None', 'ofc_centile': 'None', 'clinician_ofc_comment': '', 'lay_ofc_comment': ''}}, {'birth_data': {'birth_date': 'Wed, 11 Apr 1759 00:00:00 GMT', 'gestation_weeks': 0, 'gestation_days': 0, 'estimated_date_delivery': 'None', 'estimated_date_delivery_string': '', 'sex': 'female'}, 'measurement_dates': {'observation_date': 'Wed, 01 Aug 1759 00:00:00 GMT', 'chronological_decimal_age': 0.3066392881587953, 'corrected_decimal_age': 0.3066392881587953, 'chronological_calendar_age': '3 months and 3 weeks', 'corrected_calendar_age': '', 'corrected_gestational_age': {'corrected_gestation_weeks': None, 'corrected_gestation_days': None}, 'clinician_decimal_age_comment': 'Correction for gestational age is nolonger necessary after two years of age.', 'lay_decimal_age_comment': 'Your child is now old enough nolonger to need to take their prematurity into account when considering their growth.'}, 'child_measurement_value': {'height': None, 'weight': 7.088501064489439, 'bmi': 'None', 'ofc': None}, 'measurement_calculated_values': {'height_sds': 'None', 'height_centile': 'None', 'clinician_height_comment': '', 'lay_height_comment': '', 'weight_sds': 1.0108086749449121, 'weight_centile': 84.39459948388198, 'clinician_weight_comment': '', 'lay_weight_comment': '', 'bmi_sds': 'None', 'bmi_centile': 'None', 'clinician_bmi_comment': '', 'lay_bmi_comment': '', 'ofc_sds': 'None', 'ofc_centile': 'None', 'clinician_ofc_comment': '', 'lay_ofc_comment': ''}}, {'birth_data': {'birth_date': 'Wed, 11 Apr 1759 00:00:00 GMT', 'gestation_weeks': 0, 'gestation_days': 0, 'estimated_date_delivery': 'None', 'estimated_date_delivery_string': '', 'sex': 'female'}, 'measurement_dates': {'observation_date': 'Wed, 15 Aug 1759 00:00:00 GMT', 'chronological_decimal_age': 0.34496919917864477, 'corrected_decimal_age': 0.34496919917864477, 'chronological_calendar_age': '4 months', 'corrected_calendar_age': '', 'corrected_gestational_age': {'corrected_gestation_weeks': None, 'corrected_gestation_days': None}, 'clinician_decimal_age_comment': 'Correction for gestational age is nolonger necessary after two years of age.', 'lay_decimal_age_comment': 'Your child is now old enough nolonger to need to take their prematurity into account when considering their growth.'}, 'child_measurement_value': {'height': None, 'weight': 7.363720070832382, 'bmi': 'None', 'ofc': None}, 'measurement_calculated_values': {'height_sds': 'None', 'height_centile': 'None', 'clinician_height_comment': '', 'lay_height_comment': '', 'weight_sds': 1.0126387519444007, 'weight_centile': 84.4383628580822, 'clinician_weight_comment': '', 'lay_weight_comment': '', 'bmi_sds': 'None', 'bmi_centile': 'None', 'clinician_bmi_comment': '', 'lay_bmi_comment': '', 'ofc_sds': 'None', 'ofc_centile': 'None', 'clinician_ofc_comment': '', 'lay_ofc_comment': ''}}, {'birth_data': {'birth_date': 'Wed, 11 Apr 1759 00:00:00 GMT', 'gestation_weeks': 0, 'gestation_days': 0, 'estimated_date_delivery': 'None', 'estimated_date_delivery_string': '', 'sex': 'female'}, 'measurement_dates': {'observation_date': 'Wed, 29 Aug 1759 00:00:00 GMT', 'chronological_decimal_age': 0.38329911019849416, 'corrected_decimal_age': 0.38329911019849416, 'chronological_calendar_age': '4 months, 2 weeks and 4 days', 'corrected_calendar_age': '', 'corrected_gestational_age': {'corrected_gestation_weeks': None, 'corrected_gestation_days': None}, 'clinician_decimal_age_comment': 'Correction for gestational age is nolonger necessary after two years of age.', 'lay_decimal_age_comment': 'Your child is now old enough nolonger to need to take their prematurity into account when considering their growth.'}, 'child_measurement_value': {'height': None, 'weight': 7.614522747033926, 'bmi': 'None', 'ofc': None}, 'measurement_calculated_values': {'height_sds': 'None', 'height_centile': 'None', 'clinician_height_comment': '', 'lay_height_comment': '', 'weight_sds': 1.0139857964039922, 'weight_centile': 84.47052350872625, 'clinician_weight_comment': '', 'lay_weight_comment': '', 'bmi_sds': 'None', 'bmi_centile': 'None', 'clinician_bmi_comment': '', 'lay_bmi_comment': '', 'ofc_sds': 'None', 'ofc_centile': 'None', 'clinician_ofc_comment': '', 'lay_ofc_comment': ''}}]
     """
-
-    # import the reference
-    cwd = os.path.dirname(__file__)  # current location
-    file_path = os.path.join(
-        cwd, './data_tables/uk-who_resources/RCPCH weight correlation matrix by month.csv')
-    data_frame = pd.read_csv(file_path)
     parameter_list = []
-
     if len(measurements_array) < 2:
         return 'Not enough data'
     else:
@@ -139,61 +124,79 @@ def correlate_weight(measurements_array: list = []):
             last_weight_sds_value = last['measurement_calculated_values']['weight_sds']
             last_decimal_age = last['measurement_dates']['chronological_decimal_age']
 
-            # look up age
-            # this is the formula: (z2 – r x z1) / √1-r^2 where z2 is the most recent value and z1 the penultimate
-            # and r the correlation
 
-            # rows are penultimate age, columns are last age. to get r we must look up the ages on
-            # the correlation matrix
-            z2 = last_weight_sds_value
-            z1 = penultimate_weight_sds_value
+def correlate_weight(penultimate_decimal_age: float, penultimate_sds: float, last_decimal_age: float, last_sds: float):
+    """
+    Weight velocity of the individual child cannot be predicted without comparison against reference data velocity
+    since weight velocity is age dependent. This uses a uses a correlation matrix to look up values against which
+    to compare the rate at which the child is gaining or losing weight.
+    The formula for conditional weight gain is: (z2 – r x z1) / √1-r^2
+    Conditional reference charts to assess weight gain in British infants, T J Cole, Archives of Disease in Childhood 1995; 73: 8-16
+    """
 
-            penultimate_months = penultimate_decimal_age * 12
-            last_months = last_decimal_age * 12
+    # import the reference
+    cwd = os.path.dirname(__file__)  # current location
+    file_path = os.path.join(
+        cwd, './data_tables/uk-who_resources/RCPCH weight correlation matrix by month.csv')
+    data_frame = pd.read_csv(file_path)
 
-            if (last_months > 12):
-                raise Exception("Cannot calculate values beyond 12 mths.")
-            
-            """
-            bilinear interpolation will be used
-                xx      xx
-                    x
-                xx      xx
-                            last
-                        lower upper
-penultimate     lower    c1    c3
-                upper    c2    c4
-            
-            """
+    # look up age
+    # this is the formula: (z2 – r x z1) / √1-r^2 where z2 is the most recent value and z1 the penultimate
+    # and r the correlation
 
-            # indices of the last values
-            last_months_lower_index = math.floor(last_months)
-            last_months_upper_index = last_months_lower_index + 1
+    # rows are penultimate age, columns are last age. to get r we must look up the ages on
+    # the correlation matrix
+    z2 = last_sds
+    z1 = penultimate_sds
 
-            # indices of the penultimate values
-            penultimate_months_lower_index = math.floor(penultimate_months)
-            penultimate_months_upper_index = penultimate_months_lower_index + 1
+    penultimate_months = penultimate_decimal_age * 12
+    last_months = last_decimal_age * 12
 
-            # bilinear interpolation
-            penultimate_lower_lower = data_frame.iloc[penultimate_months_lower_index, last_months_lower_index]
-            penultimate_upper_lower = data_frame.iloc[penultimate_months_upper_index, last_months_lower_index]
-            intermediate_interpolated_penultimate = interp1d([penultimate_months, penultimate_months+1],[penultimate_lower_lower, penultimate_upper_lower])
-            interpolated_penultimate_lower = intermediate_interpolated_penultimate(penultimate_months)
+    if (last_months > 12):
+        raise Exception("Cannot calculate values beyond 12 mths.")
+    
+    """
+        bilinear interpolation will be used
+            xx      xx
+                x
+            xx      xx
+                        last
+                    lower upper
+    penultimate     lower    c1    c3
+            upper    c2    c4
+    
+    """
 
-            last_upper_lower = data_frame.iloc[penultimate_months_lower_index, last_months_upper_index]
-            last_upper_upper = data_frame.iloc[penultimate_months_upper_index, last_months_upper_index]
-            intermediate_interpolated_last = interp1d([penultimate_months_lower_index, penultimate_months_upper_index], [last_upper_lower, last_upper_upper])
-            interpolated_penultimate_upper = intermediate_interpolated_last(penultimate_months)
+    # indices of the last values
+    last_months_lower_index = math.floor(last_months)
+    last_months_upper_index = last_months_lower_index + 1
 
-            intermediate_interpolated_last = interp1d([last_months_lower_index, last_months_upper_index],[interpolated_penultimate_lower, interpolated_penultimate_upper])
-            r = intermediate_interpolated_last(last_months)
+    # indices of the penultimate values
+    penultimate_months_lower_index = math.floor(penultimate_months)
+    penultimate_months_upper_index = penultimate_months_lower_index + 1
 
-            r = r_for_age(z1, z2, r)
+    # bilinear interpolation
+    penultimate_lower_lower = data_frame.iloc[penultimate_months_lower_index, last_months_lower_index]
+    penultimate_upper_lower = data_frame.iloc[penultimate_months_upper_index, last_months_lower_index]
+    intermediate_interpolated_penultimate = interp1d([penultimate_months, penultimate_months+1],[penultimate_lower_lower, penultimate_upper_lower])
+    interpolated_penultimate_lower = intermediate_interpolated_penultimate(penultimate_months)
 
-            print(r)
+    last_upper_lower = data_frame.iloc[penultimate_months_lower_index, last_months_upper_index]
+    last_upper_upper = data_frame.iloc[penultimate_months_upper_index, last_months_upper_index]
+    intermediate_interpolated_last = interp1d([penultimate_months_lower_index, penultimate_months_upper_index], [last_upper_lower, last_upper_upper])
+    interpolated_penultimate_upper = intermediate_interpolated_last(penultimate_months)
+
+    intermediate_interpolated_last = interp1d([last_months_lower_index, last_months_upper_index],[interpolated_penultimate_lower, interpolated_penultimate_upper])
+    r = intermediate_interpolated_last(last_months)
+
+    r = ferret(z1, z2, r)
+
+    print(r)
 
 
-def r_for_age(z1, z2, r):
+
+
+def ferret(z1, z2, r):
     """
     The formula for conditional weight gain is: (z2 – r x z1) / √1-r^2
     Conditional reference charts to assess weight gain in British infants, T J Cole, Archives of Disease in Childhood 1995; 73: 8-16f
@@ -205,3 +208,43 @@ def find_nearest_index(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return idx
+
+def reverse_ferret(z1, r, Z):
+    return z1 * r + Z * math.sqrt(1 - r^2)
+
+def create_thrive_lines():
+    # import the reference
+    cwd = os.path.dirname(__file__)  # current location
+    file_path = os.path.join(
+        cwd, './data_tables/uk-who_resources/RCPCH weight correlation matrix by month.csv')
+    data_frame = pd.read_csv(file_path)
+    parameter_list = []
+    years=[]
+    months=[]
+    year = 0
+    month = 0
+    while year < 1:
+        years.append(years)
+        months.append(month)
+        year+=7/365.25 # add a week
+        month=year*12
+    for i in range(0, len(months), 2):
+        # get months in pairs
+        first_correlation = correlate_weight(i, 0, i+1, 0)
+        weight = reverse_ferret()
+
+
+def create_correlation_surface():
+    # import the reference
+    cwd = os.path.dirname(__file__)  # current location
+    file_path = os.path.join(
+        cwd, './data_tables/uk-who_resources/RCPCH weight correlation matrix by month.csv')
+    data_frame = pd.read_csv(file_path)
+    # fig = plt.figure()
+    # ax = plt.axes(projection="3d")
+    # index = data_frame.index[data_frame[]]
+    plt.matshow(data_frame.corr())
+    cb = plt.colorbar()
+    cb.ax.tick_params(labelsize=14)
+    plt.title('Correlation Matrix', fontsize=16)
+    plt.show()
