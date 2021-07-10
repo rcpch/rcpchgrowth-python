@@ -315,7 +315,7 @@ def create_turner_chart(centile_selection: str):
             z = sds_for_centile(centile)
 
         # Collect the LMS values from the correct reference
-        lms_array_for_measurement = select_reference_data_for_trisomy_21(
+        lms_array_for_measurement = select_reference_data_for_turner(
             measurement_method="height", sex=sex)
         # Generate a centile. there will be nine of these if Cole method selected.
         # Some data does not exist at all ages, so any error reflects missing data.
