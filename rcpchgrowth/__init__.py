@@ -9,3 +9,4 @@ from .trisomy_21 import select_reference_data_for_trisomy_21
 from .measurement import Measurement
 from .chart_functions import create_chart, create_plottable_child_data
 from .constants import *
+from .dynamic_growth import create_fictional_child

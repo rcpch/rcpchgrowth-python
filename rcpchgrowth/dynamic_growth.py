@@ -1,4 +1,5 @@
 # from .measurement import Measurement
+from rcpchgrowth.constants.measurement_constants import TWENTY_THREE_WEEKS_GESTATION
 import pandas as pd
 import os
 import math
@@ -274,7 +275,11 @@ def create_fictional_child(
     if gestation_weeks < 37:
         born_preterm = True
 
-    i = 0
+    i = starting_decimal_age
+    # if i < TWENTY_THREE_WEEKS_GESTATION:
+    #     raise Exception("Cannot start below 23 weeks gestation.")
+    # if i > 20:
+    #     raise Exception("Starting or final age cannot be > 20y.")
 
     while i < number_of_measurements:
 
@@ -301,24 +306,26 @@ def create_fictional_child(
         # calculate age at new measurement
         child_age_at_measurement_date = corrected_decimal_age(
             birth_date=birth_date, observation_date=observation_date, gestation_weeks=gestation_weeks, gestation_days=gestation_days)
-        # calculate observation_value back from new SDS
-        new_measurement_value = measurement_from_sds(reference=reference, measurement_method=measurement_method,
-                                                     requested_sds=requested_sds, sex=sex, age=child_age_at_measurement_date, born_preterm=born_preterm)
+        
+        if child_age_at_measurement_date <= 20:
+            # calculate observation_value back from new SDS
+            new_measurement_value = measurement_from_sds(reference=reference, measurement_method=measurement_method,
+                                                        requested_sds=requested_sds, sex=sex, age=child_age_at_measurement_date, born_preterm=born_preterm)
 
-        # create Measurement object with dates
-        new_measurement = Measurement(
-            sex=sex,
-            birth_date=birth_date,
-            observation_date=observation_date,
-            measurement_method=measurement_method,
-            observation_value=new_measurement_value,
-            gestation_weeks=gestation_weeks,
-            gestation_days=gestation_days,
-            reference="uk-who"
-        )
+            # create Measurement object with dates
+            new_measurement = Measurement(
+                sex=sex,
+                birth_date=birth_date,
+                observation_date=observation_date,
+                measurement_method=measurement_method,
+                observation_value=new_measurement_value,
+                gestation_weeks=gestation_weeks,
+                gestation_days=gestation_days,
+                reference=reference
+            )
 
-        #store in array
-        fictional_child.append(new_measurement.measurement)
+            #store in array
+            fictional_child.append(new_measurement.measurement)
 
         # and round we go again until number of requested data points reached
         i += 1
