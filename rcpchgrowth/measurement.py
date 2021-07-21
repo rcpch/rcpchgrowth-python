@@ -1,5 +1,9 @@
 # standard imports
 from datetime import date
+from pprint import pprint
+
+# third-party imports
+from marshmallow import ValidationError
 
 # rcpch imports
 from .bmi_functions import bmi_from_height_weight, weight_for_bmi_height
@@ -7,11 +11,9 @@ from .centile_bands import centile_band_for_centile
 from .constants import *
 from .date_calculations import (chronological_decimal_age, corrected_decimal_age,
                                 chronological_calendar_age, estimated_date_delivery, corrected_gestational_age)
-from .global_functions import sds_for_measurement, measurement_from_sds, centile
+from .global_functions import sds_for_measurement, centile, percentage_median_bmi
 from .growth_interpretations import comment_prematurity_correction
 from .schemas import *
-
-
 class Measurement:
 
     def __init__(
@@ -29,17 +31,13 @@ class Measurement:
         The Measurement Class is the gatekeeper to all the functions in the RCPCHGrowth package, although the public
         functions can be accessed independently. The bulk of the error handling happens here so be aware that calling
         other functions independently may yield unexpected results.
-
         It is initialised with the following Required parameters:
-
         `birth_date`: (Python datetime object) The date of birth of the subject.
         `measurement_type`: (string) 'height', 'weight', 'bmi' or 'ofc' only are accepted.
         `observation_date`: (Python datetime object) The date that the observation was made.
         `observation_value`: (float) The value of the height, weight, BMI or ofc observation.
         `sex`: (string) The sex of the child, which can either be 'male' or 'female'.
-
         Additionally there are the following optional parameters:
-
         `gestation_weeks`: (integer) gestation at birth in weeks.
         `gestation_days`: (integer) supplemental days in addition to gestation_weeks at birth.
         `reference`: ENUM refering to which reference dataset to use: ['uk-who', 'turners-syndrome', 'trisomy-21'].
@@ -205,7 +203,9 @@ class Measurement:
                 chronological_centile_value=None,
                 chronological_centile_band=None,
                 chronological_measurement_error="Dates error. Calculations impossible.",
-                corrected_measurement_error="Dates error. Calculations impossible."
+                corrected_measurement_error="Dates error. Calculations impossible.",
+                corrected_percentage_median_bmi=None,
+                chronological_percentage_median_bmi=None
             )
             return self.return_measurement_object
 
@@ -259,6 +259,31 @@ class Measurement:
             except TypeError as err:
                 corrected_measurement_error = "Not possible to calculate centile"
                 corrected_centile_band = None
+        
+        corrected_percentage_median_bmi = None
+        chronological_percentage_median_bmi = None
+        if measurement_method == "bmi" and corrected_age is not None and chronological_age is not None:
+            try: 
+                corrected_percentage_median_bmi = percentage_median_bmi(
+                reference=reference,
+                age=corrected_age,
+                actual_bmi=observation_value,
+                sex=sex
+            )
+            except Exception as err:
+                print(err)
+                corrected_percentage_median_bmi = None
+            
+            try:
+                chronological_percentage_median_bmi = percentage_median_bmi(
+                    reference=reference,
+                    age=corrected_age,
+                    actual_bmi=observation_value,
+                    sex=sex
+                )
+            except Exception as err:
+                print(err)
+                chronological_percentage_median_bmi = None
 
         self.return_measurement_object = self.__create_measurement_object(
             measurement_method=measurement_method,
@@ -271,7 +296,9 @@ class Measurement:
             chronological_centile_value=chronological_measurement_centile,
             chronological_centile_band=chronological_centile_band,
             chronological_measurement_error=chronological_measurement_error,
-            corrected_measurement_error=corrected_measurement_error
+            corrected_measurement_error=corrected_measurement_error,
+            corrected_percentage_median_bmi=corrected_percentage_median_bmi,
+            chronological_percentage_median_bmi=chronological_percentage_median_bmi
         )
 
         return self.return_measurement_object
@@ -279,7 +306,6 @@ class Measurement:
     """
     These are all private class methods and are only accessed by this class on initialisation
     """
-
     def __calculate_ages(
             self,
             sex: str,
@@ -455,7 +481,9 @@ class Measurement:
         chronological_centile_value: float,
         chronological_centile_band: str,
         chronological_measurement_error: str,
-        corrected_measurement_error: str
+        corrected_measurement_error: str,
+        corrected_percentage_median_bmi: str,
+        chronological_percentage_median_bmi: str
     ):
         """
         private class method
@@ -491,7 +519,9 @@ class Measurement:
             "chronological_centile": chronological_centile_value,
             "chronological_centile_band": chronological_centile_band,
             "corrected_measurement_error": corrected_measurement_error,
-            "chronological_measurement_error": chronological_measurement_error
+            "chronological_measurement_error": chronological_measurement_error,
+            "corrected_percentage_median_bmi": corrected_percentage_median_bmi,
+            "chronological_percentage_median_bmi":chronological_percentage_median_bmi
         }
 
         child_observation_value = {

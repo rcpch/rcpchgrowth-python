@@ -1,7 +1,7 @@
 # core imports
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 import random
+import math
 
 # rcpchgrowth imports
 from rcpchgrowth.global_functions import measurement_from_sds
@@ -14,11 +14,13 @@ def generate_fictional_child_data(
     end_age: float = 20.0,
     gestation_weeks = 40,
     gestation_days = 0,
-    interval_days = 90,
+    measurement_interval_type = "days",
+    measurement_interval_number: int = 20,
     start_sds = 0,
     drift = False,
     drift_range = -0.05,
     noise = False,
+    noise_range = 0.005,
     reference = "uk-who"
 ):
   """
@@ -27,11 +29,12 @@ def generate_fictional_child_data(
   sex: ['male', 'female']
   gestation_weeks
   gestation_days,
-  interval: days,
+  interval_type: ['days', 'd', 'day', 'years', 'year', 'y', 'months', 'month', 'm']
   start_sds: the starting SDS
   drift: a boolean value
   drift_range: implemented if drift is true. The max range SDS a data point can drift from the previous
   noise: a boolean to simulate measurement accuracy
+  noise_range: sds error around each measurement - always positive
   """
 
   # set the variables
@@ -50,9 +53,25 @@ def generate_fictional_child_data(
   # set the counters
   cycle_age = start_chronological_age
   cycle_sds = start_sds 
+
+  interval = end_age-start_chronological_age
+  annualized_interval = 0 # interval between data points
+
+  if measurement_interval_type in ['d', 'day', 'days']:
+    annualized_interval = interval * (measurement_interval_number/365.25)
+  elif measurement_interval_type in ['w', 'week', 'weeks']:
+    annualized_interval = interval * (measurement_interval_number/52)
+  elif measurement_interval_type in ['m', 'month', 'months']:
+    annualized_interval = interval * (measurement_interval_number/12)
+  elif measurement_interval_type in ['y', 'year', 'years']:
+      annualized_interval = interval * measurement_interval_number
+  else:
+      raise ValueError(
+          "parameters must be one of 'd', 'day', 'days', 'w', 'week', 'weeks', 'm', 'month', 'months', 'y', 'year' or 'years'")
   
-  annualized_interval = interval_days/365.35 # interval between data points
-  cycle_number = (start_chronological_age - end_age)/annualized_interval # number of iterations
+  print(annualized_interval)
+
+  cycle_number = math.floor(interval/annualized_interval) # number of iterations
 
   measurements_array=[]
   while cycle_age < end_age:
@@ -91,11 +110,11 @@ def generate_fictional_child_data(
     
     # add measurement inaccuracy
     if noise:
-      cycle_sds += random.uniform(-0.005, 0.005)
+      cycle_sds += random.uniform(-noise_range, noise_range)
 
     # increment age
     cycle_age += annualized_interval
-    observation_date = observation_date + timedelta(days=interval_days)
+    observation_date = observation_date + timedelta(days=math.floor(annualized_interval*365.25))
     
   return measurements_array
 
