@@ -207,7 +207,9 @@ class Measurement:
                 chronological_centile_value=None,
                 chronological_centile_band=None,
                 chronological_measurement_error="Dates error. Calculations impossible.",
-                corrected_measurement_error="Dates error. Calculations impossible."
+                corrected_measurement_error="Dates error. Calculations impossible.",
+                corrected_percentage_median_bmi=None,
+                chronological_percentage_median_bmi=None
             )
             return self.return_measurement_object
 

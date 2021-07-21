@@ -254,7 +254,8 @@ def percentage_median_bmi(reference: str, age: float, actual_bmi: float, sex: st
         lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
             reference=reference, measurement_method="bmi", sex=sex, age=age, born_preterm=born_preterm)
     except LookupError as err:
-        raise LookupError(err)
+        print(err)
+        return None
 
     # get LMS values from the reference: check for age match, interpolate if none
     try:
