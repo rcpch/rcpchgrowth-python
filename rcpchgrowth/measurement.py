@@ -12,7 +12,7 @@ from .constants import *
 from .date_calculations import (chronological_decimal_age, corrected_decimal_age,
                                 chronological_calendar_age, estimated_date_delivery, corrected_gestational_age)
 from .global_functions import sds_for_measurement, centile, percentage_median_bmi
-from .growth_interpretations import comment_prematurity_correction
+from .age_advice_strings import comment_prematurity_correction
 from .schemas import *
 class Measurement:
 

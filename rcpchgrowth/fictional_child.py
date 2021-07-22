@@ -68,8 +68,6 @@ def generate_fictional_child_data(
   else:
       raise ValueError(
           "parameters must be one of 'd', 'day', 'days', 'w', 'week', 'weeks', 'm', 'month', 'months', 'y', 'year' or 'years'")
-  
-  print(annualized_interval)
 
   cycle_number = math.floor(interval/annualized_interval) # number of iterations
 
@@ -78,8 +76,6 @@ def generate_fictional_child_data(
 
     if gestation_weeks < 40: # correct for gestational age
       cycle_age = cycle_age + ((gestation_weeks*7 + gestation_days)-280)/365.25
-    
-
 
     rawMeasurement = measurement_from_sds(
       reference=reference,
@@ -99,8 +95,8 @@ def generate_fictional_child_data(
       gestation_weeks=gestation_weeks,
       gestation_days=gestation_days
     ).measurement
-
-    measurements_array.append(measurement)
+    
+    measurements_array.append(round(measurement,1))
 
     # create drift
     if drift:
