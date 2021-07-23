@@ -54,28 +54,30 @@ def generate_fictional_child_data(
   cycle_age = start_chronological_age
   cycle_sds = start_sds 
 
-  interval = end_age-start_chronological_age
+  days_interval = end_age-start_chronological_age
+  decimal_years_interval = days_interval/365.25
   annualized_interval = 0 # interval between data points
 
   if measurement_interval_type in ['d', 'day', 'days']:
-    annualized_interval = interval * (measurement_interval_number/365.25)
+    annualized_interval = (measurement_interval_number/365.25)
   elif measurement_interval_type in ['w', 'week', 'weeks']:
-    annualized_interval = interval * (measurement_interval_number/52)
+    annualized_interval = (measurement_interval_number/52)
   elif measurement_interval_type in ['m', 'month', 'months']:
-    annualized_interval = interval * (measurement_interval_number/12)
+    annualized_interval = (measurement_interval_number/12)
   elif measurement_interval_type in ['y', 'year', 'years']:
-      annualized_interval = interval * measurement_interval_number
+      annualized_interval = measurement_interval_number
   else:
       raise ValueError(
           "parameters must be one of 'd', 'day', 'days', 'w', 'week', 'weeks', 'm', 'month', 'months', 'y', 'year' or 'years'")
 
-  cycle_number = math.floor(interval/annualized_interval) # number of iterations
+  cycle_number = math.floor(decimal_years_interval*annualized_interval) # number of iterations
 
   measurements_array=[]
   while cycle_age < end_age:
 
-    if gestation_weeks < 40: # correct for gestational age
-      cycle_age = cycle_age + ((gestation_weeks*7 + gestation_days)-280)/365.25
+    # if gestation_weeks < 40: # correct for gestational age
+    #   cycle_age = cycle_age + ((gestation_weeks*7 + gestation_days)-280)/365.25
+    cycle_age += annualized_interval
 
     rawMeasurement = measurement_from_sds(
       reference=reference,
@@ -88,15 +90,15 @@ def generate_fictional_child_data(
     measurement = Measurement(
       birth_date=birth_date,
       observation_date=observation_date,
-      observation_value=rawMeasurement,
+      observation_value=round(rawMeasurement, 1),
       measurement_method=measurement_method,
       reference=reference,
       sex=sex,
       gestation_weeks=gestation_weeks,
       gestation_days=gestation_days
     ).measurement
-    
-    measurements_array.append(round(measurement,1))
+
+    measurements_array.append(measurement)
 
     # create drift
     if drift:
