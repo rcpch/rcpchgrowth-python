@@ -20,7 +20,7 @@ def generate_fictional_child_data(
     drift = False,
     drift_range = -0.05,
     noise = False,
-    noise_range = 0.005,
+    noise_range = 0.01,
     reference = "uk-who"
 ):
   """
@@ -32,9 +32,9 @@ def generate_fictional_child_data(
   interval_type: ['days', 'd', 'day', 'years', 'year', 'y', 'months', 'month', 'm']
   start_sds: the starting SDS
   drift: a boolean value
-  drift_range: implemented if drift is true. The max range SDS a data point can drift from the previous
+  drift_range: implemented if drift is true. This is an SDS value and represents the SDS of the final plot, relative to starting SDS.
   noise: a boolean to simulate measurement accuracy
-  noise_range: sds error around each measurement - always positive
+  noise_range: 0-1 - always positive. A typical acceptable error is 1% in measurement accuracy, so supplied as 0.01
   """
 
   # set the variables
@@ -54,8 +54,7 @@ def generate_fictional_child_data(
   cycle_age = start_chronological_age
   cycle_sds = start_sds 
 
-  days_interval = end_age-start_chronological_age
-  decimal_years_interval = days_interval/365.25
+  interval_in_years = end_age-start_chronological_age
   annualized_interval = 0 # interval between data points
 
   if measurement_interval_type in ['d', 'day', 'days']:
@@ -70,14 +69,14 @@ def generate_fictional_child_data(
       raise ValueError(
           "parameters must be one of 'd', 'day', 'days', 'w', 'week', 'weeks', 'm', 'month', 'months', 'y', 'year' or 'years'")
 
-  cycle_number = math.floor(decimal_years_interval*annualized_interval) # number of iterations
+  cycle_number = math.floor(interval_in_years/annualized_interval) # number of iterations
+
+  drift_amount = 0.0
+  if drift:
+    drift_amount = drift_range / cycle_number
 
   measurements_array=[]
   while cycle_age < end_age:
-
-    # if gestation_weeks < 40: # correct for gestational age
-    #   cycle_age = cycle_age + ((gestation_weeks*7 + gestation_days)-280)/365.25
-    cycle_age += annualized_interval
 
     rawMeasurement = measurement_from_sds(
       reference=reference,
@@ -86,6 +85,11 @@ def generate_fictional_child_data(
       sex=sex,
       age=cycle_age
     )
+
+    if noise:
+      # add measurement inaccuracy based on percentage supplied
+      degree_error = rawMeasurement * noise_range
+      rawMeasurement += random.uniform(-degree_error, degree_error)
 
     measurement = Measurement(
       birth_date=birth_date,
@@ -99,20 +103,17 @@ def generate_fictional_child_data(
     ).measurement
 
     measurements_array.append(measurement)
-
+    
     # create drift
     if drift:
-      cycle_sds += random.uniform(0, drift_range/cycle_number)
+      cycle_sds += drift_amount
       # round the result
       cycle_sds=round(cycle_sds,3)
     
-    # add measurement inaccuracy
-    if noise:
-      cycle_sds += random.uniform(-noise_range, noise_range)
 
     # increment age
     cycle_age += annualized_interval
-    observation_date = observation_date + timedelta(days=math.floor(annualized_interval*365.25))
+    observation_date = observation_date + timedelta(days=annualized_interval*365.25)
     
   return measurements_array
 
