@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../rcpchgrowth-python-cli"
+		},
+		{
+			"path": "../digital-growth-charts-documentation"
+		},
+		{
+			"path": "../digital-growth-charts-server"
+		},
+		{
+			"path": "../digital-growth-charts-react-client"
+		},
+		{
+			"path": "../digital-growth-charts-react-component-library"
+		}
+	]
+}
