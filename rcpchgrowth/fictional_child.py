@@ -76,25 +76,34 @@ def generate_fictional_child_data(
     drift_amount = drift_range / cycle_number
 
   measurements_array=[]
+
   while cycle_age < end_age:
 
-    rawMeasurement = measurement_from_sds(
-      reference=reference,
-      requested_sds=cycle_sds,
-      measurement_method=measurement_method,
-      sex=sex,
-      age=cycle_age
-    )
+    rawMeasurement = None
 
-    if noise:
+    try:
+      rawMeasurement = measurement_from_sds(
+        reference=reference,
+        requested_sds=cycle_sds,
+        measurement_method=measurement_method,
+        sex=sex,
+        age=cycle_age
+      )
+    except Exception as e:
+      print(e)
+
+    if noise and rawMeasurement is not None:
       # add measurement inaccuracy based on percentage supplied
       degree_error = rawMeasurement * noise_range
       rawMeasurement += random.uniform(-degree_error, degree_error)
+    
+    if rawMeasurement is not None:
+      rawMeasurement = round(rawMeasurement, 1)
 
     measurement = Measurement(
       birth_date=birth_date,
       observation_date=observation_date,
-      observation_value=round(rawMeasurement, 1),
+      observation_value=rawMeasurement,
       measurement_method=measurement_method,
       reference=reference,
       sex=sex,

@@ -209,8 +209,13 @@ def measurement_from_sds(
     m = lms["m"]
     s = lms["s"]
 
-    observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
-    return observation_value
+    observation_value = None
+    try:
+        observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
+        return observation_value
+    except Exception as e:
+        print(e) 
+        return None
 
 
 def sds_for_measurement(

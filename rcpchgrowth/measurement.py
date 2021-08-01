@@ -2,9 +2,6 @@
 from datetime import date
 from pprint import pprint
 
-# third-party imports
-from marshmallow import ValidationError
-
 # rcpch imports
 from .bmi_functions import bmi_from_height_weight, weight_for_bmi_height
 from .centile_bands import centile_band_for_centile
@@ -13,7 +10,6 @@ from .date_calculations import (chronological_decimal_age, corrected_decimal_age
                                 chronological_calendar_age, estimated_date_delivery, corrected_gestational_age)
 from .global_functions import sds_for_measurement, centile, percentage_median_bmi
 from .age_advice_strings import comment_prematurity_correction
-from .schemas import *
 class Measurement:
 
     def __init__(
@@ -51,20 +47,6 @@ class Measurement:
         self.observation_value = observation_value
         self.reference = reference
         self.sex = sex
-
-        # Validate using the Marshmallow Schema
-        # Note that Marshmallow validates only STRING dates, not Python Dates, hence the conversion here
-
-        MeasurementClassSchema().load({
-            'birth_date': birth_date.strftime('%Y-%m-%d'),
-            'gestation_days': gestation_days,
-            'gestation_weeks': gestation_weeks,
-            'measurement_method': measurement_method,
-            'observation_date': observation_date.strftime('%Y-%m-%d'),
-            'observation_value': observation_value,
-            'reference': reference,
-            'sex': sex
-        })
 
         try:
             self.__validate_measurement_method(
