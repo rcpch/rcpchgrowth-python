@@ -223,12 +223,15 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_selection: st
             # Generate a centile. there will be nine of these if Cole method selected.
             # Some data does not exist at all ages, so any error reflects missing data.
             # If this happens, an empty list is returned.
-            centile_data = generate_centile(z=z, centile=centile, measurement_method=measurement_method,
-                                            sex=sex, lms_array_for_measurement=lms_array_for_measurement, reference="uk-who")
+            try:
+                centile_data = generate_centile(z=z, centile=centile, measurement_method=measurement_method,
+                                                sex=sex, lms_array_for_measurement=lms_array_for_measurement, reference="uk-who")
 
-            # Store this centile for a given measurement
-            centiles.append({"sds": round(z * 100) / 100,
-                             "centile": centile, "data": centile_data})
+                # Store this centile for a given measurement
+                centiles.append({"sds": round(z * 100) / 100,
+                                "centile": centile, "data": centile_data})
+            except Exception as e:
+                print(e)
 
         # this is the end of the centile_collection for loop
         # All the centiles for this measurement, sex and reference are added to the measurements list
@@ -319,13 +322,15 @@ def create_turner_chart(centile_selection: str):
         # Generate a centile. there will be nine of these if Cole method selected.
         # Some data does not exist at all ages, so any error reflects missing data.
         # If this happens, an empty list is returned.
+        try:
+            centile_data = generate_centile(z=z, centile=centile, measurement_method="height",
+                                            sex=sex, lms_array_for_measurement=lms_array_for_measurement, reference=TURNERS)
 
-        centile_data = generate_centile(z=z, centile=centile, measurement_method="height",
-                                        sex=sex, lms_array_for_measurement=lms_array_for_measurement, reference=TURNERS)
-
-        # Store this centile for a given measurement
-        centiles.append({"sds": round(z * 100) / 100,
-                         "centile": centile, "data": centile_data})
+            # Store this centile for a given measurement
+            centiles.append({"sds": round(z * 100) / 100,
+                            "centile": centile, "data": centile_data})
+        except Exception as e:
+            print(e)
 
     # this is the end of the centile_collection for loop
     # All the centiles for this measurement, sex and reference are added to the measurements list
@@ -405,13 +410,15 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_selection
         # Generate a centile. there will be nine of these if Cole method selected.
         # Some data does not exist at all ages, so any error reflects missing data.
         # If this happens, an empty list is returned.
+        try:    
+            centile_data = generate_centile(z=z, centile=centile, measurement_method=measurement_method,
+                                            sex=sex, lms_array_for_measurement=lms_array_for_measurement, reference=TRISOMY_21)
 
-        centile_data = generate_centile(z=z, centile=centile, measurement_method=measurement_method,
-                                        sex=sex, lms_array_for_measurement=lms_array_for_measurement, reference=TRISOMY_21)
-
-        # Store this centile for a given measurement
-        centiles.append({"sds": round(z * 100) / 100,
-                         "centile": centile, "data": centile_data})
+            # Store this centile for a given measurement
+            centiles.append({"sds": round(z * 100) / 100,
+                            "centile": centile, "data": centile_data})
+        except Exception as e:
+            print(e)
 
     # this is the end of the centile_collection for loop
     # All the centiles for this measurement, sex and reference are added to the measurements list
