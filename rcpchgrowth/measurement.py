@@ -55,11 +55,6 @@ class Measurement:
         except Exception as err:
             observation_value_error = f"{err}"
 
-        if gestation_weeks < 37 and gestation_weeks >= 23:
-            self.born_preterm = True
-        else:
-            self.born_preterm = False
-
         # the ages_object receives birth_data and measurement_dates objects
         self.ages_object = self.__calculate_ages(
             sex=self.sex,
@@ -76,7 +71,6 @@ class Measurement:
             measurement_method=self.measurement_method,
             observation_value=self.observation_value,
             observation_value_error=observation_value_error,
-            born_preterm=self.born_preterm,
             reference=self.reference
         )
 
@@ -163,8 +157,7 @@ class Measurement:
         observation_value_error: str,
         measurement_method: str,
         observation_value: float,
-        reference: str,
-        born_preterm: bool = False,
+        reference: str
     ):
 
         # returns sds for given measurement
@@ -193,14 +186,14 @@ class Measurement:
 
         try:
             corrected_measurement_sds = sds_for_measurement(reference=reference, age=corrected_age, measurement_method=measurement_method,
-                                                            observation_value=observation_value, sex=sex, born_preterm=born_preterm)
+                                                            observation_value=observation_value, sex=sex)
         except Exception as err:
             corrected_measurement_error = f"{err}"
             corrected_measurement_sds = None
 
         try:
             chronological_measurement_sds = sds_for_measurement(reference=reference, age=chronological_age, measurement_method=measurement_method,
-                                                                observation_value=observation_value, sex=sex, born_preterm=born_preterm)
+                                                                observation_value=observation_value, sex=sex)
         except LookupError as err:
             chronological_measurement_error = f"{err}"
             chronological_measurement_sds = None

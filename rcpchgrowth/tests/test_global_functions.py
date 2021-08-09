@@ -71,7 +71,7 @@ def test_sds_for_measurement_corrected(line):
     if line["observation_value"] is None or line["corrected_sds"] is None:
         return
     sds = global_functions.sds_for_measurement("uk-who", float(line["corrected_age"]), str(
-        line["measurement_method"]), float(line["observation_value"]), str(line["sex"]), False)
+        line["measurement_method"]), float(line["observation_value"]), str(line["sex"]))
     tim_sds = float(line["corrected_sds"])
     assert sds == pytest.approx(tim_sds, abs=ACCURACY)
 
@@ -84,6 +84,6 @@ def test_sds_for_measurement_chronological(line):
     if line["observation_value"] is None or line["chronological_sds"] is None:
         return
     sds = global_functions.sds_for_measurement("uk-who", float(line["chronological_age"]), str(
-        line["measurement_method"]), float(line["observation_value"]), str(line["sex"]), False)
+        line["measurement_method"]), float(line["observation_value"]), str(line["sex"]))
     tim_sds = float(line["chronological_sds"])
     assert sds == pytest.approx(tim_sds, abs=ACCURACY)
