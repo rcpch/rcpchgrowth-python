@@ -4,15 +4,21 @@ and the API for validation of input values and rejection of very high or low val
 """
 
 # HEIGHT CONSTANTS
-MINIMUM_LENGTH_CM = 30
+MINIMUM_LENGTH_CM = 20
 MAXIMUM_HEIGHT_CM = 300
+# The smallest baby was report by the BBC on 9/8/2021 (https://www.bbc.co.uk/news/world-asia-58141756.amp)
+# to have a length of just 24cm and was born at 25 weeks gestation, discharged at 13 mths of age (chronological)
+# from Singapore's National University Hospital 
 # The tallest person for whom there is irrefutable evidence is
 # Robert Pershing Wadlow who was 2.72m (8 ft 11.1 in) tall at his death in 1940
 # https://en.wikipedia.org/wiki/Robert_Wadlow
 
 # WEIGHT CONSTANTS
-MINIMUM_WEIGHT_KG = 0.2
+MINIMUM_WEIGHT_KG = 0.15
 MAXIMUM_WEIGHT_KG = 500
+# The smallest baby was report by the BBC on 9/8/2021 (https://www.bbc.co.uk/news/world-asia-58141756.amp)
+# to weigh just 212g and was born at 25 weeks gestation, discharged at 13 mths of age (chronological)
+# from Singapore's National University Hospital 
 # The heaviest man according to google is Jon Brower Minnoch (US)
 # who had suffered from obesity since childhood. In September 1976,
 # he measured 185 cm (6 ft 1 in) tall and weighed 442 kg (974 lb; 69 st 9 lb)
