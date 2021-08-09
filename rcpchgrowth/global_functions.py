@@ -192,13 +192,12 @@ def measurement_from_sds(
     requested_sds: float,
     measurement_method: str,
     sex: str,
-    age: float,
-    born_preterm: bool = False
+    age: float
 ) -> float:
 
     try:
         lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, age=age, measurement_method=measurement_method, sex=sex, born_preterm=born_preterm)
+            reference=reference, age=age, measurement_method=measurement_method, sex=sex)
     except LookupError as err:
         raise LookupError(err)
 
@@ -223,13 +222,12 @@ def sds_for_measurement(
     age: float,
     measurement_method: str,
     observation_value: float,
-    sex: str,
-    born_preterm: bool = False
+    sex: str
 ) -> float:
 
     try:
         lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, age=age, measurement_method=measurement_method, sex=sex, born_preterm=born_preterm)
+            reference=reference, age=age, measurement_method=measurement_method, sex=sex)
     except LookupError as err:
         raise LookupError(err)
 
@@ -243,7 +241,7 @@ def sds_for_measurement(
     return z_score(l=l, m=m, s=s, observation=observation_value)
 
 
-def percentage_median_bmi(reference: str, age: float, actual_bmi: float, sex: str, born_preterm=False) -> float:
+def percentage_median_bmi(reference: str, age: float, actual_bmi: float, sex: str) -> float:
     """
     public method
     This returns a child"s BMI expressed as a percentage of the median value for age and sex.
@@ -254,7 +252,7 @@ def percentage_median_bmi(reference: str, age: float, actual_bmi: float, sex: st
     # fetch the LMS values for the requested measurement
     try:
         lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, measurement_method="bmi", sex=sex, age=age, born_preterm=born_preterm)
+            reference=reference, measurement_method="bmi", sex=sex, age=age)
     except LookupError as err:
         raise LookupError(err)
 
@@ -287,7 +285,7 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
         # loop through the reference in steps of 0.1y
         try:
             measurement = measurement_from_sds(
-                reference=reference, measurement_method=measurement_method, requested_sds=z, sex=sex, age=age, born_preterm=True)
+                reference=reference, measurement_method=measurement_method, requested_sds=z, sex=sex, age=age)
         except Exception as err:
             print(err)
             measurement = None
@@ -342,8 +340,7 @@ def lms_value_array_for_measurement_for_reference(
     reference: str,
     age: float,
     measurement_method: str,
-    sex: str,
-    born_preterm: bool
+    sex: str
 ) -> list:
     """
     This is a private function which returns the LMS array for measurement_method and sex and reference
@@ -353,7 +350,7 @@ def lms_value_array_for_measurement_for_reference(
     if reference == UK_WHO:
         try:
             lms_value_array_for_measurement = uk_who_lms_array_for_measurement_and_sex(
-                age=age, measurement_method=measurement_method, sex=sex, born_preterm=born_preterm)
+                age=age, measurement_method=measurement_method, sex=sex)
         except LookupError as error:
             raise LookupError(error)
     elif reference == TURNERS:
