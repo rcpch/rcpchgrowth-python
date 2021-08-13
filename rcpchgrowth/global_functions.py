@@ -6,7 +6,7 @@ from .turner import turner_lms_array_for_measurement_and_sex
 from .trisomy_21 import trisomy_21_lms_array_for_measurement_and_sex
 # from scipy import interpolate  #see below, comment back in if swapping interpolation method
 # from scipy.interpolate import CubicSpline #see below, comment back in if swapping interpolation method
-from .constants.reference_constants import UK_WHO, TURNERS, TRISOMY_21
+from .constants.reference_constants import UK_WHO, TURNERS, TRISOMY_21, SEXES
 
 
 def cubic_interpolation(age: float, age_one_below: float, age_two_below: float, age_one_above: float, age_two_above: float, parameter_two_below: float, parameter_one_below: float, parameter_one_above: float, parameter_two_above: float) -> float:
@@ -368,3 +368,18 @@ def lms_value_array_for_measurement_for_reference(
     else:
         raise ValueError("Incorrect reference supplied")
     return lms_value_array_for_measurement
+
+
+def mid_parental_height(
+    height_paternal: float,
+    height_maternal: float,
+    sex: str
+) -> float:
+    """
+    Calculates mid-parental height for the child.
+    All units are in cm
+    """
+    if sex == SEXES[0]:
+        return (height_paternal + height_maternal + 13)/2
+    else:
+        return (height_paternal + height_maternal - 13)/2
