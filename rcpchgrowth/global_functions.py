@@ -368,3 +368,18 @@ def lms_value_array_for_measurement_for_reference(
     else:
         raise ValueError("Incorrect reference supplied")
     return lms_value_array_for_measurement
+
+
+def mid_parental_height(
+    height_paternal: float,
+    height_maternal: float,
+    sex: str
+) -> float:
+    """
+    Calculates mid-parental height for the child.
+    All units are in cm
+    """
+    if sex == "male":
+        return (height_paternal + height_maternal + 13)/2
+    else:
+        return (height_paternal + height_maternal - 13)/2
