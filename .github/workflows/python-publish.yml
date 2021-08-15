@@ -21,11 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip3 install -r requirements.txt
-        pip3 install setuptools wheel twine
-    - name: Test with Pytest
-      run: |
-        pytest
+        pip install setuptools wheel twine
     - name: Build and publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
@@ -33,3 +29,14 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine upload dist/*
+
+    - name: Delay 15min to wait for publish to pypi
+      run: |
+        sleep 15m
+
+    - name: Initiate repository event in rcpch_server
+      run: |
+        curl -X POST https://api.github.com/repos/rcpch/digital-growth-charts-server/dispatches \
+        -H 'Accept: application/vnd.github.v3+json' \
+        -u ${{ secrets.ACCESS_TOKEN }} \
+        -d '{"event_type":"publish_to_pypi"}'
