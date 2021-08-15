@@ -3,7 +3,6 @@ from datetime import date
 from pprint import pprint
 
 # rcpch imports
-from .bmi_functions import bmi_from_height_weight, weight_for_bmi_height
 from .centile_bands import centile_band_for_centile
 from .constants import *
 from .date_calculations import (chronological_decimal_age, corrected_decimal_age,
@@ -22,11 +21,7 @@ class Measurement:
         sex: str,
         gestation_days: int = 0,
         gestation_weeks: int = 0,
-        bone_age: float = None,
-        bone_age_type: str = None,
-        bone_age_sds: float = None,
-        bone_age_centile: float = None,
-        event_text: str = None
+        event_text: list = None
     ):
         """
         The Measurement Class is the gatekeeper to all the functions in the RCPCHGrowth package, although the public
@@ -42,12 +37,11 @@ class Measurement:
         `gestation_weeks`: (integer) gestation at birth in weeks.
         `gestation_days`: (integer) supplemental days in addition to gestation_weeks at birth.
         `reference`: ENUM refering to which reference dataset to use: ['uk-who', 'turners-syndrome', 'trisomy-21'].
-        `bone_age`: an estimated skeletal age calculated from xrays reported in decimal years
-        `bone_age_sds`: an SDS for the bone age, based on references
-        `bone_age_centile`: a centile for the bone age, based on references
-        `bone_age_reference`: enum ['greulich-pyle', 'tanner-whitehouse-ii', 'tanner-whitehouse-iii', 'fels', 'bonexpert']
-        `age_prediction`: decimal years
-        `age_prediction_reference`: enum ['bayley-pinneau', 'roche-wainer-thissen']
+        `height_prediction`: decimal years
+        `height_prediction_sds`: SDS for height prediction against reference
+        `height_prediction_centile`: centile for height prediction against reference
+        `height_prediction_reference`: enum ['bayley-pinneau', 'roche-wainer-thissen']
+        `event_text`: list. this is a list of strings which are comments to tag a given measurement/plot with contextual information 
         """
 
         self.birth_date = birth_date
@@ -58,10 +52,10 @@ class Measurement:
         self.observation_value = observation_value
         self.reference = reference
         self.sex = sex
-        self.bone_age = bone_age
-        self.bone_age_sds = bone_age_sds
-        self.bone_age_type = bone_age_type
-        self.bone_age_centile = bone_age_centile
+        # self.height_prediction = height_prediction
+        # self.height_prediction_sds = height_prediction_sds
+        # self.height_prediction_centile = height_prediction_centile
+        # self.height_prediction_reference = height_prediction_reference
         self.event_text = event_text
 
         try:
@@ -159,12 +153,12 @@ class Measurement:
                 "centile_data": self.plottable_centile_data,
                 "sds_data": self.plottable_sds_data
             },
-            'bone_age_data': {
-                'bone_age': self.bone_age,
-                'bone_age_sds': self.bone_age_sds,
-                'bone_age_centile': self.bone_age_centile,
-                'bone_age_type': self.bone_age_type
-            },
+            # 'height_prediction_data':{
+            #     "height_prediction": self.height_prediction,
+            #     "height_prediction_sds": self.height_prediction_sds,
+            #     "height_prediction_centile": self.height_prediction_centile,
+            #     "height_prediction_reference": self.height_prediction_reference
+            # },
             'event_data': {
                 'event_text': self.event_text
             }
