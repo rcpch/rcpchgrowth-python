@@ -6,7 +6,7 @@ from .turner import turner_lms_array_for_measurement_and_sex
 from .trisomy_21 import trisomy_21_lms_array_for_measurement_and_sex
 # from scipy import interpolate  #see below, comment back in if swapping interpolation method
 # from scipy.interpolate import CubicSpline #see below, comment back in if swapping interpolation method
-from .constants.reference_constants import UK_WHO, TURNERS, TRISOMY_21, SEXES
+from .constants.reference_constants import MALE, UK_WHO, TURNERS, TRISOMY_21, SEXES, BMI
 
 
 """Public functions"""
@@ -75,7 +75,7 @@ def percentage_median_bmi(reference: str, age: float, actual_bmi: float, sex: st
     # fetch the LMS values for the requested measurement
     try:
         lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, measurement_method="bmi", sex=sex, age=age)
+            reference=reference, measurement_method=BMI, sex=sex, age=age)
     except LookupError as err:
         raise LookupError(err)
 
@@ -146,7 +146,7 @@ def mid_parental_height(
     Calculates mid-parental height for the child.
     All units are in cm
     """
-    if sex == SEXES[0]:
+    if sex == MALE:
         return (height_paternal + height_maternal + 13)/2
     else:
         return (height_paternal + height_maternal - 13)/2

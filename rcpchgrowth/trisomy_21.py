@@ -47,10 +47,10 @@ def reference_data_absent(
     if age > TWENTY_YEARS: # upper threshold of trisomy_21 data
         return True, "Trisomy 21 reference data does not exist over the age of 20y."
         
-    elif measurement_method == "bmi" and age > 18.82:
+    elif measurement_method == BMI and age > 18.82:
         return True, f"Trisomy BMI reference data does not exist > 18.82 y."
     
-    elif measurement_method == "ofc":
+    elif measurement_method == HEAD_CIRCUMFERENCE:
         if age > EIGHTEEN_YEARS:
             return True, "Trisomy head circumference reference data does not exist > 18 y"
         else:

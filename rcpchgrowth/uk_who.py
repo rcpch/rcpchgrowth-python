@@ -81,15 +81,15 @@ def reference_data_absent(
     if age > TWENTY_YEARS:  # upper threshold of UK90 data
         return True, "UK-WHO data does not exist above 20 years."
 
-    if measurement_method == "height" and age < TWENTY_FIVE_WEEKS_GESTATION:
+    if measurement_method == HEIGHT and age < TWENTY_FIVE_WEEKS_GESTATION:
         return True, "UK-WHO length data does not exist in infants below 25 weeks gestation."
 
-    elif measurement_method == "bmi" and age < FORTY_TWO_WEEKS_GESTATION:
+    elif measurement_method == BMI and age < FORTY_TWO_WEEKS_GESTATION:
         return True, "UK-WHO BMI data does not exist below 2 weeks of age."
 
-    elif measurement_method == "ofc":
-        if (sex == "male" and age > EIGHTEEN_YEARS) or (sex == "female" and age > SEVENTEEN_YEARS):
-            if sex == "male":
+    elif measurement_method == HEAD_CIRCUMFERENCE:
+        if (sex == MALE and age > EIGHTEEN_YEARS) or (sex == FEMALE and age > SEVENTEEN_YEARS):
+            if sex == MALE:
                 return True, "UK-WHO head circumference data does not exist in boys over 18 y of age."
             else:
                 return True, "UK-WHO head circumference data does not exist in girls over 17 y of age."

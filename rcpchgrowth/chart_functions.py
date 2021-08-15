@@ -2,14 +2,14 @@ from .global_functions import sds_for_centile, rounded_sds_for_centile, generate
 from .uk_who import select_reference_data_for_uk_who_chart
 from .trisomy_21 import select_reference_data_for_trisomy_21
 from .turner import select_reference_data_for_turner
-from .constants.reference_constants import UK_WHO, TURNERS, TRISOMY_21, COLE_TWO_THIRDS_SDS_NINE_CENTILES, COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION, THREE_PERCENT_CENTILE_COLLECTION, UK_WHO_REFERENCES
+from .constants.reference_constants import FEMALE, HEIGHT, UK_WHO, TURNERS, TRISOMY_21, COLE_TWO_THIRDS_SDS_NINE_CENTILES, COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION, THREE_PERCENT_CENTILE_COLLECTION, UK_WHO_REFERENCES
 
 """
 Public chart functions
 """
 
 
-def create_chart(reference: str, centile_selection: str, measurement_method: str = "height", sex: str = "female",):
+def create_chart(reference: str, centile_selection: str, measurement_method: str = HEIGHT, sex: str = FEMALE):
     """
     Global method - return chart for measurement_method, sex and reference
     """
@@ -301,7 +301,7 @@ def create_turner_chart(centile_selection: str):
     # data to keep all objects the same
 
     sex_list: dict = {}
-    sex = "female"
+    sex = FEMALE
 
     measurements: dict = {}  # all the data for a given measurement_method are stored here
 
@@ -323,12 +323,12 @@ def create_turner_chart(centile_selection: str):
 
         # Collect the LMS values from the correct reference
         lms_array_for_measurement = select_reference_data_for_turner(
-            measurement_method="height", sex=sex)
+            measurement_method=HEIGHT, sex=sex)
         # Generate a centile. there will be nine of these if Cole method selected.
         # Some data does not exist at all ages, so any error reflects missing data.
         # If this happens, an empty list is returned.
         try:
-            centile_data = generate_centile(z=z, centile=centile, measurement_method="height",
+            centile_data = generate_centile(z=z, centile=centile, measurement_method=HEIGHT,
                                             sex=sex, lms_array_for_measurement=lms_array_for_measurement, reference=TURNERS)
 
             # Store this centile for a given measurement
@@ -339,7 +339,7 @@ def create_turner_chart(centile_selection: str):
 
     # this is the end of the centile_collection for loop
     # All the centiles for this measurement, sex and reference are added to the measurements list
-    measurements.update({"height": centiles})
+    measurements.update({HEIGHT: centiles})
 
     # this is the end of the measurement_methods loop
     # All data for all measurement_methods for this sex are added to the sex_list list

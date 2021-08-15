@@ -1,3 +1,6 @@
+# imports from rcpchgrowth
+from .constants import BMI, HEAD_CIRCUMFERENCE
+
 # Recommendations from Project board for reporting Centiles
 
 # Lower limit	Upper limit	Centile band	Weight,  Height, Head	BMI
@@ -30,9 +33,9 @@ def centile_band_for_centile(sds: float, measurement_method: str)->str:
 
     centile_band = ""
 
-    if measurement_method == "bmi":
+    if measurement_method == BMI:
         measurement_method = "body mass index"
-    if measurement_method == "ofc":
+    if measurement_method == HEAD_CIRCUMFERENCE:
         measurement_method = "head circumference"
 
     if sds <= -6:

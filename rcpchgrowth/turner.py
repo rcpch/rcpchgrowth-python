@@ -61,14 +61,14 @@ def reference_data_absent(
         return True, 'There is no reference data below 1 year.'
     elif age > TWENTY_YEARS: # upper threshold of Turner data
         return True, "There is no reference data above 20 years."
-    elif measurement_method=="weight" or measurement_method=="bmi" or measurement_method=="ofc":
+    elif measurement_method==WEIGHT or measurement_method==BMI or measurement_method==HEAD_CIRCUMFERENCE:
         text_string = measurement_method
-        if measurement_method == "bmi":
+        if measurement_method == BMI:
             text_string = "BMI (body mass index)"
-        elif measurement_method == "ofc":
+        elif measurement_method == HEAD_CIRCUMFERENCE:
             text_string = "head circumference"
         return True, f"There is no reference data for {text_string}."
-    elif sex == "male":
+    elif sex == MALE:
         return True, f"Turner's syndrome only affects girls and women."
     else:
         return False, "Valid Data"

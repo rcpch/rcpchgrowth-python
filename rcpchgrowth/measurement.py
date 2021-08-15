@@ -42,6 +42,12 @@ class Measurement:
         `gestation_weeks`: (integer) gestation at birth in weeks.
         `gestation_days`: (integer) supplemental days in addition to gestation_weeks at birth.
         `reference`: ENUM refering to which reference dataset to use: ['uk-who', 'turners-syndrome', 'trisomy-21'].
+        `bone_age`: an estimated skeletal age calculated from xrays reported in decimal years
+        `bone_age_sds`: an SDS for the bone age, based on references
+        `bone_age_centile`: a centile for the bone age, based on references
+        `bone_age_reference`: enum ['greulich-pyle', 'tanner-whitehouse-ii', 'tanner-whitehouse-iii', 'fels', 'bonexpert']
+        `age_prediction`: decimal years
+        `age_prediction_reference`: enum ['bayley-pinneau', 'roche-wainer-thissen']
         """
 
         self.birth_date = birth_date
@@ -256,7 +262,7 @@ class Measurement:
         
         corrected_percentage_median_bmi = None
         chronological_percentage_median_bmi = None
-        if measurement_method == "bmi" and corrected_age is not None and chronological_age is not None:
+        if measurement_method == BMI and corrected_age is not None and chronological_age is not None:
             try: 
                 corrected_percentage_median_bmi = percentage_median_bmi(
                 reference=reference,

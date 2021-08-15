@@ -38,9 +38,15 @@ UK90_UPPER_THRESHOLD = 20
 
 
 # Generic constants
+MALE="male"
+FEMALE="female"
+HEIGHT="height"
+WEIGHT="weight"
+HEAD_CIRCUMFERENCE="ofc"
+BMI="bmi"
 REFERENCES = [UK_WHO, TRISOMY_21, TURNERS]
-SEXES = ["male", "female"]
-MEASUREMENT_METHODS = ["height", "weight", "ofc", "bmi"]
+SEXES = [MALE, FEMALE]
+MEASUREMENT_METHODS = [HEIGHT, WEIGHT, HEAD_CIRCUMFERENCE, BMI]
 
 THREE_PERCENT_CENTILES = 'six-centiles'
 COLE_TWO_THIRDS_SDS_NINE_CENTILES = 'nine-centiles'
