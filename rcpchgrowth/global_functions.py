@@ -9,6 +9,190 @@ from .trisomy_21 import trisomy_21_lms_array_for_measurement_and_sex
 from .constants.reference_constants import UK_WHO, TURNERS, TRISOMY_21, SEXES
 
 
+"""Public functions"""
+
+
+def measurement_from_sds(
+    reference: str,
+    requested_sds: float,
+    measurement_method: str,
+    sex: str,
+    age: float
+) -> float:
+
+    try:
+        lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
+            reference=reference, age=age, measurement_method=measurement_method, sex=sex)
+    except LookupError as err:
+        raise LookupError(err)
+
+    # get LMS values from the reference: check for age match, interpolate if none
+    lms = fetch_lms(
+        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement)
+    l = lms["l"]
+    m = lms["m"]
+    s = lms["s"]
+
+    observation_value = None
+    try:
+        observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
+        return observation_value
+    except Exception as e:
+        print(e) 
+        return None
+
+def sds_for_measurement(
+    reference: str,
+    age: float,
+    measurement_method: str,
+    observation_value: float,
+    sex: str
+) -> float:
+
+    try:
+        lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
+            reference=reference, age=age, measurement_method=measurement_method, sex=sex)
+    except LookupError as err:
+        raise LookupError(err)
+
+    # get LMS values from the reference: check for age match, interpolate if none
+    lms = fetch_lms(
+        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement)
+    l = lms["l"]
+    m = lms["m"]
+    s = lms["s"]
+
+    return z_score(l=l, m=m, s=s, observation=observation_value)
+
+def percentage_median_bmi(reference: str, age: float, actual_bmi: float, sex: str) -> float:
+    """
+    public method
+    This returns a child"s BMI expressed as a percentage of the median value for age and sex.
+    It is used widely in the assessment of malnutrition particularly in children and young people with eating disorders.
+    It accepts the reference ('uk-who', 'turners-syndrome' or 'trisomy-21')
+    """
+
+    # fetch the LMS values for the requested measurement
+    try:
+        lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
+            reference=reference, measurement_method="bmi", sex=sex, age=age)
+    except LookupError as err:
+        raise LookupError(err)
+
+    # get LMS values from the reference: check for age match, interpolate if none
+    try:
+        lms = fetch_lms(
+            age=age, lms_value_array_for_measurement=lms_value_array_for_measurement)
+    except LookupError as err:
+        print(err)
+        return None
+
+    m = lms["m"]  # this is the median BMI
+
+    percent_median_bmi = (actual_bmi / m) * 100.0
+    return percent_median_bmi
+
+def generate_centile(z: float, centile: float, measurement_method: str, sex: str, lms_array_for_measurement: list, reference: str) -> list:
+    """
+    Generates a centile curve for a given reference. 
+    Takes the z-score equivalent of the centile, the centile to be used as a label, the sex and measurement method.
+    """
+
+    min_age = lms_array_for_measurement[0]["decimal_age"]
+    max_age = lms_array_for_measurement[-1]["decimal_age"]
+
+    centile_measurements = []
+    age = min_age
+    while age <= max_age:
+        # loop through the reference in steps of 0.1y
+        try:
+            measurement = measurement_from_sds(
+                reference=reference, measurement_method=measurement_method, requested_sds=z, sex=sex, age=age)
+        except Exception as err:
+            print(err)
+            measurement = None
+
+        # creates a data point
+        if measurement is not None:
+            rounded = round(measurement, 4)
+        else:
+            rounded = None
+        value = {
+            "l": centile,
+            "x": round(age, 4),
+            "y": rounded
+        }
+
+        centile_measurements.append(value)
+
+        # weekly intervals until 2 y, then monthly
+        if age <= 2:
+            age += (7 / 365.25)  # weekly intervals
+        else:
+            age += 1 / 12  # monthly intervals
+
+        # Although it is preferable to have weekly data points, it generates files of ~2.5 MB
+        # even after minifying, which are not practical. Weekly values makes plotting easier.
+        # Here we have used weekly points from preterm to 2 y, monthly values after.
+        # age += (7/365.25) # weekly intervals
+    return centile_measurements
+
+def mid_parental_height(
+    height_paternal: float,
+    height_maternal: float,
+    sex: str
+) -> float:
+    """
+    Calculates mid-parental height for the child.
+    All units are in cm
+    """
+    if sex == SEXES[0]:
+        return (height_paternal + height_maternal + 13)/2
+    else:
+        return (height_paternal + height_maternal - 13)/2
+
+"""
+*** PUBLIC FUNCTIONS THAT CONVERT BETWEEN CENTILE AND SDS
+"""
+
+def sds_for_centile(centile: float) -> float:
+    """
+    converts a centile (supplied as a percentage) using the scipy package to an SDS.
+    """
+    sds = stats.norm.ppf(centile / 100)
+    return sds
+
+def rounded_sds_for_centile(centile: float) -> float:
+    """
+    converts a centile (supplied as a percentage) using the scipy package to the nearest 2/3 SDS.
+    """
+    sds = stats.norm.ppf(centile / 100)
+    if sds == 0:
+        return sds
+    else:
+        rounded_to_nearest_two_thirds = round(sds / (2 / 3))
+        return rounded_to_nearest_two_thirds * (2 / 3)
+
+def centile(z_score: float):
+    """
+    Converts a Z Score to a p value (2-tailed) using the SciPy library, which it returns as a percentage
+    """
+    try:
+        centile = (stats.norm.cdf(z_score) * 100)
+        return centile
+    except TypeError as err:
+        raise TypeError(err)
+
+
+"""
+Private Functions
+These are essential to the public functions but are not needed outside this file
+"""
+
+"""
+***** INTERPOLATION FUNCTIONS *****
+"""
+
 def cubic_interpolation(age: float, age_one_below: float, age_two_below: float, age_one_above: float, age_two_above: float, parameter_two_below: float, parameter_one_below: float, parameter_one_above: float, parameter_two_above: float) -> float:
     """
     See sds function. This method tests if the age of the child (either corrected for prematurity or chronological) is at a threshold of the reference data
@@ -78,6 +262,19 @@ def linear_interpolation(age: float, age_one_below: float, age_one_above: float,
     linear_interpolated_value = intermediate(age)
     return linear_interpolated_value
 
+"""
+***** DO THE CALCULATIONS *****
+"""
+
+def measurement_for_z(z: float, l: float, m: float, s: float) -> float:
+    """
+    Returns a measurement for a z score, L, M and S
+    """
+    if l != 0.0:
+        measurement_value = math.pow((1 + l * s * z), 1 / l) * m
+    else:
+        measurement_value = math.exp(s * z) * m
+    return measurement_value
 
 def z_score(l: float, m: float, s: float, observation: float):
     """
@@ -91,27 +288,9 @@ def z_score(l: float, m: float, s: float, observation: float):
     return sds
 
 
-def centile(z_score: float):
-    """
-    Converts a Z Score to a p value (2-tailed) using the SciPy library, which it returns as a percentage
-    """
-    try:
-        centile = (stats.norm.cdf(z_score) * 100)
-        return centile
-    except TypeError as err:
-        raise TypeError(err)
-
-
-def measurement_for_z(z: float, l: float, m: float, s: float) -> float:
-    """
-    Returns a measurement for a z score, L, M and S
-    """
-    if l != 0.0:
-        measurement_value = math.pow((1 + l * s * z), 1 / l) * m
-    else:
-        measurement_value = math.exp(s * z) * m
-    return measurement_value
-
+"""
+***** LOOKUP FUNCTIONS *****
+"""
 
 def nearest_lowest_index(
     lms_array: list,
@@ -186,156 +365,6 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list):
         "s": s
     }
 
-
-def measurement_from_sds(
-    reference: str,
-    requested_sds: float,
-    measurement_method: str,
-    sex: str,
-    age: float
-) -> float:
-
-    try:
-        lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, age=age, measurement_method=measurement_method, sex=sex)
-    except LookupError as err:
-        raise LookupError(err)
-
-    # get LMS values from the reference: check for age match, interpolate if none
-    lms = fetch_lms(
-        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement)
-    l = lms["l"]
-    m = lms["m"]
-    s = lms["s"]
-
-    observation_value = None
-    try:
-        observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
-        return observation_value
-    except Exception as e:
-        print(e) 
-        return None
-
-
-def sds_for_measurement(
-    reference: str,
-    age: float,
-    measurement_method: str,
-    observation_value: float,
-    sex: str
-) -> float:
-
-    try:
-        lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, age=age, measurement_method=measurement_method, sex=sex)
-    except LookupError as err:
-        raise LookupError(err)
-
-    # get LMS values from the reference: check for age match, interpolate if none
-    lms = fetch_lms(
-        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement)
-    l = lms["l"]
-    m = lms["m"]
-    s = lms["s"]
-
-    return z_score(l=l, m=m, s=s, observation=observation_value)
-
-
-def percentage_median_bmi(reference: str, age: float, actual_bmi: float, sex: str) -> float:
-    """
-    public method
-    This returns a child"s BMI expressed as a percentage of the median value for age and sex.
-    It is used widely in the assessment of malnutrition particularly in children and young people with eating disorders.
-    It accepts the reference ('uk-who', 'turners-syndrome' or 'trisomy-21')
-    """
-
-    # fetch the LMS values for the requested measurement
-    try:
-        lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, measurement_method="bmi", sex=sex, age=age)
-    except LookupError as err:
-        raise LookupError(err)
-
-    # get LMS values from the reference: check for age match, interpolate if none
-    try:
-        lms = fetch_lms(
-            age=age, lms_value_array_for_measurement=lms_value_array_for_measurement)
-    except LookupError as err:
-        print(err)
-        return None
-
-    m = lms["m"]  # this is the median BMI
-
-    percent_median_bmi = (actual_bmi / m) * 100.0
-    return percent_median_bmi
-
-
-def generate_centile(z: float, centile: float, measurement_method: str, sex: str, lms_array_for_measurement: list, reference: str) -> list:
-    """
-    Generates a centile curve for a given reference. 
-    Takes the z-score equivalent of the centile, the centile to be used as a label, the sex and measurement method.
-    """
-
-    min_age = lms_array_for_measurement[0]["decimal_age"]
-    max_age = lms_array_for_measurement[-1]["decimal_age"]
-
-    centile_measurements = []
-    age = min_age
-    while age <= max_age:
-        # loop through the reference in steps of 0.1y
-        try:
-            measurement = measurement_from_sds(
-                reference=reference, measurement_method=measurement_method, requested_sds=z, sex=sex, age=age)
-        except Exception as err:
-            print(err)
-            measurement = None
-
-        # creates a data point
-        if measurement is not None:
-            rounded = round(measurement, 4)
-        else:
-            rounded = None
-        value = {
-            "l": centile,
-            "x": round(age, 4),
-            "y": rounded
-        }
-
-        centile_measurements.append(value)
-
-        # weekly intervals until 2 y, then monthly
-        if age <= 2:
-            age += (7 / 365.25)  # weekly intervals
-        else:
-            age += 1 / 12  # monthly intervals
-
-        # Although it is preferable to have weekly data points, it generates files of ~2.5 MB
-        # even after minifying, which are not practical. Weekly values makes plotting easier.
-        # Here we have used weekly points from preterm to 2 y, monthly values after.
-        # age += (7/365.25) # weekly intervals
-    return centile_measurements
-
-
-def rounded_sds_for_centile(centile: float) -> float:
-    """
-    converts a centile (supplied as a percentage) using the scipy package to the nearest 2/3 SDS.
-    """
-    sds = stats.norm.ppf(centile / 100)
-    if sds == 0:
-        return sds
-    else:
-        rounded_to_nearest_two_thirds = round(sds / (2 / 3))
-        return rounded_to_nearest_two_thirds * (2 / 3)
-
-
-def sds_for_centile(centile: float) -> float:
-    """
-    converts a centile (supplied as a percentage) using the scipy package to an SDS.
-    """
-    sds = stats.norm.ppf(centile / 100)
-    return sds
-
-
 def lms_value_array_for_measurement_for_reference(
     reference: str,
     age: float,
@@ -368,18 +397,3 @@ def lms_value_array_for_measurement_for_reference(
     else:
         raise ValueError("Incorrect reference supplied")
     return lms_value_array_for_measurement
-
-
-def mid_parental_height(
-    height_paternal: float,
-    height_maternal: float,
-    sex: str
-) -> float:
-    """
-    Calculates mid-parental height for the child.
-    All units are in cm
-    """
-    if sex == SEXES[0]:
-        return (height_paternal + height_maternal + 13)/2
-    else:
-        return (height_paternal + height_maternal - 13)/2

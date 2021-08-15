@@ -4,6 +4,10 @@ from .trisomy_21 import select_reference_data_for_trisomy_21
 from .turner import select_reference_data_for_turner
 from .constants.reference_constants import UK_WHO, TURNERS, TRISOMY_21, COLE_TWO_THIRDS_SDS_NINE_CENTILES, COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION, THREE_PERCENT_CENTILE_COLLECTION, UK_WHO_REFERENCES
 
+"""
+Public chart functions
+"""
+
 
 def create_chart(reference: str, centile_selection: str, measurement_method: str = "height", sex: str = "female",):
     """
@@ -21,6 +25,7 @@ def create_chart(reference: str, centile_selection: str, measurement_method: str
 
 def create_plottable_child_data(child_results_array):
     """
+    DEPRECATED
     Global method - receives a measurement object and returns the data in plottable format - the ages as x, the measurements
     as y and the centile values as l (label)
     """

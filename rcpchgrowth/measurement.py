@@ -22,6 +22,11 @@ class Measurement:
         sex: str,
         gestation_days: int = 0,
         gestation_weeks: int = 0,
+        bone_age: float = None,
+        bone_age_type: str = None,
+        bone_age_sds: float = None,
+        bone_age_centile: float = None,
+        event_text: str = None
     ):
         """
         The Measurement Class is the gatekeeper to all the functions in the RCPCHGrowth package, although the public
@@ -47,6 +52,11 @@ class Measurement:
         self.observation_value = observation_value
         self.reference = reference
         self.sex = sex
+        self.bone_age = bone_age
+        self.bone_age_sds = bone_age_sds
+        self.bone_age_type = bone_age_type
+        self.bone_age_centile = bone_age_centile
+        self.event_text = event_text
 
         try:
             self.__validate_measurement_method(
@@ -142,6 +152,15 @@ class Measurement:
             'plottable_data': {
                 "centile_data": self.plottable_centile_data,
                 "sds_data": self.plottable_sds_data
+            },
+            'bone_age_data': {
+                'bone_age': self.bone_age,
+                'bone_age_sds': self.bone_age_sds,
+                'bone_age_centile': self.bone_age_centile,
+                'bone_age_type': self.bone_age_type
+            },
+            'event_data': {
+                'event_text': self.event_text
             }
         }
 
