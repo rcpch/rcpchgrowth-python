@@ -21,7 +21,12 @@ class Measurement:
         sex: str,
         gestation_days: int = 0,
         gestation_weeks: int = 0,
-        event_text: list = None
+        event_text: list = None,
+        bone_age: float = None,
+        bone_age_type: str = None,
+        bone_age_sds: float = None,
+        bone_age_centile: float = None,
+        bone_age_text: str = None
     ):
         """
         The Measurement Class is the gatekeeper to all the functions in the RCPCHGrowth package, although the public
@@ -52,6 +57,11 @@ class Measurement:
         self.observation_value = observation_value
         self.reference = reference
         self.sex = sex
+        self.bone_age = bone_age
+        self.bone_age_type = bone_age_type
+        self.bone_age_sds = bone_age_sds
+        self.bone_age_centile = bone_age_centile
+        self.bone_age_text = bone_age_text
         # self.height_prediction = height_prediction
         # self.height_prediction_sds = height_prediction_sds
         # self.height_prediction_centile = height_prediction_centile
@@ -92,6 +102,8 @@ class Measurement:
             "chronological_decimal_age_data": {
                 "x": self.ages_object['measurement_dates']['chronological_decimal_age'],
                 "y": self.observation_value,
+                "b": self.bone_age,
+                "bone_age_label": f"SDS: {self.bone_age_sds}, Centile: {self.bone_age_type}",
                 "observation_error": self.calculated_measurements_object['child_observation_value']["observation_value_error"],
                 "age_type": "chronological_age",
                 "calendar_age": self.ages_object["measurement_dates"]["chronological_calendar_age"],
@@ -105,6 +117,8 @@ class Measurement:
             "corrected_decimal_age_data": {
                 "x": self.ages_object['measurement_dates']['corrected_decimal_age'],
                 "y": self.observation_value,
+                "b": self.bone_age,
+                "bone_age_label": f"SDS: {self.bone_age_sds}, Centile: {self.bone_age_type}",
                 "observation_error": self.calculated_measurements_object['child_observation_value']["observation_value_error"],
                 "age_type": "corrected_age",
                 "corrected_gestational_age": corrected_gestational_age,
@@ -121,6 +135,8 @@ class Measurement:
             "chronological_decimal_age_data": {
                 "x": self.ages_object['measurement_dates']['chronological_decimal_age'],
                 "y": self.calculated_measurements_object['measurement_calculated_values']["chronological_sds"],
+                "b": self.bone_age,
+                "bone_age_label": f"SDS: {self.bone_age_sds}, Centile: {self.bone_age_type}",
                 "age_type": "chronological_age",
                 "calendar_age": self.ages_object["measurement_dates"]["chronological_calendar_age"],
                 "lay_comment": self.ages_object["measurement_dates"]["comments"]["lay_chronological_decimal_age_comment"],
@@ -132,6 +148,8 @@ class Measurement:
             "corrected_decimal_age_data": {
                 "x": self.ages_object['measurement_dates']['corrected_decimal_age'],
                 "y": self.calculated_measurements_object['measurement_calculated_values']["corrected_sds"],
+                "b": self.bone_age,
+                "bone_age_label": f"SDS: {self.bone_age_sds}, Centile: {self.bone_age_type}",
                 "age_type": "corrected_age",
                 "corrected_gestational_age": corrected_gestational_age,
                 "calendar_age": self.ages_object["measurement_dates"]["corrected_calendar_age"],
