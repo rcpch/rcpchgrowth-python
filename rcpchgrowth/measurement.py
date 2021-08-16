@@ -47,6 +47,10 @@ class Measurement:
         `height_prediction_centile`: centile for height prediction against reference
         `height_prediction_reference`: enum ['bayley-pinneau', 'roche-wainer-thissen']
         `event_text`: list. this is a list of strings which are comments to tag a given measurement/plot with contextual information 
+        `bone_age`: an estimated skeletal age calculated from xrays reported in decimal years
+        `bone_age_sds`: an SDS for the bone age, based on references
+        `bone_age_centile`: a centile for the bone age, based on references
+        `bone_age_reference`: enum ['greulich-pyle', 'tanner-whitehouse-ii', 'tanner-whitehouse-iii', 'fels', 'bonexpert']
         """
 
         self.birth_date = birth_date
@@ -177,6 +181,13 @@ class Measurement:
             #     "height_prediction_centile": self.height_prediction_centile,
             #     "height_prediction_reference": self.height_prediction_reference
             # },
+            'bone_age': {
+                "bone_age": self.bone_age,
+                "bone_age_type": self.bone_age_type,
+                "bone_age_sds": self.bone_age_sds,
+                "bone_age_centile": self.bone_age_centile,
+                "bone_age_text": self.bone_age_text,
+            },
             'event_data': {
                 'event_text': self.event_text
             }
