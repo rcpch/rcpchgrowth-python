@@ -42,11 +42,9 @@ jobs:
         sleep 15m
 
     - name: Initiate repository event in rcpch_server
-      env:
-        PATTOKEN: ${{secrets.PAT_USERNAME}}:${{secrets.PAT_TOKEN}}
       run: |
         curl -XPOST  \
         -H 'Accept: application/vnd.github.v3+json' \
-        -u ":$PATTOKEN" \
+        -u "${{secrets.PAT_USERNAME}}:${{secrets.PAT_TOKEN}}" \
         -H "Content-Type: application/json" https://api.github.com/repos/rcpch/digital-growth-charts-server/dispatches \
         --data '{"event_type":"publish_to_pypi"}'
