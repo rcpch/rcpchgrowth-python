@@ -45,6 +45,6 @@ jobs:
       run: |
         curl -XPOST  \
         -H 'Accept: application/vnd.github.v3+json' \
-        -H "Authorization: token ${{secrets.PAT_TOKEN}}" \
+        -u ${{secrets.PAT_USERNAME}}:${{secrets.PAT_TOKEN}} \
         -H "Content-Type: application/json" https://api.github.com/repos/rcpch/digital-growth-charts-server/dispatches \
-        -d '{"event_type":"publish_to_pypi"}'
+        --data '{"event_type":"publish_to_pypi"}'
