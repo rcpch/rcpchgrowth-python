@@ -43,7 +43,7 @@ jobs:
 
     - name: Initiate repository event in rcpch_server
       env:
-        PATUSER: ${{secrets.PAT_USERNAME}}:${{secrets.PAT_TOKEN}}
+        PATTOKEN: ${{secrets.PAT_USERNAME}}:${{secrets.PAT_TOKEN}}
       run: |
         curl -XPOST  \
         -H 'Accept: application/vnd.github.v3+json' \
