@@ -21,7 +21,7 @@ class Measurement:
         sex: str,
         gestation_days: int = 0,
         gestation_weeks: int = 0,
-        event_text: list = None,
+        events_text: list = None,
         bone_age: float = None,
         bone_age_type: str = None,
         bone_age_sds: float = None,
@@ -70,7 +70,7 @@ class Measurement:
         # self.height_prediction_sds = height_prediction_sds
         # self.height_prediction_centile = height_prediction_centile
         # self.height_prediction_reference = height_prediction_reference
-        self.event_text = event_text
+        self.events_text = events_text
 
         try:
             self.__validate_measurement_method(
@@ -111,6 +111,7 @@ class Measurement:
                 "x": self.ages_object['measurement_dates']['chronological_decimal_age'],
                 "y": self.observation_value,
                 "b": self.bone_age,
+                "events_text": self.events_text,
                 "bone_age_label": bone_age_comment,
                 "observation_error": self.calculated_measurements_object['child_observation_value']["observation_value_error"],
                 "age_type": "chronological_age",
@@ -126,6 +127,7 @@ class Measurement:
                 "x": self.ages_object['measurement_dates']['corrected_decimal_age'],
                 "y": self.observation_value,
                 "b": self.bone_age,
+                "events_text": self.events_text,
                 "bone_age_label": f"SDS: {self.bone_age_sds}, Centile: {self.bone_age_type}",
                 "observation_error": self.calculated_measurements_object['child_observation_value']["observation_value_error"],
                 "age_type": "corrected_age",
@@ -192,8 +194,8 @@ class Measurement:
                 "bone_age_centile": self.bone_age_centile,
                 "bone_age_text": self.bone_age_text,
             },
-            'event_data': {
-                'event_text': self.event_text
+            'events_data': {
+                'events_text': self.events_text
             }
         }
 
