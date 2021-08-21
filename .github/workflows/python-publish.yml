@@ -49,5 +49,5 @@ jobs:
           -X POST https://api.github.com/repos/rcpch/digital-growth-charts-server/dispatches \
           -H "Accept: application/vnd.github.v3+json" \
           -H "Content-Type: application/json" \
-          -u "$TOKEN" \
+          -u "${{ env.TOKEN }}" \
           --data '{"event_type":"publish_to_pypi"}'
