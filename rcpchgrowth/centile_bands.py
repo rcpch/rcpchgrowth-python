@@ -28,9 +28,6 @@ from .global_functions import rounded_sds_for_centile
 # 2.84	6.00	Above 99.6th	Above normal range	Severely obese
 # 	>6.00		Probable error	Probable error
 
-<<<<<<< HEAD
-=======
-
 def create_suffix_for_cardinal_number(cardinal_number)->str:
     # Converts a cardinal number to an ordinal by adding a suffix 'st', 'nd', 'rd' or 'th'
     # Accepts decimals and negative numbers
@@ -52,7 +49,6 @@ def create_suffix_for_cardinal_number(cardinal_number)->str:
         suffix = "th"
 
     return f"{cardinal_number}{suffix}"
->>>>>>> a7ba1a2913d9c7dab4a2a0ed222316d88ade476f
 
 
 def quarter_distances(centile):
@@ -89,12 +85,12 @@ def centile_band_for_centile(sds: float, measurement_method: str, centile_format
         params: accepts a measurement_method as string
         params: accepts array of centiles representing the centile lines
     """
-    if centile_pattern == CENTILE_FORMATS[0]:
+    if centile_format == CENTILE_FORMATS[0]:
         centile_band = THREE_PERCENT_CENTILE_COLLECTION
-    elif centile_pattern == CENTILE_FORMATS[1]:
+    elif centile_format == CENTILE_FORMATS[1]:
         centile_band = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
 
-    centile_band_ranges = generate_centile_band_ranges(centile_format)    
+    centile_band_ranges = generate_centile_band_ranges(centile_band)    
 
     if measurement_method == BMI:
         measurement_method = "body mass index"
@@ -115,11 +111,11 @@ def centile_band_for_centile(sds: float, measurement_method: str, centile_format
         for r in range(len(centile_band_ranges)):
             if centile_band_ranges[r][0] <= sds < centile_band_ranges[r][1]:
                 if r%2 == 0:
-                    centile = centile_band[r//2]
+                    centile = create_suffix_for_cardinal_number(centile_band[r//2])
                     return f"This {measurement_method} measurement is on or near the {centile} centile."
                 else:
-                    lower_centile = centile_band[(r-1)//2]
-                    upper_centile = centile_band[(r+1)//2]
+                    lower_centile = create_suffix_for_cardinal_number(centile_band[(r-1)//2])
+                    upper_centile = create_suffix_for_cardinal_number(centile_band[(r+1)//2])
                     return f"This {measurement_method} measurement is between the {lower_centile} and {upper_centile} centiles."
     
 
