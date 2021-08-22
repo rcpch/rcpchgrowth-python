@@ -72,7 +72,12 @@ def return_suffix(centile: float)->str:
 
 def quarter_distances(centile):
     """
-    return sds of points that are +/- 1/4 of centile space from the centile line
+    return sds of points that are +/- 0.25*0.666 sds space from the centile line
+
+    0.25 * 0.666 comes from the definition that a point within 0.25 centile space
+     from the centile line in a UK growth chart is considered as on the centile
+    this distance from centile line is used for all centile patterns, regardless of 
+     whether the centile lines are equally spaced apart
     """
     sds = rounded_sds_for_centile(centile)
     quarter_distance = 0.25 * 0.666
@@ -81,7 +86,7 @@ def quarter_distances(centile):
 
 def generate_centile_band_ranges(centile_collection):
     """
-    returns a list of tuples representing ranges
+    returns a list of tuples representing ranges of on centile line and between centiles
     """
     centile_ranges = []
     for centile in centile_collection:
@@ -97,7 +102,7 @@ def centile_band_for_centile(sds: float, measurement_method: str, centile_format
     
         params: accepts a sds: float
         params: accepts a measurement_method as string
-        params: accepts centile_pattern 6 or 9
+        params: accepts array of centiles representing the centile lines
     """
     
     centile_collection = []
