@@ -265,7 +265,10 @@ class Measurement:
                 chronological_measurement_centile = None
             try:
                 chronological_centile_band = centile_band_for_centile(
-                    sds=chronological_measurement_sds, measurement_method=measurement_method)
+                    sds=chronological_measurement_sds, 
+                    measurement_method=measurement_method,
+                    centile_format=COLE_TWO_THIRDS_SDS_NINE_CENTILES
+                    )
             except TypeError as err:
                 chronological_measurement_error = "Not possible to calculate centile"
                 chronological_centile_band = None
@@ -284,7 +287,10 @@ class Measurement:
 
             try:
                 corrected_centile_band = centile_band_for_centile(
-                    sds=corrected_measurement_sds, measurement_method=measurement_method)
+                    sds=corrected_measurement_sds, 
+                    measurement_method=measurement_method,
+                    centile_format=COLE_TWO_THIRDS_SDS_NINE_CENTILES
+                )
             except TypeError as err:
                 corrected_measurement_error = "Not possible to calculate centile"
                 corrected_centile_band = None

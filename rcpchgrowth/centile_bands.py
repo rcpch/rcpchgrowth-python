@@ -1,7 +1,7 @@
 # imports from rcpchgrowth
-from .constants import BMI, HEAD_CIRCUMFERENCE,CENTILE_FORMATS,THREE_PERCENT_CENTILE_COLLECTION,COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION 
+from rcpchgrowth.constants.reference_constants import COLE_TWO_THIRDS_SDS_NINE_CENTILES, THREE_PERCENT_CENTILES
+from .constants import BMI, HEAD_CIRCUMFERENCE,THREE_PERCENT_CENTILE_COLLECTION,COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION 
 from .global_functions import rounded_sds_for_centile
-from itertools import chain
 
 # Recommendations from Project board for reporting Centiles
 
@@ -27,7 +27,48 @@ from itertools import chain
 # 2.50	2.84	99.6th 		Very overweight (obese)
 # 2.84	6.00	Above 99.6th	Above normal range	Severely obese
 # 	>6.00		Probable error	Probable error
+"""
+In fact we have changed these slightly as sometimes we might not always use the standard Cole nine
+centile format. In those circumstances hard coding these thresholds would not work.
+Instead @a-wei-0513 has calculated 0.25 distance between the lines to be 'on or near'. This is very close
+to these numbers and would accommodate different centile formats.
+"""
 
+def return_suffix(centile: float)->str:
+    # Converts a cardinal number to an ordinal by adding a suffix 'st', 'nd', 'rd' or 'th'
+    # Accepts decimals and negative numbers
+    
+    # centile should not be < 0 or > 100
+    if centile <=0:
+        return "below lowest centile.;"
+    if centile >= 100:
+        return "above highest centile."
+
+    suffix="th" # this is the default
+    final_number = centile
+    if (centile > 99 and centile <100) or (centile < 1 and centile > 0):
+        final_number=round(centile,1)
+    else:
+       final_number=int(round(final_number))
+    
+    # get the final digit
+    string_from_number = str(final_number)
+    final_digit = int(string_from_number[len(string_from_number)-1: len(string_from_number)])
+    if final_digit == 1:
+        suffix = "st"
+    elif final_digit == 2:
+        suffix = "nd"
+    elif final_digit == 3:
+        suffix = "rd"
+    
+    # 11, 12, 13 are special cases as they take 'th'
+    # get the final 2 digits if not a decimal
+    if isinstance(final_number, float) and final_number.is_integer() or isinstance(final_number, int):
+        final_two_digits = string_from_number[len(string_from_number)-2: len(string_from_number)]
+        if int(final_two_digits) >10 <14:
+            suffix = "th"
+
+    return f"{string_from_number}{suffix}"
 
 def quarter_distances(centile):
     """
@@ -38,19 +79,19 @@ def quarter_distances(centile):
     return sds - quarter_distance, sds + quarter_distance
 
 
-def generate_centile_band_ranges(centile_lines):
+def generate_centile_band_ranges(centile_collection):
     """
     returns a list of tuples representing ranges
     """
     centile_ranges = []
-    for centile in centile_lines:
+    for centile in centile_collection:
         centile_ranges.extend(quarter_distances(centile))
     centile_bands = list(zip(centile_ranges[:-1],centile_ranges[1:]))
 
     return centile_bands
 
 
-def centile_band_for_centile(sds: float, measurement_method: str, centile_pattern: str)->str:
+def centile_band_for_centile(sds: float, measurement_method: str, centile_format: str)->str:
     """
         this function returns a centile band into which the sds falls
     
@@ -58,18 +99,14 @@ def centile_band_for_centile(sds: float, measurement_method: str, centile_patter
         params: accepts a measurement_method as string
         params: accepts centile_pattern 6 or 9
     """
-    #temporary; couldn't find the suffix function
-    centile_band_9_suffix = ["th","nd","th","th","th","th","st","th","th"]
-    centile_band_6_suffix = ["rd","th","th","th","th","th","th"]
+    
+    centile_collection = []
+    if centile_format == THREE_PERCENT_CENTILES:
+        centile_collection = THREE_PERCENT_CENTILE_COLLECTION
+    elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
+        centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
 
-    if centile_pattern == CENTILE_FORMATS[0]:
-        centile_band = THREE_PERCENT_CENTILE_COLLECTION
-        centile_band_suffix = centile_band_6_suffix
-    elif centile_pattern == CENTILE_FORMATS[1]:
-        centile_band = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
-        centile_band_suffix = centile_band_9_suffix
-
-    centile_band_ranges = generate_centile_band_ranges(centile_band)    
+    centile_band_ranges = generate_centile_band_ranges(centile_collection)
 
     if measurement_method == BMI:
         measurement_method = "body mass index"
@@ -86,39 +123,16 @@ def centile_band_for_centile(sds: float, measurement_method: str, centile_patter
         return f"This {measurement_method} measurement is above the normal range"        
     else:
         #even indices of centile_bands list is always on centile
-        #odd indices of cnetile_bands list is always between centil
+        #odd indices of cnetile_bands list is always between centiles
         for r in range(len(centile_band_ranges)):
             if centile_band_ranges[r][0] <= sds < centile_band_ranges[r][1]:
                 if r%2 == 0:
-                    centile = centile_band[r//2]
-                    suffix = centile_band_suffix[r//2]
-                    return f"This {measurement_method} measurement is on or near the {centile:0.0f}{suffix} centile."
+                    centile = centile_collection[r//2]
+                    suffixed_centile = return_suffix(centile)
+                    return f"This {measurement_method} measurement is on or near the {suffixed_centile} centile."
                 else:
-                    lower_centile = centile_band[(r-1)//2]
-                    lower_suffix = centile_band_suffix[(r-1)//2]
-                    upper_centile = centile_band[(r+1)//2]
-                    upper_suffix = centile_band_suffix[(r+1)//2]
-                    return f"This {measurement_method} measurement is between the {lower_centile:0.0f}{lower_suffix} and {upper_centile:0.0f}{upper_suffix} centiles."
-    
-
-def create_suffix_for_cardinal_number(cardinal_number)->str:
-    # Converts a cardinal number to an ordinal by adding a suffix 'st', 'nd', 'rd' or 'th'
-    # Accepts decimals and negative numbers
-
-    suffix="th" # this is the default
-
-    # get the final and last 2 digits
-    final_two_digits = cardinal_number%100
-    final_digit = cardinal_number%10
-    if final_digit == 1:
-        suffix = "st"
-    elif final_digit == 2:
-        suffix = "nd"
-    elif final_digit == 3:
-        suffix = "rd"
-    
-    # 11, 12, 13 are special cases as they take 'th'
-    if final_two_digits >= 11 or final_two_digits <= 13:
-        suffix = "th"
-
-    return f"{cardinal_number}{suffix}"
+                    lower_centile = centile_collection[(r-1)//2]
+                    lower_suffixed_centile = return_suffix(lower_centile)
+                    upper_centile = centile_collection[(r+1)//2]
+                    upper_suffixed_centile = return_suffix(upper_centile)
+                    return f"This {measurement_method} measurement is between the {lower_suffixed_centile} and {upper_suffixed_centile} centiles."
