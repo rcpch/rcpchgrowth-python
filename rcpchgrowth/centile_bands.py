@@ -101,4 +101,24 @@ def centile_band_for_centile(sds: float, measurement_method: str, centile_patter
                     return f"This {measurement_method} measurement is between the {lower_centile:0.0f}{lower_suffix} and {upper_centile:0.0f}{upper_suffix} centiles."
     
 
+def create_suffix_for_cardinal_number(cardinal_number)->str:
+    # Converts a cardinal number to an ordinal by adding a suffix 'st', 'nd', 'rd' or 'th'
+    # Accepts decimals and negative numbers
 
+    suffix="th" # this is the default
+
+    # get the final and last 2 digits
+    final_two_digits = cardinal_number%100
+    final_digit = cardinal_number%10
+    if final_digit == 1:
+        suffix = "st"
+    elif final_digit == 2:
+        suffix = "nd"
+    elif final_digit == 3:
+        suffix = "rd"
+    
+    # 11, 12, 13 are special cases as they take 'th'
+    if final_two_digits >= 11 or final_two_digits <= 13:
+        suffix = "th"
+
+    return f"{cardinal_number}{suffix}"
