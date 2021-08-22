@@ -1,7 +1,7 @@
 # imports from rcpchgrowth
 from .constants import BMI, HEAD_CIRCUMFERENCE,CENTILE_FORMATS,THREE_PERCENT_CENTILE_COLLECTION,COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION 
 from .global_functions import rounded_sds_for_centile
-from itertools import chain
+
 
 # Recommendations from Project board for reporting Centiles
 
@@ -31,45 +31,44 @@ from itertools import chain
 
 def quarter_distances(centile):
     """
-    return sds of points that are +/- 1/4 of centile space from the centile line
+    return sds of points that are +/- 0.25*0.666 sds space from the centile line
+
+    0.25 * 0.666 comes from the definition that a point within 0.25 centile space
+     from the centile line in a UK growth chart is considered as on the centile
+    this distance from centile line is used for all centile patterns, regardless of 
+     whether the centile lines are equally spaced apart
     """
     sds = rounded_sds_for_centile(centile)
     quarter_distance = 0.25 * 0.666
     return sds - quarter_distance, sds + quarter_distance
 
 
-def generate_centile_band_ranges(centile_lines):
+def generate_centile_band_ranges(centile_format):
     """
-    returns a list of tuples representing ranges
+    returns a list of tuples representing ranges of on centile line and between centiles
     """
     centile_ranges = []
-    for centile in centile_lines:
-        centile_ranges.extend(quarter_distances(centile))
+    for centile_line in centile_format:
+        centile_ranges.extend(quarter_distances(centile_line))
     centile_bands = list(zip(centile_ranges[:-1],centile_ranges[1:]))
 
     return centile_bands
 
 
-def centile_band_for_centile(sds: float, measurement_method: str, centile_pattern: str)->str:
+def centile_band_for_centile(sds: float, measurement_method: str, centile_format: str)->str:
     """
         this function returns a centile band into which the sds falls
     
         params: accepts a sds: float
         params: accepts a measurement_method as string
-        params: accepts centile_pattern 6 or 9
+        params: accepts array of centiles representing the centile lines
     """
-    #temporary; couldn't find the suffix function
-    centile_band_9_suffix = ["th","nd","th","th","th","th","st","th","th"]
-    centile_band_6_suffix = ["rd","th","th","th","th","th","th"]
-
     if centile_pattern == CENTILE_FORMATS[0]:
         centile_band = THREE_PERCENT_CENTILE_COLLECTION
-        centile_band_suffix = centile_band_6_suffix
     elif centile_pattern == CENTILE_FORMATS[1]:
         centile_band = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
-        centile_band_suffix = centile_band_9_suffix
 
-    centile_band_ranges = generate_centile_band_ranges(centile_band)    
+    centile_band_ranges = generate_centile_band_ranges(centile_format)    
 
     if measurement_method == BMI:
         measurement_method = "body mass index"
@@ -91,14 +90,9 @@ def centile_band_for_centile(sds: float, measurement_method: str, centile_patter
             if centile_band_ranges[r][0] <= sds < centile_band_ranges[r][1]:
                 if r%2 == 0:
                     centile = centile_band[r//2]
-                    suffix = centile_band_suffix[r//2]
-                    return f"This {measurement_method} measurement is on or near the {centile:0.0f}{suffix} centile."
+                    return f"This {measurement_method} measurement is on or near the {centile} centile."
                 else:
                     lower_centile = centile_band[(r-1)//2]
-                    lower_suffix = centile_band_suffix[(r-1)//2]
                     upper_centile = centile_band[(r+1)//2]
-                    upper_suffix = centile_band_suffix[(r+1)//2]
-                    return f"This {measurement_method} measurement is between the {lower_centile:0.0f}{lower_suffix} and {upper_centile:0.0f}{upper_suffix} centiles."
+                    return f"This {measurement_method} measurement is between the {lower_centile} and {upper_centile} centiles."
     
-
-
