@@ -37,10 +37,6 @@ jobs:
         python setup.py sdist bdist_wheel
         twine upload dist/*
 
-    - name: Delay 15min to wait for publish to pypi
-      run: |
-        sleep 15m
-
     - name: Initiate repository event in rcpch_server
       env: 
         TOKEN: ${{secrets.PAT_USERNAME}}:${{secrets.PAT_TOKEN}}
@@ -49,5 +45,5 @@ jobs:
           -X POST https://api.github.com/repos/rcpch/digital-growth-charts-server/dispatches \
           -H "Accept: application/vnd.github.v3+json" \
           -H "Content-Type: application/json" \
-          -u "${{ env.TOKEN }}" \
+          --header 'authorization: Bearer ${{ secrets.PAT_USERNAME }}:${{ secrets.PAT_TOKEN }}' \
           --data '{"event_type":"publish_to_pypi"}'
