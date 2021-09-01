@@ -1,4 +1,5 @@
-from .global_functions import sds_for_centile, rounded_sds_for_centile, generate_centile
+from typing import Union
+from .global_functions import centile, sds_for_centile, rounded_sds_for_centile, generate_centile
 from .uk_who import select_reference_data_for_uk_who_chart
 from .trisomy_21 import select_reference_data_for_trisomy_21
 from .turner import select_reference_data_for_turner
@@ -9,10 +10,11 @@ Public chart functions
 """
 
 
-def create_chart(reference: str, centile_selection: str, measurement_method: str = HEIGHT, sex: str = FEMALE):
+def create_chart(reference: str, centile_selection: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES, measurement_method: str = HEIGHT, sex: str = FEMALE):
     """
     Global method - return chart for measurement_method, sex and reference
     """
+    
     if reference == UK_WHO:
         return create_uk_who_chart(measurement_method=measurement_method, sex=sex, centile_selection=centile_selection)
     elif reference == TURNERS:
@@ -172,22 +174,25 @@ private functions
 """
 
 
-def create_uk_who_chart(measurement_method: str, sex: str, centile_selection: str = COLE_TWO_THIRDS_SDS_NINE_CENTILES):
+def create_uk_who_chart(measurement_method: str, sex: str, centile_selection: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES):
 
     # user selects which centile collection they want, for sex and measurement_method
     # If the Cole method is selected, conversion between centile and SDS
     # is different as SDS is rounded to the nearest 2/3
     # Cole method selection is stored in the cole_method flag.
     # If no parameter is passed, default is the Cole method
+    # Alternatively it is possible to pass a custom list of values
 
     centile_collection = []
+    cole_method = False
 
-    if centile_selection == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
+    if (type(centile_selection) is list):
+        centile_collection = centile_selection
+    elif centile_selection == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
         centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
         cole_method = True
     else:
         centile_collection = THREE_PERCENT_CENTILE_COLLECTION
-        cole_method = False
 
     ##
     # iterate through the 4 references that make up UK-WHO
@@ -276,7 +281,7 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_selection: st
     """
 
 
-def create_turner_chart(centile_selection: str):
+def create_turner_chart(centile_selection: Union[str, list]):
    # user selects which centile collection they want
     # If the Cole method is selected, conversion between centile and SDS
     # is different as SDS is rounded to the nearest 2/3
@@ -284,13 +289,15 @@ def create_turner_chart(centile_selection: str):
     # If no parameter is passed, default is the Cole method
 
     centile_collection = []
+    cole_method = False
 
-    if centile_selection == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
+    if (type(centile_selection) is list):
+        centile_collection = centile_selection
+    elif centile_selection == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
         centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
         cole_method = True
     else:
         centile_collection = THREE_PERCENT_CENTILE_COLLECTION
-        cole_method = False
 
     # all data for a the reference are stored here: this is returned to the user
     reference_data = {}
@@ -368,7 +375,7 @@ def create_turner_chart(centile_selection: str):
     """
 
 
-def create_trisomy_21_chart(measurement_method: str, sex: str, centile_selection: str):
+def create_trisomy_21_chart(measurement_method: str, sex: str, centile_selection: Union[str, list]):
    # user selects which centile collection they want
     # If the Cole method is selected, conversion between centile and SDS
     # is different as SDS is rounded to the nearest 2/3
@@ -376,13 +383,15 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_selection
     # If no parameter is passed, default is the Cole method
 
     centile_collection = []
+    cole_method = False
 
-    if centile_selection == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
+    if (type(centile_selection) is list):
+        centile_collection = centile_selection
+    elif centile_selection == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
         centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
         cole_method = True
     else:
         centile_collection = THREE_PERCENT_CENTILE_COLLECTION
-        cole_method = False
 
     # all data for a the reference are stored here: this is returned to the user
     reference_data = {}
