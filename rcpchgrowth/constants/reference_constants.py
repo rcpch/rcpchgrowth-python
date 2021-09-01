@@ -48,6 +48,11 @@ REFERENCES = [UK_WHO, TRISOMY_21, TURNERS]
 SEXES = [MALE, FEMALE]
 MEASUREMENT_METHODS = [HEIGHT, WEIGHT, HEAD_CIRCUMFERENCE, BMI]
 
+# Nomenclature
+# Centile formats describe the collection - the two most common used are the cole-nine-centiles format used in UK-WHO
+# and the three-percent-centiles used by the CDC. They use 5/10/25/50/75/90/95 and suggest 3rd centile 
+# is unlikely necessary.
+
 THREE_PERCENT_CENTILES = 'three-percent-centiles'
 COLE_TWO_THIRDS_SDS_NINE_CENTILES = 'cole-nine-centiles'
 CENTILE_FORMATS=[THREE_PERCENT_CENTILES, COLE_TWO_THIRDS_SDS_NINE_CENTILES]
