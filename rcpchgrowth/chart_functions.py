@@ -10,17 +10,17 @@ Public chart functions
 """
 
 
-def create_chart(reference: str, centile_selection: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES, measurement_method: str = HEIGHT, sex: str = FEMALE):
+def create_chart(reference: str, centile_format: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES, measurement_method: str = HEIGHT, sex: str = FEMALE):
     """
     Global method - return chart for measurement_method, sex and reference
     """
     
     if reference == UK_WHO:
-        return create_uk_who_chart(measurement_method=measurement_method, sex=sex, centile_selection=centile_selection)
+        return create_uk_who_chart(measurement_method=measurement_method, sex=sex, centile_format=centile_format)
     elif reference == TURNERS:
-        return create_turner_chart(centile_selection=centile_selection)
+        return create_turner_chart(centile_format=centile_format)
     elif reference == TRISOMY_21:
-        return create_trisomy_21_chart(measurement_method=measurement_method, sex=sex, centile_selection=centile_selection)
+        return create_trisomy_21_chart(measurement_method=measurement_method, sex=sex, centile_format=centile_format)
     else:
         print("No reference data returned. Is there a spelling mistake in your reference?")
 
@@ -72,7 +72,7 @@ def generate_custom_centile(reference: str, measurement_method: str, sex: str, c
         except:
             print(f"It was not possible to retrieve {reference} data.")
             lms_array_for_measurement=[]
-            
+
         try:
             centile_data=[]
             centile_data= build_centile_object(
@@ -287,7 +287,7 @@ def build_centile_object(measurement_method: str, sex: str, lms_array_for_measur
     return sex_list
 
 
-def create_uk_who_chart(measurement_method: str, sex: str, centile_selection: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES):
+def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES):
 
     # user selects which centile collection they want, for sex and measurement_method
     # If the Cole method is selected, conversion between centile and SDS
@@ -299,9 +299,9 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_selection: Un
     centile_collection = []
     cole_method = False
 
-    if (type(centile_selection) is list):
-        centile_collection = centile_selection
-    elif centile_selection == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
+    if (type(centile_format) is list):
+        centile_collection = centile_format
+    elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
         centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
         cole_method = True
     else:
@@ -407,7 +407,7 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_selection: Un
     """
 
 
-def create_turner_chart(centile_selection: Union[str, list]):
+def create_turner_chart(centile_format: Union[str, list]):
    # user selects which centile collection they want
     # If the Cole method is selected, conversion between centile and SDS
     # is different as SDS is rounded to the nearest 2/3
@@ -417,9 +417,9 @@ def create_turner_chart(centile_selection: Union[str, list]):
     centile_collection = []
     cole_method = False
 
-    if (type(centile_selection) is list):
-        centile_collection = centile_selection
-    elif centile_selection == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
+    if (type(centile_format) is list):
+        centile_collection = centile_format
+    elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
         centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
         cole_method = True
     else:
@@ -501,7 +501,7 @@ def create_turner_chart(centile_selection: Union[str, list]):
     """
 
 
-def create_trisomy_21_chart(measurement_method: str, sex: str, centile_selection: Union[str, list]):
+def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: Union[str, list]):
    # user selects which centile collection they want
     # If the Cole method is selected, conversion between centile and SDS
     # is different as SDS is rounded to the nearest 2/3
@@ -511,9 +511,9 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_selection
     centile_collection = []
     cole_method = False
 
-    if (type(centile_selection) is list):
-        centile_collection = centile_selection
-    elif centile_selection == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
+    if (type(centile_format) is list):
+        centile_collection = centile_format
+    elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
         centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
         cole_method = True
     else:
