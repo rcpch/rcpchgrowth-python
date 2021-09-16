@@ -480,13 +480,13 @@ def create_turner_chart(centile_format: Union[str, list]):
     sex_list.update({sex: measurements})
 
     # all data can now be tagged by reference_name and added to reference_data
-    reference_data = {TURNERS: sex_list}
+    reference_data = [{TURNERS: sex_list}]
     return reference_data
 
     """
     Return object structure
-    trisomy_21: {
-        male: {
+    [turners-syndrome: [{
+        female: {
             height: [
                 {
                     sds: -2.667,
@@ -497,7 +497,7 @@ def create_turner_chart(centile_format: Union[str, list]):
             weight: [...]
         },
         female {...}
-    }
+    }]
     """
 
 
@@ -570,12 +570,12 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: U
     sex_list.update({sex: measurements})
 
     # all data can now be tagged by reference_name and added to reference_data
-    reference_data = {TRISOMY_21: sex_list}
+    reference_data = [{TRISOMY_21: sex_list}]
     return reference_data
 
     """
     # return object structure
-    trisomy_21: {
+    [trisomy_21: {
         male: {
             height: [
                 {
@@ -587,5 +587,5 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: U
             weight: [...]
         },
         female {...}
-    }
+    }]
     """
