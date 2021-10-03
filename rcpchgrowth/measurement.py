@@ -101,10 +101,6 @@ class Measurement:
         corrected_gestational_age = ""
         if (self.ages_object["measurement_dates"]["corrected_gestational_age"]["corrected_gestation_weeks"] is not None):
             corrected_gestational_age = f'{ self.ages_object["measurement_dates"]["corrected_gestational_age"]["corrected_gestation_weeks"] } + { self.ages_object["measurement_dates"]["corrected_gestational_age"]["corrected_gestation_days"]} weeks'
-        
-        bone_age_comment = None
-        if self.bone_age is not None:
-            bone_age_comment = f"SDS: {self.bone_age_sds}, Centile: {self.bone_age_type}"
 
         self.plottable_centile_data = {
             "chronological_decimal_age_data": {

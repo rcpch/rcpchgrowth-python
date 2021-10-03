@@ -100,18 +100,18 @@ def generate_fictional_child_data(
     if rawMeasurement is not None:
       rawMeasurement = round(rawMeasurement, 1)
 
-    measurement = Measurement(
-      birth_date=birth_date,
-      observation_date=observation_date,
-      observation_value=rawMeasurement,
-      measurement_method=measurement_method,
-      reference=reference,
-      sex=sex,
-      gestation_weeks=gestation_weeks,
-      gestation_days=gestation_days
-    ).measurement
+      measurement = Measurement(
+        birth_date=birth_date,
+        observation_date=observation_date,
+        observation_value=rawMeasurement,
+        measurement_method=measurement_method,
+        reference=reference,
+        sex=sex,
+        gestation_weeks=gestation_weeks,
+        gestation_days=gestation_days
+      ).measurement
 
-    measurements_array.append(measurement)
+      measurements_array.append(measurement)
     
     # create drift
     if drift:
