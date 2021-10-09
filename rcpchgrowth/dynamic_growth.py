@@ -2,10 +2,12 @@
 # import pandas as pd
 import numpy as np
 import pandas as pd
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import os
 import math
-from scipy.interpolate import interp1d
+from rcpchgrowth.constants.reference_constants import UK_WHO
+
+from rcpchgrowth.global_functions import centile, measurement_from_sds, sds_for_centile, z_score
 
 """
 These functions are experimental
@@ -117,81 +119,17 @@ def create_pairs(measurements_array: list = []):
             penultimate_decimal_age = penultimate['measurement_dates']['chronological_decimal_age']
             last_weight_sds_value = last['measurement_calculated_values']['weight_sds']
             last_decimal_age = last['measurement_dates']['chronological_decimal_age']
+            return {
+                "penultimate_weight_sds_value": penultimate_weight_sds_value,
+                "penultimate_decimal_age": penultimate_decimal_age,
+                "last_weight_sds_value": last_weight_sds_value,
+                "last_decimal_age": last_decimal_age
+            }
 
-
-def correlate_weight(penultimate_decimal_age: float, penultimate_sds: float, last_decimal_age: float, last_sds: float):
+def conditional_weight_gain(z1, z2, r):
     """
-    Weight velocity of the individual child cannot be predicted without comparison against reference data velocity
-    since weight velocity is age dependent. This uses a uses a correlation matrix to look up values against which
+    Weight velocity of the individual child cannot be predicted without comparison against reference data velocity since weight velocity is age dependent. This uses a uses a correlation matrix to look up values against which
     to compare the rate at which the child is gaining or losing weight.
-    The formula for conditional weight gain is: (z2 – r x z1) / √1-r^2
-    Conditional reference charts to assess weight gain in British infants, T J Cole, Archives of Disease in Childhood 1995; 73: 8-16
-    """
-
-    # import the reference
-    cwd = os.path.dirname(__file__)  # current location
-    file_path = os.path.join(
-        cwd, './data_tables/uk-who_resources/RCPCH weight correlation matrix by month.csv')
-    data_frame = pd.read_csv(file_path)
-
-    # look up age
-    # this is the formula: (z2 – r x z1) / √1-r^2 where z2 is the most recent value and z1 the penultimate
-    # and r the correlation
-
-    # rows are penultimate age, columns are last age. to get r we must look up the ages on
-    # the correlation matrix
-    z2 = last_sds
-    z1 = penultimate_sds
-
-    penultimate_months = penultimate_decimal_age * 12
-    last_months = last_decimal_age * 12
-
-    if (last_months > 12):
-        raise Exception("Cannot calculate values beyond 12 mths.")
-    
-    """
-        bilinear interpolation will be used
-            xx      xx
-                x
-            xx      xx
-                        last
-                    lower upper
-    penultimate     lower    c1    c3
-            upper    c2    c4
-    
-    """
-
-    # indices of the last values
-    last_months_lower_index = math.floor(last_months)
-    last_months_upper_index = last_months_lower_index + 1
-
-    # indices of the penultimate values
-    penultimate_months_lower_index = math.floor(penultimate_months)
-    penultimate_months_upper_index = penultimate_months_lower_index + 1
-
-    # bilinear interpolation
-    penultimate_lower_lower = data_frame.iloc[penultimate_months_lower_index, last_months_lower_index]
-    penultimate_upper_lower = data_frame.iloc[penultimate_months_upper_index, last_months_lower_index]
-    intermediate_interpolated_penultimate = interp1d([penultimate_months, penultimate_months+1],[penultimate_lower_lower, penultimate_upper_lower])
-    interpolated_penultimate_lower = intermediate_interpolated_penultimate(penultimate_months)
-
-    last_upper_lower = data_frame.iloc[penultimate_months_lower_index, last_months_upper_index]
-    last_upper_upper = data_frame.iloc[penultimate_months_upper_index, last_months_upper_index]
-    intermediate_interpolated_last = interp1d([penultimate_months_lower_index, penultimate_months_upper_index], [last_upper_lower, last_upper_upper])
-    interpolated_penultimate_upper = intermediate_interpolated_last(penultimate_months)
-
-    intermediate_interpolated_last = interp1d([last_months_lower_index, last_months_upper_index],[interpolated_penultimate_lower, interpolated_penultimate_upper])
-    r = intermediate_interpolated_last(last_months)
-
-    r = ferret(z1, z2, r)
-
-    print(r)
-
-
-
-
-def ferret(z1, z2, r):
-    """
     The formula for conditional weight gain is: (z2 – r x z1) / √1-r^2
     Conditional reference charts to assess weight gain in British infants, T J Cole, Archives of Disease in Childhood 1995; 73: 8-16f
     """
@@ -203,42 +141,105 @@ def find_nearest_index(array, value):
     idx = (np.abs(array - value)).argmin()
     return idx
 
-def reverse_ferret(z1, r, Z):
+def inverse_conditional_weight_gain(z1, r, Z):
+    """
+    This is the inverse function of conditional_weight_gain
+    Conditional reference charts to assess weight gain in British infants, T J Cole, Archives of Disease in Childhood 1995; 73: 8-16f
+    """
     return z1 * r + Z * math.sqrt(1 - r^2)
 
-def create_thrive_lines():
-    # import the reference
+def create_thrive_line(t: list, z1: float, target_centile: float = 5.0):
+    # creates a single thrive line
+    # accepts a list of ages against which the measurements are plotted
+    # z1 refers to the starting SDS
+    # target_centile refers to the velocity centile requested (defaults to 5th centile)
+
+    return_measurements=[]
+    return_ages=[]
+    zv=sds_for_centile(target_centile)
+    for index in range(len(t)-1):
+        t1=t[index]
+        t2=t[index+1]
+        r=return_correlation(t1=t1, t2=t2)
+        z=conditional_weight_gain(z1=z1, z2=zv, r=r)
+        m=measurement_from_sds(UK_WHO, z, "weight", "male", t1/12)
+        return_measurements.append(m)
+        return_ages.append(t1/12)
+    return {
+        "ages": return_ages,
+        "measurements": return_measurements
+    }
+    
+
+def create_thrive_lines(months_under_1: list, z_starts: list, centile_target: float):
+    # Creates thrive lines for weights in the under 1s
+    # Each thrive line requires a starting SDS and list of ages against 
+    # which the lines are plotted.
+    # The centile_target refers to the velocity centile cut off at which 
+    # the line is drawn.
+    t=[1,2,3,4,5,6,7,8,9]
+    z=[0,0.33, 0.66, 1.0, 1.33, 1.66]
+    for index, item in enumerate(z):
+        val = create_thrive_line(t, item, centile_target)
+        plt.plot(val["ages"], val["measurements"])
+        plt.title('Correlation Matrix', fontsize=16)
+    plt.show()
+
+def return_correlation(t1, t2):
+    #  import the reference
     cwd = os.path.dirname(__file__)  # current location
     file_path = os.path.join(
         cwd, './data_tables/uk-who_resources/RCPCH weight correlation matrix by month.csv')
     data_frame = pd.read_csv(file_path)
-    parameter_list = []
-    years=[]
-    months=[]
-    year = 0
-    month = 0
-    while year < 1:
-        years.append(years)
-        months.append(month)
-        year+=7/365.25 # add a week
-        month=year*12
-    for i in range(0, len(months), 2):
-        # get months in pairs
-        first_correlation = correlate_weight(i, 0, i+1, 0)
-        weight = reverse_ferret()
+    lowerIndexT1 = math.floor(t1)
+    upperIndexT1 = lowerIndexT1+1
+    lowerIndexT2 = math.floor(t2)
+    upperIndexT2 = lowerIndexT2+1
+    lowerT1lowerT2 = data_frame.iloc[lowerIndexT1, lowerIndexT2]
+    lowerT1upperT2 = data_frame.iloc[lowerIndexT1, upperIndexT2]
+    upperT1lowerT2 = data_frame.iloc[upperIndexT1, lowerIndexT2]
+    upperT1upperT2 = data_frame.iloc[upperIndexT1, upperIndexT2]
+
+    correlation = bilinear_interpolation(
+            x=t1, 
+            y=t2, 
+            points=[
+                (lowerIndexT1, lowerIndexT2, lowerT1lowerT2),
+                (lowerIndexT1, upperIndexT2, lowerT1upperT2),
+                (upperIndexT1, lowerIndexT2, upperT1lowerT2),
+                (upperIndexT1, upperIndexT2, upperT1upperT2),
+            ]
+        )
+    return correlation
 
 
-def create_correlation_surface():
-    # import the reference
-    cwd = os.path.dirname(__file__)  # current location
-    file_path = os.path.join(
-        cwd, './data_tables/uk-who_resources/RCPCH weight correlation matrix by month.csv')
-    data_frame = pd.read_csv(file_path)
-    # fig = plt.figure()
-    # ax = plt.axes(projection="3d")
-    # index = data_frame.index[data_frame[]]
-    # plt.matshow(data_frame.corr())
-    # cb = plt.colorbar()
-    # cb.ax.tick_params(labelsize=14)
-    # plt.title('Correlation Matrix', fontsize=16)
-    # plt.show()
+def bilinear_interpolation(x, y, points):
+    '''Interpolate (x,y) from values associated with four points.
+
+    The four points are a list of four triplets:  (x, y, value).
+    The four points can be in any order.  They should form a rectangle.
+
+        >>> bilinear_interpolation(12, 5.5,
+        ...                        [(10, 4, 100),
+        ...                         (20, 4, 200),
+        ...                         (10, 6, 150),
+        ...                         (20, 6, 300)])
+        165.0
+
+    '''
+    # See formula at:  http://en.wikipedia.org/wiki/Bilinear_interpolation
+    # Thanks to Raymond Hettinger on Stack overflow for this solution: https://stackoverflow.com/questions/8661537/how-to-perform-bilinear-interpolation-in-python
+
+    points = sorted(points)               # order points by x, then by y
+    (x1, y1, q11), (_x1, y2, q12), (x2, _y1, q21), (_x2, _y2, q22) = points
+
+    if x1 != _x1 or x2 != _x2 or y1 != _y1 or y2 != _y2:
+        raise ValueError('points do not form a rectangle')
+    if not x1 <= x <= x2 or not y1 <= y <= y2:
+        raise ValueError('(x, y) not within the rectangle')
+
+    return (q11 * (x2 - x) * (y2 - y) +
+            q21 * (x - x1) * (y2 - y) +
+            q12 * (x2 - x) * (y - y1) +
+            q22 * (x - x1) * (y - y1)
+           ) / ((x2 - x1) * (y2 - y1) + 0.0)
