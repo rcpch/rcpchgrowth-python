@@ -2,10 +2,11 @@
 # import pandas as pd
 import numpy as np
 import pandas as pd
+from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
 import os
 import math
-from rcpchgrowth.constants.reference_constants import UK_WHO
+from rcpchgrowth.constants.reference_constants import FEMALE, MALE, UK_WHO, WEIGHT
 
 from rcpchgrowth.global_functions import centile, measurement_from_sds, sds_for_centile, z_score
 
@@ -126,63 +127,133 @@ def create_pairs(measurements_array: list = []):
                 "last_decimal_age": last_decimal_age
             }
 
-def conditional_weight_gain(z1, z2, r):
-    """
-    Weight velocity of the individual child cannot be predicted without comparison against reference data velocity since weight velocity is age dependent. This uses a uses a correlation matrix to look up values against which
-    to compare the rate at which the child is gaining or losing weight.
-    The formula for conditional weight gain is: (z2 – r x z1) / √1-r^2
-    Conditional reference charts to assess weight gain in British infants, T J Cole, Archives of Disease in Childhood 1995; 73: 8-16f
-    """
-    conditional_weight_gain = (z2 - (z1 * r)) / math.sqrt(1 - pow(r, 2))
-    return conditional_weight_gain
-
 def find_nearest_index(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return idx
 
-def inverse_conditional_weight_gain(z1, r, Z):
+# centile creation
+
+def nine_centiles(sex: str):
+    t=[0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0,9.5, 10.0, 10.5, 11.0, 11.5, 12.0]
+    requested_sd_scores=[-2.67, -2.0, -1.33, -0.67, 0, 0.67, 1.33, 2.0, 2.67]
+    final_array=[]
+    for index, requested_sd_score in enumerate(requested_sd_scores):
+        return_ages_array=[]
+        return_m_array=[]
+        for index in range(len(t)-1):
+            m=measurement_from_sds(
+                reference=UK_WHO,
+                requested_sds=requested_sd_score,
+                measurement_method=WEIGHT,
+                sex=sex,
+                age=t[index]/12
+            )
+            return_m_array.append(m)
+            return_ages_array.append(t[index]/12)
+        final_array.append({
+            "ages": return_ages_array,
+            "observation_values": return_m_array
+        })
+    return final_array
+
+# conditional weight gain functions
+
+def conditional_weight_gain(z1, r, Z):
     """
-    This is the inverse function of conditional_weight_gain
+    Weight velocity of the individual child cannot be predicted without comparison against reference data velocity since weight velocity is age dependent. This uses a correlation matrix to look up values against which to compare the rate at which the child is gaining or losing weight.
+    The formula for conditional weight gain is: (z2 – r x z1) / √1-r^2
     Conditional reference charts to assess weight gain in British infants, T J Cole, Archives of Disease in Childhood 1995; 73: 8-16f
     """
-    return z1 * r + Z * math.sqrt(1 - r^2)
+    return z1 * r + Z * math.sqrt(1 - r**2)
 
-def create_thrive_line(t: list, z1: float, target_centile: float = 5.0):
+# create a single thrive line
+
+def create_thrive_line(t: list, z1: float, sex: str, target_centile: float = 5.0):
     # creates a single thrive line
     # accepts a list of ages against which the measurements are plotted
     # z1 refers to the starting SDS
     # target_centile refers to the velocity centile requested (defaults to 5th centile)
 
-    return_measurements=[]
-    return_ages=[]
     zv=sds_for_centile(target_centile)
-    for index in range(len(t)-1):
-        t1=t[index]
-        t2=t[index+1]
-        r=return_correlation(t1=t1, t2=t2)
-        z=conditional_weight_gain(z1=z1, z2=zv, r=r)
-        m=measurement_from_sds(UK_WHO, z, "weight", "male", t1/12)
-        return_measurements.append(m)
-        return_ages.append(t1/12)
-    return {
-        "ages": return_ages,
-        "measurements": return_measurements
-    }
+    observation_value=None
+    if z1 <= 2.67 and z1 >= -2.67:
+        observation_value=measurement_from_sds(
+                reference=UK_WHO,
+                requested_sds=z1,
+                sex=sex,
+                age=t[0]/12,
+                measurement_method=WEIGHT
+            )
+    return_observation_values=[observation_value]
+    cycle_sds=[z1]
+    return_ages=[t[0]]
     
+    for index in range(len(t)-1):
+        observation_value=None
+        z2=0.0
+        # loop through the list of ages which are ordered and evenly spaced a month apart
+        t1, t2=t[index], t[index+1]
+        # use the current and then next age in the list to look up the correlation r
+        r=return_correlation(t1=t1, t2=t2)
+        # calculate the expected z, based on requested velocity centile (zv) for the next age in the list using r
+        z2=conditional_weight_gain(cycle_sds[index], r, zv)
+        cycle_sds.append(z2)
+        
+        return_ages.append(t2/12)
+        # prune away any values that are outside the margins of the centile chart
+        if z2 <= 3 and z2 >= -3:
+            # convert z2 to a measurement and add to the list against t2 in years
+            observation_value = measurement_from_sds(
+                reference=UK_WHO,
+                requested_sds=z2,
+                sex=sex,
+                age=t2/12,
+                measurement_method=WEIGHT
+            )
+        return_observation_values.append(observation_value)
+        
+    return {
+        "zs": cycle_sds, 
+        "ages": return_ages, 
+        "observation_values": return_observation_values
+    }
 
-def create_thrive_lines(months_under_1: list, z_starts: list, centile_target: float):
+def create_thrive_lines(target_centile: float, sex: str):
     # Creates thrive lines for weights in the under 1s
     # Each thrive line requires a starting SDS and list of ages against 
     # which the lines are plotted.
     # The centile_target refers to the velocity centile cut off at which 
     # the line is drawn.
-    t=[1,2,3,4,5,6,7,8,9]
-    z=[0,0.33, 0.66, 1.0, 1.33, 1.66]
-    for index, item in enumerate(z):
-        val = create_thrive_line(t, item, centile_target)
-        plt.plot(val["ages"], val["measurements"])
-        plt.title('Correlation Matrix', fontsize=16)
+
+    # time_blocks = [0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1,1.125, 1.25, 1.375, 1.5, 1.625, 1.75, 1.875, 2,2.125, 2.25, 2.375, 2.5, 2.625, 2.75, 2.875, 3.0,3.125, 3.25, 3.375, 3.5, 3.625, 3.75, 3.875, 4,4.125, 4.25, 4.375, 4.5, 4.625, 4.75, 4.875, 5,5.125, 5.25, 5.375, 5.5, 5.625, 5.75, 5.875, 6.0, 6.125, 6.25, 6.375, 6.5, 6.625, 6.75, 6.875, 7, 7.125, 7.25,8, 8.125, 8.25, 8.375, 8.5, 8.625, 8.75, 8.875, 9.0, 9.125, 9.25, 9.375, 9.5, 9.625, 9.75, 9.875, 10, 10.125, 10.25, 10.375, 10.5, 10.625, 10.75, 10.875, 11.0]
+    time_blocks = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+    centile_lines=nine_centiles(sex=sex)
+    for index, centile_line in enumerate(centile_lines):
+        # these are the 9 centile lines
+        if index % 2 == 0:
+            plt.plot(centile_line["ages"], centile_line["observation_values"], linestyle='--', color="grey", linewidth=0.5)
+        else:
+            plt.plot(centile_line["ages"], centile_line["observation_values"], color="grey", linewidth=0.5)
+    z=-25
+    while z <= 25:
+        thrive_line = create_thrive_line(
+            t=time_blocks, 
+            z1=z,
+            sex=sex,
+            target_centile=target_centile)
+        z+=0.67
+
+        # zs = [i for i in thrive_line['zs'] if i is not None]
+        # observation_values = [j for j in thrive_line['observation_values'] if j is not None]
+        # ages = [k for k in thrive_line['ages'] if k is not None]
+        
+        if len(thrive_line['zs'])>3:
+            x, y = thrive_line["ages"], thrive_line["observation_values"]
+            # smoothed_measurements = UnivariateSpline(x,y) smoothed_measurements(x)
+            plt.plot(x, y, color="green", linestyle='--', dashes=(15,2.5), linewidth=1.0)
+    plt.title('Thrive Lines', fontsize=16)
     plt.show()
 
 def return_correlation(t1, t2):
