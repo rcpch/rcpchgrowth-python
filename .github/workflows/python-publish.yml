@@ -18,7 +18,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x'
+        python-version: '3.8.3'
 
     - name: Install dependencies
       run: |
@@ -36,14 +36,3 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine upload dist/*
-
-    - name: Initiate repository event in rcpch_server
-      env: 
-        TOKEN: ${{secrets.PAT_USERNAME}}:${{secrets.PAT_TOKEN}}
-      run: |
-        curl 
-          -X POST https://api.github.com/repos/rcpch/digital-growth-charts-server/dispatches \
-          -H "Accept: application/vnd.github.v3+json" \
-          -H "Content-Type: application/json" \
-          --header 'authorization: Bearer ${{ secrets.PAT_USERNAME }}:${{ secrets.PAT_TOKEN }}' \
-          --data '{"event_type":"publish_to_pypi"}'
