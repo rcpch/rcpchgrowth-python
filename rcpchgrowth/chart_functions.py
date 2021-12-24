@@ -24,6 +24,71 @@ def create_chart(reference: str, centile_format: Union[str, list] = COLE_TWO_THI
     else:
         print("No reference data returned. Is there a spelling mistake in your reference?")
 
+def generate_custom_sds_line(reference: str, measurement_method: str, sex: str, custom_sds: float):
+    # Public function that returns a custom SDS line
+    # the centile reference data
+    
+    ##
+    # iterate through the 4 references that make up UK-WHO
+    # There will be a list for each one. For the other references ther will be only one list
+    ##
+
+    # all data for a given reference are stored here: this is returned to the user
+    reference_data = []
+
+    custom_centile = centile(custom_sds)
+
+    if reference == UK_WHO:
+        for reference_index, reference in enumerate(UK_WHO_REFERENCES):
+            # the centile reference data
+            lms_array_for_measurement=select_reference_data_for_uk_who_chart(
+                uk_who_reference=reference, 
+                measurement_method=measurement_method, 
+                sex=sex)
+            centile_data=[]
+            try:
+                centile_data= build_centile_object(
+                    measurement_method=measurement_method,
+                    sex=sex,
+                    lms_array_for_measurement=lms_array_for_measurement,
+                    z=custom_sds,
+                    centile=custom_centile
+                )
+            except:
+                print("Could not generate centile data.")
+                centile_data=[]
+        # all data can now be tagged by reference_name and added to reference_data
+        reference_data.append({reference: centile_data})
+    else:
+        # get the reference data
+        lms_array_for_measurement=[]
+        try:
+            lms_array_for_measurement=select_reference_lms_data(
+                reference=reference,
+                measurement_method=measurement_method,
+                sex=sex
+            )
+        except:
+            print(f"It was not possible to retrieve {reference} data.")
+            lms_array_for_measurement=[]
+
+        try:
+            centile_data=[]
+            centile_data= build_centile_object(
+                    measurement_method=measurement_method,
+                    sex=sex,
+                    lms_array_for_measurement=lms_array_for_measurement,
+                    z=custom_sds,
+                    centile=custom_centile
+                )
+        except:
+            print("Could not generate sds data.")
+            centile_data=[]
+
+        reference_data.append({reference: centile_data})
+
+    return reference_data
+
 def generate_custom_centile(reference: str, measurement_method: str, sex: str, custom_centile: float)->list:
 
     # Public function that returns a custom centile line

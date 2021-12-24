@@ -131,9 +131,10 @@ def create_pairs(measurements_array: list = []):
 # centile creation
 
 def nine_centiles(sex: str):
-    t=[0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0,9.5, 10.0, 10.5, 11.0, 11.5, 12.0]
+    t=[centile * 0.5 for centile in range(24)]
     requested_sd_scores=[-2.67, -2.0, -1.33, -0.67, 0, 0.67, 1.33, 2.0, 2.67]
     final_array=[]
+    
     for index, requested_sd_score in enumerate(requested_sd_scores):
         return_ages_array=[]
         return_m_array=[]
@@ -184,17 +185,23 @@ def create_thrive_line(t: list, z1: float, sex: str, target_centile: float = 5.0
     return_observation_values=[observation_value]
     cycle_sds=[z1]
     return_ages=[t[0]]
+    z2=0.0
     
-    for index in range(len(t)-1):
+    for index in range(len(t)):
         observation_value=None
-        z2=0.0
         # loop through the list of ages which are ordered and evenly spaced a month apart
-        t1, t2=t[index], t[index+1]
         z_current = cycle_sds[index]
-        # use the current and then next age in the list to look up the correlation r
-        r=return_correlation(t1=t1, t2=t2, time_interval="months")
-        # calculate the expected z, based on requested velocity centile (zv) for the next age in the list using r
-        z2=conditional_weight_gain(cycle_sds[index], r, zv)
+
+        if index < len(t)-1:
+            t1, t2=t[index], t[index+1]
+            # use the current and then next age in the list to look up the correlation r
+            r=return_correlation(t1=t1, t2=t2, time_interval="months")
+            # calculate the expected z, based on requested velocity centile (zv) for the next age in the list using r
+            z2=conditional_weight_gain(z_current, r, zv)
+        else:
+            # this is the last item in the list
+            t2 = t1
+            z2=z_current
         
         # convert z2 to a measurement and add to the list against t2 in years
         observation_value = measurement_from_sds(
@@ -222,16 +229,13 @@ def create_thrive_lines(target_centile: float, sex: str):
     # The centile_target refers to the velocity centile cut off at which 
     # the line is drawn.
 
-    # time_blocks = [0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1,1.125, 1.25, 1.375, 1.5, 1.625, 1.75, 1.875, 2,2.125, 2.25, 2.375, 2.5, 2.625, 2.75, 2.875, 3.0,3.125, 3.25, 3.375, 3.5, 3.625, 3.75, 3.875, 4,4.125, 4.25, 4.375, 4.5, 4.625, 4.75, 4.875, 5,5.125, 5.25, 5.375, 5.5, 5.625, 5.75, 5.875, 6.0, 6.125, 6.25, 6.375, 6.5, 6.625, 6.75, 6.875, 7, 7.125, 7.25,8, 8.125, 8.25, 8.375, 8.5, 8.625, 8.75, 8.875, 9.0, 9.125, 9.25, 9.375, 9.5, 9.625, 9.75, 9.875, 10, 10.125, 10.25, 10.375, 10.5, 10.625, 10.75, 10.875, 11.0]
-    time_blocks = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    time_blocks = [i for i in range(12)]
 
     centile_lines=nine_centiles(sex=sex)
     for index, centile_line in enumerate(centile_lines):
         # these are the 9 centile lines
-        if index % 2 == 0:
-            plt.plot(centile_line["ages"], centile_line["observation_values"], linestyle='--', color="grey", linewidth=0.5)
-        else:
-            plt.plot(centile_line["ages"], centile_line["observation_values"], color="grey", linewidth=0.5)
+        plt.plot(centile_line["ages"], centile_line["observation_values"], linestyle='--' if index % 2==0 else '-' , color="grey", linewidth=0.5)
+        
     z=-25
     while z <= 25:
         thrive_line = create_thrive_line(
@@ -246,40 +250,47 @@ def create_thrive_lines(target_centile: float, sex: str):
         counter=0
         while counter < len(thrive_line['zs'])-1:
             if (thrive_line['zs'][counter] >= 2.667 and thrive_line['zs'][counter+1] < 2.667):
-                interpolated_age=float(linear_interpolation(2.667, thrive_line['zs'][counter+1], thrive_line['zs'][counter], thrive_line['ages'][counter+1], thrive_line['ages'][counter]))
-                interpolated_measurement = measurement_from_sds(
-                    reference=UK_WHO,
-                    requested_sds=2.667,
-                    measurement_method=WEIGHT,
-                    sex=sex,
-                    age=interpolated_age
-                )
-                measurements.append(interpolated_measurement)
-                ages.append(interpolated_age)
+                try:
+                    interpolated_age=float(linear_interpolation(2.667, thrive_line['zs'][counter+1], thrive_line['zs'][counter], thrive_line['ages'][counter+1], thrive_line['ages'][counter]))
+                    interpolated_measurement = measurement_from_sds(
+                        reference=UK_WHO,
+                        requested_sds=2.667,
+                        measurement_method=WEIGHT,
+                        sex=sex,
+                        age=interpolated_age
+                    )
+                    measurements.append(interpolated_measurement)
+                    ages.append(interpolated_age)
+                except Exception:
+                    print("exception")
+                    pass
             elif (thrive_line['zs'][counter] >= -2.667 and thrive_line['zs'][counter+1] < -2.667):
-                interpolated_age=float(linear_interpolation(-2.667, thrive_line['zs'][counter+1], thrive_line['zs'][counter], thrive_line['ages'][counter+1], thrive_line['ages'][counter]))
-                interpolated_measurement = measurement_from_sds(
-                    reference=UK_WHO,
-                    requested_sds=-2.667,
-                    measurement_method=WEIGHT,
-                    sex=sex,
-                    age=interpolated_age
-                )
-                measurements.append(interpolated_measurement)
-                ages.append(interpolated_age)
+                try:
+                    interpolated_age=float(linear_interpolation(-2.667, thrive_line['zs'][counter+1], thrive_line['zs'][counter], thrive_line['ages'][counter+1], thrive_line['ages'][counter]))
+                    interpolated_measurement = measurement_from_sds(
+                        reference=UK_WHO,
+                        requested_sds=-2.667,
+                        measurement_method=WEIGHT,
+                        sex=sex,
+                        age=interpolated_age
+                    )
+                    measurements.append(interpolated_measurement)
+                    ages.append(interpolated_age)
+                except Exception:
+                    print("another exception")
+                    pass
             elif thrive_line['zs'][counter] > -2.667 and thrive_line['zs'][counter] < 2.667:
                 measurements.append(thrive_line['observation_values'][counter])
                 ages.append(thrive_line['ages'][counter])
             counter += 1
         
-        # if len(thrive_line['zs'])>3:
-        x, y = ages, measurements
-        # smoothed_measurements = UnivariateSpline(x,y) smoothed_measurements(x)
+    #     x, y = ages, measurements
+    #     # smoothed_measurements = UnivariateSpline(x,y) smoothed_measurements(x)
+    #     if len(x) > 0 and len(y) > 0:
+    #         plt.plot(x, y, color="green", linestyle='--', dashes=(15,2.5), linewidth=1.0)
         
-        plt.plot(x, y, color="green", linestyle='--', dashes=(15,2.5), linewidth=1.0)
-        
-    plt.title('Thrive Lines', fontsize=16)
-    plt.show()
+    # plt.title('Thrive Lines', fontsize=16)
+    # plt.show()
 
 def return_correlation(t1, t2, time_interval: Literal["weeks", "months"]):
     # import the reference - the index of each row and column 
