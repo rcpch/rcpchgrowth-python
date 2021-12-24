@@ -361,17 +361,17 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union
     # If no parameter is passed, default is the Cole method
     # Alternatively it is possible to pass a custom list of values - if the is_sds flag is False (default) these are centiles
 
-    centile_collection = []
+    centile_sds_collection = []
     cole_method = False
 
     if (type(centile_format) is list):
-        centile_collection = centile_format
+        centile_sds_collection = centile_format
     elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
-        centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
+        centile_sds_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
         cole_method = True
         is_sds=False
     else:
-        centile_collection = THREE_PERCENT_CENTILE_COLLECTION
+        centile_sds_collection = THREE_PERCENT_CENTILE_COLLECTION
         is_sds=False
     ##
     # iterate through the 4 references that make up UK-WHO
@@ -402,19 +402,21 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union
         except:
             lms_array_for_measurement = []
 
-        for centile_index, centile in enumerate(centile_collection):
+        for centile_index, centile_sds in enumerate(centile_sds_collection):
             # we must create a z for each requested centile
             # if the Cole 9 centiles were selected, these are rounded,
             # so conversion to SDS is different
             # Otherwise standard conversation of centile to z is used
             if cole_method:
-                z = rounded_sds_for_centile(centile)
+                z = rounded_sds_for_centile(centile_sds)
+                centile_value=centile_sds
             else:
                 if (is_sds):
-                    z=centile
+                    z=centile_sds
+                    centile_value=centile(centile_sds)
                 else:
-                    z = sds_for_centile(centile)
-
+                    z = sds_for_centile(centile_sds)
+                    centile_value=centile_sds
             centile_data = []
 
             try:
@@ -423,18 +425,19 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union
                 # If this happens, an empty list is returned.
                 centile_data = generate_centile(
                     z=z,
-                    centile=centile,
+                    centile=centile_value,
                     measurement_method=measurement_method,
                     sex=sex,
                     lms_array_for_measurement=lms_array_for_measurement,
-                    reference=UK_WHO
+                    reference=UK_WHO,
+                    is_sds=is_sds
                 )
             except:
                 centile_data=None
             # Store this centile for a given measurement
             
             centiles.append({"sds": round(z * 100) / 100,
-                        "centile": centile, "data": centile_data})
+                        "centile": centile_value, "data": centile_data})
 
         # this is the end of the centile_collection for loop
         # All the centiles for this measurement, sex and reference are added to the measurements list
@@ -481,17 +484,17 @@ def create_turner_chart(centile_format: Union[str, list], is_sds=False):
     # Cole method selection is stored in the cole_method flag.
     # If no parameter is passed, default is the Cole method
 
-    centile_collection = []
+    centile_sds_collection = []
     cole_method = False
 
     if (type(centile_format) is list):
-        centile_collection = centile_format
+        centile_sds_collection = centile_format
     elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
-        centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
+        centile_sds_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
         cole_method = True
         is_sds=False
     else:
-        centile_collection = THREE_PERCENT_CENTILE_COLLECTION
+        centile_sds_collection = THREE_PERCENT_CENTILE_COLLECTION
         is_sds=False
 
     # all data for a the reference are stored here: this is returned to the user
@@ -513,19 +516,21 @@ def create_turner_chart(centile_format: Union[str, list], is_sds=False):
 
     centiles = []  # all generated centiles for a selected centile collection are stored here
 
-    for centile_index, centile in enumerate(centile_collection):
+    for centile_index, centile_sds in enumerate(centile_sds_collection):
         # we must create a z for each requested centile
         # if the Cole 9 centiles were selected, these are rounded,
         # so conversion to SDS is different
         # Otherwise standard conversation of centile to z is used
         if cole_method:
-            z = rounded_sds_for_centile(centile)
+            z = rounded_sds_for_centile(centile_sds)
+            centile_value=centile_sds
         else:
             if is_sds:
-                z = centile
+                z = centile_sds
+                centile_value = centile(centile_sds)
             else:
-                z = sds_for_centile(centile)
-
+                z = sds_for_centile(centile_sds)
+                centile_value=centile_sds
         # Collect the LMS values from the correct reference
         lms_array_for_measurement = select_reference_data_for_turner(
             measurement_method=HEIGHT, sex=sex)
@@ -533,12 +538,17 @@ def create_turner_chart(centile_format: Union[str, list], is_sds=False):
         # Some data does not exist at all ages, so any error reflects missing data.
         # If this happens, an empty list is returned.
         try:
-            centile_data = generate_centile(z=z, centile=centile, measurement_method=HEIGHT,
-                                            sex=sex, lms_array_for_measurement=lms_array_for_measurement, reference=TURNERS)
+            centile_data = generate_centile(
+                z=z, 
+                centile=centile_value, 
+                measurement_method=HEIGHT,
+                sex=sex, 
+                lms_array_for_measurement=lms_array_for_measurement, reference=TURNERS,
+                is_sds=is_sds)
 
             # Store this centile for a given measurement
             centiles.append({"sds": round(z * 100) / 100,
-                            "centile": centile, "data": centile_data})
+                            "centile": centile_value, "data": centile_data})
         except Exception as e:
             print(e)
 
@@ -580,17 +590,17 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: U
     # Cole method selection is stored in the cole_method flag.
     # If no parameter is passed, default is the Cole method
 
-    centile_collection = []
+    centile_sds_collection = []
     cole_method = False
 
     if (type(centile_format) is list):
-        centile_collection = centile_format
+        centile_sds_collection = centile_format
     elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
-        centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
+        centile_sds_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
         cole_method = True
         is_sds=False
     else:
-        centile_collection = THREE_PERCENT_CENTILE_COLLECTION
+        centile_sds_collection = THREE_PERCENT_CENTILE_COLLECTION
         is_sds=False
 
     # all data for a the reference are stored here: this is returned to the user
@@ -608,19 +618,21 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: U
 
     centiles = []  # all generated centiles for a selected centile collection are stored here
 
-    for centile_index, centile in enumerate(centile_collection):
+    for centile_index, centile_sds in enumerate(centile_sds_collection):
         # we must create a z for each requested centile
         # if the Cole 9 centiles were selected, these are rounded,
         # so conversion to SDS is different
         # Otherwise standard conversation of centile to z is used
         if cole_method:
-            z = rounded_sds_for_centile(centile)
+            z = rounded_sds_for_centile(centile_sds)
+            centile_value=centile_sds
         else:
             if is_sds:
-                z = centile
+                z = centile_sds
+                centile_value=centile(z)
             else:
-                z = sds_for_centile(centile)
-
+                z = sds_for_centile(centile_sds)
+                centile_value=centile_sds
         # Collect the LMS values from the correct reference
         lms_array_for_measurement = select_reference_data_for_trisomy_21(
             measurement_method=measurement_method, sex=sex)
@@ -628,12 +640,18 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: U
         # Some data does not exist at all ages, so any error reflects missing data.
         # If this happens, an empty list is returned.
         try:    
-            centile_data = generate_centile(z=z, centile=centile, measurement_method=measurement_method,
-                                            sex=sex, lms_array_for_measurement=lms_array_for_measurement, reference=TRISOMY_21)
+            centile_data = generate_centile(
+                z=z, 
+                centile=centile_value, 
+                measurement_method=measurement_method,
+                sex=sex, 
+                lms_array_for_measurement=lms_array_for_measurement, 
+                reference=TRISOMY_21,
+                is_sds=is_sds)
 
             # Store this centile for a given measurement
             centiles.append({"sds": round(z * 100) / 100,
-                            "centile": centile, "data": centile_data})
+                            "centile": centile_value, "data": centile_data})
         except Exception as e:
             print(e)
 

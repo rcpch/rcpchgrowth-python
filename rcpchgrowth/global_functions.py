@@ -92,7 +92,7 @@ def percentage_median_bmi(reference: str, age: float, actual_bmi: float, sex: st
     percent_median_bmi = (actual_bmi / m) * 100.0
     return percent_median_bmi
 
-def generate_centile(z: float, centile: float, measurement_method: str, sex: str, lms_array_for_measurement: list, reference: str) -> list:
+def generate_centile(z: float, centile: float, measurement_method: str, sex: str, lms_array_for_measurement: list, reference: str, is_sds: bool=False) -> list:
     """
     Generates a centile curve for a given reference. 
     Takes the z-score equivalent of the centile, the centile to be used as a label, the sex and measurement method.
@@ -100,6 +100,11 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
 
     min_age = lms_array_for_measurement[0]["decimal_age"]
     max_age = lms_array_for_measurement[-1]["decimal_age"]
+
+    # if this is an sds line, the label reflects the sds value. The default is to reflect the centile
+    label_value = centile
+    if is_sds:
+        label_value=round(z, 3)
 
     centile_measurements = []
     age = min_age
@@ -118,7 +123,7 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
         else:
             rounded = None
         value = {
-            "l": centile,
+            "l": label_value,
             "x": round(age, 4),
             "y": rounded
         }
