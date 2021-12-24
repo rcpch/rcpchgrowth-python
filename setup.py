@@ -27,7 +27,6 @@ setup(
     packages=find_packages(),  
     python_requires='>=3.5, <3.9',
     install_requires=[
-        'numpy',
         'python-dateutil',
         "scipy",
         'six',
