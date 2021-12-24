@@ -1,7 +1,6 @@
 attrs==20.3.0
 bump2version==1.0.1
 iniconfig==1.1.1
-numpy==1.20.2
 packaging==20.9
 pandas==1.2.4
 pluggy==0.13.1
@@ -12,3 +11,4 @@ python-dateutil==2.8.1
 scipy==1.6.2
 six==1.15.0
 toml==0.10.2
+matplotlib
