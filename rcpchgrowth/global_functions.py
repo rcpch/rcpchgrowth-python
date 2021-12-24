@@ -38,7 +38,7 @@ def measurement_from_sds(
         observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
         return observation_value
     except Exception as e:
-        print(e) 
+        print(f"hello {e} + z: {requested_sds}, l: {l} m:{m} s:{s}") 
         return None
 
 def sds_for_measurement(
@@ -276,7 +276,8 @@ def measurement_for_z(z: float, l: float, m: float, s: float) -> float:
     Returns a measurement for a z score, L, M and S
     """
     if l != 0.0:
-        measurement_value = math.pow((1 + l * s * z), 1 / l) * m
+        # measurement_value = math.pow((1 + l * s * z), 1 / l) * m
+        measurement_value = ((1 + l * s * z) ** (1 / l)) * m
     else:
         measurement_value = math.exp(s * z) * m
     return measurement_value
@@ -287,7 +288,8 @@ def z_score(l: float, m: float, s: float, observation: float):
     """
     sds = 0.0
     if l != 0.0:
-        sds = (((math.pow((observation / m), l)) - 1) / (l * s))
+        # sds = (((math.pow((observation / m), l)) - 1) / (l * s))
+        sds = (((observation / m) ** l) - 1) / (l*s)
     else:
         sds = (math.log(observation / m) / s)
     return sds
