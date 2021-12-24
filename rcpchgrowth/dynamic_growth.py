@@ -4,8 +4,8 @@ from typing import Literal
 import os
 import math
 
-from scipy.interpolate import UnivariateSpline
-import matplotlib.pyplot as plt
+# from scipy.interpolate import UnivariateSpline
+# import matplotlib.pyplot as plt
 
 # rcpchgrowth local imports
 from rcpchgrowth.constants.reference_constants import FEMALE, MALE, UK_WHO, WEIGHT

@@ -8,7 +8,7 @@ py==1.10.0
 pyparsing==2.4.7
 pytest==6.2.3
 python-dateutil==2.8.1
-scipy==1.6.2
+scipy
 six==1.15.0
 toml==0.10.2
 matplotlib
