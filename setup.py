@@ -25,11 +25,10 @@ setup(
     keywords='growth charts anthropometry SDS Centile',  
     
     packages=find_packages(),  
-    python_requires='>=3.5, <4',
+    python_requires='>=3.5, <3.9',
     install_requires=[
         'numpy',
         'python-dateutil',
-        'pandas',
         "scipy",
         'six',
         'pytest',
