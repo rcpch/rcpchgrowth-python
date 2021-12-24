@@ -10,17 +10,17 @@ Public chart functions
 """
 
 
-def create_chart(reference: str, centile_format: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES, measurement_method: str = HEIGHT, sex: str = FEMALE):
+def create_chart(reference: str, centile_format: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES, measurement_method: str = HEIGHT, sex: str = FEMALE, is_sds=False):
     """
     Global method - return chart for measurement_method, sex and reference
     """
     
     if reference == UK_WHO:
-        return create_uk_who_chart(measurement_method=measurement_method, sex=sex, centile_format=centile_format)
+        return create_uk_who_chart(measurement_method=measurement_method, sex=sex, centile_format=centile_format, is_sds=is_sds)
     elif reference == TURNERS:
-        return create_turner_chart(centile_format=centile_format)
+        return create_turner_chart(centile_format=centile_format, is_sds=is_sds)
     elif reference == TRISOMY_21:
-        return create_trisomy_21_chart(measurement_method=measurement_method, sex=sex, centile_format=centile_format)
+        return create_trisomy_21_chart(measurement_method=measurement_method, sex=sex, centile_format=centile_format, is_sds=is_sds)
     else:
         print("No reference data returned. Is there a spelling mistake in your reference?")
 
@@ -352,14 +352,14 @@ def build_centile_object(measurement_method: str, sex: str, lms_array_for_measur
     return sex_list
 
 
-def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES):
+def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES, is_sds = False):
 
     # user selects which centile collection they want, for sex and measurement_method
     # If the Cole method is selected, conversion between centile and SDS
     # is different as SDS is rounded to the nearest 2/3
     # Cole method selection is stored in the cole_method flag.
     # If no parameter is passed, default is the Cole method
-    # Alternatively it is possible to pass a custom list of values
+    # Alternatively it is possible to pass a custom list of values - if the is_sds flag is False (default) these are centiles
 
     centile_collection = []
     cole_method = False
@@ -369,9 +369,10 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union
     elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
         centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
         cole_method = True
+        is_sds=False
     else:
         centile_collection = THREE_PERCENT_CENTILE_COLLECTION
-
+        is_sds=False
     ##
     # iterate through the 4 references that make up UK-WHO
     # There will be a list for each one
@@ -379,8 +380,6 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union
 
     # all data for a given reference are stored here: this is returned to the user
     reference_data = []
-
-    
 
     for reference_index, reference in enumerate(UK_WHO_REFERENCES):
         sex_list: dict = {}  # all the data for a given sex are stored here
@@ -411,7 +410,10 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union
             if cole_method:
                 z = rounded_sds_for_centile(centile)
             else:
-                z = sds_for_centile(centile)
+                if (is_sds):
+                    z=centile
+                else:
+                    z = sds_for_centile(centile)
 
             centile_data = []
 
@@ -472,7 +474,7 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union
     """
 
 
-def create_turner_chart(centile_format: Union[str, list]):
+def create_turner_chart(centile_format: Union[str, list], is_sds=False):
    # user selects which centile collection they want
     # If the Cole method is selected, conversion between centile and SDS
     # is different as SDS is rounded to the nearest 2/3
@@ -487,8 +489,10 @@ def create_turner_chart(centile_format: Union[str, list]):
     elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
         centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
         cole_method = True
+        is_sds=False
     else:
         centile_collection = THREE_PERCENT_CENTILE_COLLECTION
+        is_sds=False
 
     # all data for a the reference are stored here: this is returned to the user
     reference_data = {}
@@ -517,7 +521,10 @@ def create_turner_chart(centile_format: Union[str, list]):
         if cole_method:
             z = rounded_sds_for_centile(centile)
         else:
-            z = sds_for_centile(centile)
+            if is_sds:
+                z = centile
+            else:
+                z = sds_for_centile(centile)
 
         # Collect the LMS values from the correct reference
         lms_array_for_measurement = select_reference_data_for_turner(
@@ -566,7 +573,7 @@ def create_turner_chart(centile_format: Union[str, list]):
     """
 
 
-def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: Union[str, list]):
+def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: Union[str, list], is_sds=False):
    # user selects which centile collection they want
     # If the Cole method is selected, conversion between centile and SDS
     # is different as SDS is rounded to the nearest 2/3
@@ -581,8 +588,10 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: U
     elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
         centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
         cole_method = True
+        is_sds=False
     else:
         centile_collection = THREE_PERCENT_CENTILE_COLLECTION
+        is_sds=False
 
     # all data for a the reference are stored here: this is returned to the user
     reference_data = {}
@@ -607,7 +616,10 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: U
         if cole_method:
             z = rounded_sds_for_centile(centile)
         else:
-            z = sds_for_centile(centile)
+            if is_sds:
+                z = centile
+            else:
+                z = sds_for_centile(centile)
 
         # Collect the LMS values from the correct reference
         lms_array_for_measurement = select_reference_data_for_trisomy_21(
