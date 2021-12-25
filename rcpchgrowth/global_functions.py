@@ -38,7 +38,7 @@ def measurement_from_sds(
         observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
         return observation_value
     except Exception as e:
-        print(f"hello {e} + z: {requested_sds}, l: {l} m:{m} s:{s}") 
+        print(e) 
         return None
 
 def sds_for_measurement(
@@ -104,7 +104,7 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
     # if this is an sds line, the label reflects the sds value. The default is to reflect the centile
     label_value = centile
     if is_sds:
-        label_value=round(z, 3)
+        label_value=round(z, 3)        
 
     centile_measurements = []
     age = min_age
@@ -119,7 +119,11 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
 
         # creates a data point
         if measurement is not None:
-            rounded = round(measurement, 4)
+            try:
+                rounded = round(measurement, 4)
+            except Exception as err:
+                # cannot round a complex number: set that as zero
+                rounded = None
         else:
             rounded = None
         value = {

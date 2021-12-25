@@ -650,10 +650,10 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: U
                 is_sds=is_sds)
 
             # Store this centile for a given measurement
-            centiles.append({"sds": round(z * 100) / 100,
+            centiles.append({"sds": round(z, 2),
                             "centile": centile_value, "data": centile_data})
         except Exception as e:
-            print(e)
+            print(f"{e}")
 
     # this is the end of the centile_collection for loop
     # All the centiles for this measurement, sex and reference are added to the measurements list
