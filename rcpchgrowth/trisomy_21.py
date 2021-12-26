@@ -69,7 +69,7 @@ def trisomy_21_lms_array_for_measurement_and_sex(
     if data_invalid:
         raise LookupError(data_error)
     else:
-         return TRISOMY_21_DATA["measurement"][measurement_method][sex]
+        return TRISOMY_21_DATA["measurement"][measurement_method][sex]
 
 def select_reference_data_for_trisomy_21(measurement_method:str, sex:str):
     try:

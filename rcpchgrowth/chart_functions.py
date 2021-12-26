@@ -407,16 +407,20 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union
             # if the Cole 9 centiles were selected, these are rounded,
             # so conversion to SDS is different
             # Otherwise standard conversation of centile to z is used
+
+            z=0.0 #initialise
+            centile_value=0.0 #initialise
+
             if cole_method:
-                z = rounded_sds_for_centile(centile_sds)
-                centile_value=centile_sds
+                z = rounded_sds_for_centile(centile_sds) # a centile was provided, so convert to z
+                centile_value=centile_sds # store the original centile value 
             else:
                 if (is_sds):
-                    z=centile_sds
-                    centile_value=centile(centile_sds)
+                    z=centile_sds # an sds was supplied
+                    centile_value=centile(centile_sds) # convert the z to a centile and store
                 else:
-                    z = sds_for_centile(centile_sds)
-                    centile_value=centile_sds
+                    z = sds_for_centile(centile_sds) # a centile was provided, so convert to z
+                    centile_value=centile_sds # store the original centile value 
             centile_data = []
 
             try:
@@ -433,6 +437,7 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union
                     is_sds=is_sds
                 )
             except:
+                print(f"Not possible to generate centile data for UK-WHO {measurement_method} in {sex}s.")
                 centile_data=None
             # Store this centile for a given measurement
             

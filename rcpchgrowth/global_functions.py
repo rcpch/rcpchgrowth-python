@@ -36,10 +36,10 @@ def measurement_from_sds(
     observation_value = None
     try:
         observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
-        return observation_value
     except Exception as e:
         print(e) 
         return None
+    return observation_value
 
 def sds_for_measurement(
     reference: str,
@@ -98,32 +98,34 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
     Takes the z-score equivalent of the centile, the centile to be used as a label, the sex and measurement method.
     """
 
+    if (len(lms_array_for_measurement)==0):
+        raise Exception(f"No reference data available for {measurement_method} in {sex} in {reference}")
+    
     min_age = lms_array_for_measurement[0]["decimal_age"]
     max_age = lms_array_for_measurement[-1]["decimal_age"]
 
     # if this is an sds line, the label reflects the sds value. The default is to reflect the centile
     label_value = centile
     if is_sds:
-        label_value=round(z, 3)        
+        label_value=round(z, 3)
 
     centile_measurements = []
     age = min_age
     while age <= max_age:
+        measurement=0.0 #initialise
         # loop through the reference in steps of 0.1y
         try:
             measurement = measurement_from_sds(
                 reference=reference, measurement_method=measurement_method, requested_sds=z, sex=sex, age=age)
         except Exception as err:
-            print(err)
-            measurement = None
+            print(f"Measurement Calculation Error: {err}")
 
         # creates a data point
         if measurement is not None:
             try:
-                rounded = round(measurement, 4)
-            except Exception as err:
-                # cannot round a complex number: set that as zero
-                rounded = None
+                rounded = round(measurement*10000)/10000
+            except Exception as e:
+                print(f"{e} z:{z} age:{age} measurement: {measurement}")
         else:
             rounded = None
         value = {
@@ -278,10 +280,22 @@ def linear_interpolation(age: float, age_one_below: float, age_one_above: float,
 def measurement_for_z(z: float, l: float, m: float, s: float) -> float:
     """
     Returns a measurement for a z score, L, M and S
+    x = M (1 + L S z)^(1/L)
+    Note, in some circumstances, 1 + l * s * z will be negative, and 
+    it will not be possible to calculate a power.
+    In these circumstances, None is returned
     """
+    measurement_value=0.0
     if l != 0.0:
-        # measurement_value = math.pow((1 + l * s * z), 1 / l) * m
-        measurement_value = ((1 + l * s * z) ** (1 / l)) * m
+        first_step= (1 + l * s * z)
+        exponent= 1 / l
+        if first_step < 0:
+            return None
+        try:
+            measurement_value= (first_step ** (1/exponent)) * m
+        except Exception as e:
+            print(e)
+            return
     else:
         measurement_value = math.exp(s * z) * m
     return measurement_value
@@ -292,7 +306,6 @@ def z_score(l: float, m: float, s: float, observation: float):
     """
     sds = 0.0
     if l != 0.0:
-        # sds = (((math.pow((observation / m), l)) - 1) / (l * s))
         sds = (((observation / m) ** l) - 1) / (l*s)
     else:
         sds = (math.log(observation / m) / s)
