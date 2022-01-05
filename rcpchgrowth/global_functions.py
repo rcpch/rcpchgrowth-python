@@ -98,8 +98,6 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
     Takes the z-score equivalent of the centile, the centile to be used as a label, the sex and measurement method.
     """
 
-    print(f"hello: {z}")
-
     if (len(lms_array_for_measurement)==0):
         raise Exception(f"No reference data available for {measurement_method} in {sex} in {reference}")
     
@@ -114,14 +112,13 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
     centile_measurements = []
     age = min_age
     while age <= max_age:
-        measurement=0.0 #initialise
+        
         # loop through the reference in steps of 0.1y
         try:
             measurement = measurement_from_sds(
                 reference=reference, measurement_method=measurement_method, requested_sds=z, sex=sex, age=age)
         except Exception as err:
-            print(f"Measurement Calculation Error: {err}")
-            return
+            print(err)
 
         # creates a data point
         if measurement is not None:
