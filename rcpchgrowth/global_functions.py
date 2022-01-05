@@ -98,6 +98,8 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
     Takes the z-score equivalent of the centile, the centile to be used as a label, the sex and measurement method.
     """
 
+    print(f"hello: {z}")
+
     if (len(lms_array_for_measurement)==0):
         raise Exception(f"No reference data available for {measurement_method} in {sex} in {reference}")
     
@@ -119,13 +121,15 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
                 reference=reference, measurement_method=measurement_method, requested_sds=z, sex=sex, age=age)
         except Exception as err:
             print(f"Measurement Calculation Error: {err}")
+            return
 
         # creates a data point
         if measurement is not None:
             try:
-                rounded = round(measurement*10000)/10000
+                rounded = round(measurement, 4)
             except Exception as e:
                 print(f"{e} z:{z} age:{age} measurement: {measurement}")
+                return
         else:
             rounded = None
         value = {
@@ -292,7 +296,7 @@ def measurement_for_z(z: float, l: float, m: float, s: float) -> float:
         if first_step < 0:
             return None
         try:
-            measurement_value= (first_step ** (1/exponent)) * m
+            measurement_value= (first_step ** exponent) * m
         except Exception as e:
             print(e)
             return
