@@ -17,6 +17,12 @@
 		},
 		{
 			"path": "../../../rcpchgrowth-python-cli"
+		},
+		{
+			"path": "../../../meta"
+		},
+		{
+			"path": "../../../digital-growth-charts-react-client-node-server"
 		}
 	],
 	"settings": {}

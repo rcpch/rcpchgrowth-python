@@ -22,7 +22,10 @@ def measurement_from_sds(
 
     try:
         lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, age=age, measurement_method=measurement_method, sex=sex)
+            reference=reference, 
+            age=age, 
+            measurement_method=measurement_method, 
+            sex=sex)
     except LookupError as err:
         raise LookupError(err)
 
@@ -111,33 +114,25 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
 
     centile_measurements = []
     age = min_age
-    while age <= max_age:
-        
+
+    while age < max_age:
         # loop through the reference in steps of 0.1y
+
         try:
             measurement = measurement_from_sds(
                 reference=reference, measurement_method=measurement_method, requested_sds=z, sex=sex, age=age)
         except Exception as err:
             print(err)
 
-        # creates a data point
-        if measurement is not None:
-            try:
-                rounded = round(measurement, 4)
-            except Exception as e:
-                print(f"{e} z:{z} age:{age} measurement: {measurement}")
-                return
-        else:
-            rounded = None
-        value = {
-            "l": label_value,
-            "x": round(age, 4),
-            "y": rounded
-        }
+        value = create_data_point(
+            age=age,
+            measurement=measurement,
+            label_value=label_value
+        )
 
         centile_measurements.append(value)
 
-        # weekly intervals until 2 y, then monthly
+        # weekly intervals until 4 y, then monthly
         if age <= 2:
             age += (7 / 365.25)  # weekly intervals
         else:
@@ -147,6 +142,22 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
         # even after minifying, which are not practical. Weekly values makes plotting easier.
         # Here we have used weekly points from preterm to 2 y, monthly values after.
         # age += (7/365.25) # weekly intervals
+    
+    # add the final value in the data set so the lines overlap cleanly
+    try:
+        measurement = measurement_from_sds(
+            reference=reference, measurement_method=measurement_method, requested_sds=z, sex=sex, age=max_age)
+    except Exception as err:
+        print(err)
+    
+    value = create_data_point(
+            age=max_age,
+            measurement=measurement,
+            label_value=label_value
+        )
+
+    centile_measurements.append(value)
+
     return centile_measurements
 
 def mid_parental_height(
@@ -200,6 +211,23 @@ def centile(z_score: float):
 Private Functions
 These are essential to the public functions but are not needed outside this file
 """
+
+def create_data_point(age: float, measurement: float, label_value: str):
+    # creates a data point
+    if measurement is not None:
+        try:
+            rounded = round(measurement, 4)
+        except Exception as e:
+            print(f"{e} z:{z} age:{age} measurement: {measurement}")
+            return
+    else:
+        rounded = None
+    value = {
+        "l": label_value,
+        "x": round(age, 4),
+        "y": rounded
+    }
+    return value
 
 """
 ***** INTERPOLATION FUNCTIONS *****
@@ -404,7 +432,10 @@ def lms_value_array_for_measurement_for_reference(
     if reference == UK_WHO:
         try:
             lms_value_array_for_measurement = uk_who_lms_array_for_measurement_and_sex(
-                age=age, measurement_method=measurement_method, sex=sex)
+                age=age, 
+                measurement_method=measurement_method, 
+                sex=sex
+            )
         except LookupError as error:
             raise LookupError(error)
     elif reference == TURNERS:

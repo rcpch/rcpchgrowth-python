@@ -123,10 +123,10 @@ def uk_who_reference(
         # Children beyond 2 weeks but below 2 years are measured lying down using WHO data
         return WHO_INFANTS_DATA
 
-    elif age < WHO_CHILDREN_UPPER_THRESHOLD:
-        # Children 2 years and beyond but below 4 years are measured standing up using WHO data
+    elif age <= WHO_CHILDREN_UPPER_THRESHOLD:
+        # Children 2 years and beyond but below 4 years are measured standing up using WHO data        
         return WHO_CHILD_DATA
-
+        
     elif age <= UK90_UPPER_THRESHOLD:
         # All children 4 years and above are measured using UK90 child data
         return UK90_CHILD_DATA
@@ -145,7 +145,8 @@ def uk_who_lms_array_for_measurement_and_sex(
 
     try:
         selected_reference = uk_who_reference(
-            age=age)
+            age=age
+        )
     except:  #  there is no reference for the age supplied
         return LookupError("There is no UK-WHO reference for the age supplied.")
 
@@ -162,7 +163,10 @@ def uk_who_lms_array_for_measurement_and_sex(
         return selected_reference["measurement"][measurement_method][sex]
 
 
-def select_reference_data_for_uk_who_chart(uk_who_reference: str, measurement_method: str, sex: str):
+def select_reference_data_for_uk_who_chart(
+    uk_who_reference: str, 
+    measurement_method: str, 
+    sex: str):
 
     # takes a uk_who_reference name (see parameter constants), measurement_method and sex to return
     # reference data
@@ -172,7 +176,8 @@ def select_reference_data_for_uk_who_chart(uk_who_reference: str, measurement_me
             uk90_preterm_reference = uk_who_lms_array_for_measurement_and_sex(
                 age=-0.01,
                 measurement_method=measurement_method,
-                sex=sex)
+                sex=sex,
+            )
         except:
             uk90_preterm_reference = []
         return uk90_preterm_reference
@@ -181,7 +186,8 @@ def select_reference_data_for_uk_who_chart(uk_who_reference: str, measurement_me
             uk_who_infants_reference = uk_who_lms_array_for_measurement_and_sex(
                 age=0.04,
                 measurement_method=measurement_method,
-                sex=sex)
+                sex=sex,
+            )
         except:
             uk_who_infants_reference = []
         return uk_who_infants_reference
@@ -190,7 +196,8 @@ def select_reference_data_for_uk_who_chart(uk_who_reference: str, measurement_me
             uk_who_children_reference = uk_who_lms_array_for_measurement_and_sex(
                 age=2.0,
                 measurement_method=measurement_method,
-                sex=sex)
+                sex=sex,
+            )
         except:
             uk_who_children_reference = []
         return uk_who_children_reference
@@ -199,7 +206,8 @@ def select_reference_data_for_uk_who_chart(uk_who_reference: str, measurement_me
             uk90_children_reference = uk_who_lms_array_for_measurement_and_sex(
                 age=4.0,
                 measurement_method=measurement_method,
-                sex=sex)
+                sex=sex,
+            )
         except:
             uk90_children_reference = []
         return uk90_children_reference
