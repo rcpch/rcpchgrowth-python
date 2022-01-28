@@ -123,7 +123,7 @@ def uk_who_reference(
         # Children beyond 2 weeks but below 2 years are measured lying down using WHO data
         return WHO_INFANTS_DATA
 
-    elif age <= WHO_CHILDREN_UPPER_THRESHOLD:
+    elif age < WHO_CHILDREN_UPPER_THRESHOLD:
         # Children 2 years and beyond but below 4 years are measured standing up using WHO data        
         return WHO_CHILD_DATA
         
