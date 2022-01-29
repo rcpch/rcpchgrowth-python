@@ -122,16 +122,23 @@ def uk_who_reference(
 
     elif age < WHO_CHILD_LOWER_THRESHOLD:
         # Children beyond 2 weeks but below 2 years are measured lying down using WHO data
+        if age == FORTY_TWO_WEEKS_GESTATION and default_youngest_reference:
+            # If default_youngest_reference is True, the younger reference is used to calculate values
+            # This is specifically for the overlap between WHO 2006 lying and standing in centile curve generation
+            return UK90_PRETERM_DATA
         return WHO_INFANTS_DATA
 
     elif age < WHO_CHILDREN_UPPER_THRESHOLD:
-        # Children 2 years and beyond but below 4 years are measured standing up using WHO data        
+        # Children 2 years and beyond but below 4 years are measured standing up using WHO data
+        if age == 2.0 and default_youngest_reference:
+            # If default_youngest_reference is True, the younger reference is used to calculate values
+            # This is specifically for the overlap between WHO 2006 lying and standing in centile curve generation
+            return WHO_INFANTS_DATA     
         return WHO_CHILD_DATA
         
     elif age <= UK90_UPPER_THRESHOLD:
         # All children 4 years and above are measured using UK90 child data
         if age == 4.0 and default_youngest_reference:
-            print(f"age {age} selected")
             # If default_youngest_reference is True, the younger reference is used to calculate values
             # This is specifically for the overlap between WHO 2006 and UK90 in centile curve generation
             return WHO_CHILD_DATA
