@@ -17,7 +17,8 @@ def measurement_from_sds(
     requested_sds: float,
     measurement_method: str,
     sex: str,
-    age: float
+    age: float,
+    default_youngest_reference: bool = False
 ) -> float:
 
     try:
@@ -25,7 +26,9 @@ def measurement_from_sds(
             reference=reference, 
             age=age, 
             measurement_method=measurement_method, 
-            sex=sex)
+            sex=sex,
+            default_youngest_reference=default_youngest_reference
+        )
     except LookupError as err:
         raise LookupError(err)
 
@@ -54,7 +57,12 @@ def sds_for_measurement(
 
     try:
         lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, age=age, measurement_method=measurement_method, sex=sex)
+            reference=reference, 
+            age=age, 
+            measurement_method=measurement_method, 
+            sex=sex,
+            default_youngest_reference=False # The oldest child reference should always be selected for SDS calculation
+        )
     except LookupError as err:
         raise LookupError(err)
 
@@ -67,7 +75,11 @@ def sds_for_measurement(
 
     return z_score(l=l, m=m, s=s, observation=observation_value)
 
-def percentage_median_bmi(reference: str, age: float, actual_bmi: float, sex: str) -> float:
+def percentage_median_bmi(
+        reference: str, 
+        age: float, 
+        actual_bmi: float, 
+        sex: str) -> float:
     """
     public method
     This returns a child"s BMI expressed as a percentage of the median value for age and sex.
@@ -78,7 +90,10 @@ def percentage_median_bmi(reference: str, age: float, actual_bmi: float, sex: st
     # fetch the LMS values for the requested measurement
     try:
         lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, measurement_method=BMI, sex=sex, age=age)
+            reference=reference, 
+            measurement_method=BMI, sex=sex, 
+            age=age,
+            default_youngest_reference=False) # The oldest reference should always be chosen for this calculation
     except LookupError as err:
         raise LookupError(err)
 
@@ -95,7 +110,14 @@ def percentage_median_bmi(reference: str, age: float, actual_bmi: float, sex: st
     percent_median_bmi = (actual_bmi / m) * 100.0
     return percent_median_bmi
 
-def generate_centile(z: float, centile: float, measurement_method: str, sex: str, lms_array_for_measurement: list, reference: str, is_sds: bool=False) -> list:
+def generate_centile(
+        z: float, 
+        centile: float, 
+        measurement_method: str, 
+        sex: str, 
+        lms_array_for_measurement: list, 
+        reference: str, 
+        is_sds: bool=False) -> list:
     """
     Generates a centile curve for a given reference. 
     Takes the z-score equivalent of the centile, the centile to be used as a label, the sex and measurement method.
@@ -120,7 +142,13 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
 
         try:
             measurement = measurement_from_sds(
-                reference=reference, measurement_method=measurement_method, requested_sds=z, sex=sex, age=age)
+                reference=reference, 
+                measurement_method=measurement_method, 
+                requested_sds=z, 
+                sex=sex, 
+                age=age,
+                default_youngest_reference=False
+            )
         except Exception as err:
             print(err)
 
@@ -146,7 +174,13 @@ def generate_centile(z: float, centile: float, measurement_method: str, sex: str
     # add the final value in the data set so the lines overlap cleanly
     try:
         measurement = measurement_from_sds(
-            reference=reference, measurement_method=measurement_method, requested_sds=z, sex=sex, age=max_age)
+            reference=reference, 
+            measurement_method=measurement_method, 
+            requested_sds=z, 
+            sex=sex, 
+            age=max_age,
+            default_youngest_reference=True
+        )
     except Exception as err:
         print(err)
     
@@ -422,11 +456,14 @@ def lms_value_array_for_measurement_for_reference(
     reference: str,
     age: float,
     measurement_method: str,
-    sex: str
+    sex: str,
+    default_youngest_reference: bool = False
 ) -> list:
     """
     This is a private function which returns the LMS array for measurement_method and sex and reference
     It accepts the reference ('uk-who', 'turners-syndrome' or 'trisomy-21')
+    If the UK-WHO reference is requested, it is possible to be select the younger reference for overlap values,
+    using the default_youngest_reference flag.
     """
 
     if reference == UK_WHO:
@@ -434,7 +471,8 @@ def lms_value_array_for_measurement_for_reference(
             lms_value_array_for_measurement = uk_who_lms_array_for_measurement_and_sex(
                 age=age, 
                 measurement_method=measurement_method, 
-                sex=sex
+                sex=sex,
+                default_youngest_reference=default_youngest_reference
             )
         except LookupError as error:
             raise LookupError(error)

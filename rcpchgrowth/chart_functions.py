@@ -10,21 +10,40 @@ Public chart functions
 """
 
 
-def create_chart(reference: str, centile_format: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES, measurement_method: str = HEIGHT, sex: str = FEMALE, is_sds=False):
+def create_chart(
+    reference: str, 
+    centile_format: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES, 
+    measurement_method: str = HEIGHT, 
+    sex: str = FEMALE, 
+    is_sds=False):
     """
     Global method - return chart for measurement_method, sex and reference
     """
     
     if reference == UK_WHO:
-        return create_uk_who_chart(measurement_method=measurement_method, sex=sex, centile_format=centile_format, is_sds=is_sds)
+        return create_uk_who_chart(
+            measurement_method=measurement_method, 
+            sex=sex, 
+            centile_format=centile_format, 
+            is_sds=is_sds)
     elif reference == TURNERS:
-        return create_turner_chart(centile_format=centile_format, is_sds=is_sds)
+        return create_turner_chart(
+            centile_format=centile_format, 
+            is_sds=is_sds)
     elif reference == TRISOMY_21:
-        return create_trisomy_21_chart(measurement_method=measurement_method, sex=sex, centile_format=centile_format, is_sds=is_sds)
+        return create_trisomy_21_chart(
+            measurement_method=measurement_method, 
+            sex=sex, 
+            centile_format=centile_format, 
+            is_sds=is_sds)
     else:
         print("No reference data returned. Is there a spelling mistake in your reference?")
 
-def generate_custom_sds_line(reference: str, measurement_method: str, sex: str, custom_sds: float):
+def generate_custom_sds_line(
+    reference: str, 
+    measurement_method: str, 
+    sex: str, 
+    custom_sds: float):
     # Public function that returns a custom SDS line
     # the centile reference data
     
@@ -42,7 +61,7 @@ def generate_custom_sds_line(reference: str, measurement_method: str, sex: str, 
         for reference_index, reference in enumerate(UK_WHO_REFERENCES):
             # the centile reference data
             lms_array_for_measurement=select_reference_data_for_uk_who_chart(
-                uk_who_reference=reference, 
+                uk_who_reference_name=reference, 
                 measurement_method=measurement_method, 
                 sex=sex)
             centile_data=[]
@@ -88,175 +107,6 @@ def generate_custom_sds_line(reference: str, measurement_method: str, sex: str, 
         reference_data.append({reference: centile_data})
 
     return reference_data
-
-def generate_custom_centile(reference: str, measurement_method: str, sex: str, custom_centile: float)->list:
-
-    # Public function that returns a custom centile line
-    # the centile reference data
-    
-    ##
-    # iterate through the 4 references that make up UK-WHO
-    # There will be a list for each one. For the other references ther will be only one list
-    ##
-
-    # all data for a given reference are stored here: this is returned to the user
-    reference_data = []
-
-    z = sds_for_centile(custom_centile)
-
-    if reference == UK_WHO:
-        for reference_index, reference in enumerate(UK_WHO_REFERENCES):
-            # the centile reference data
-            lms_array_for_measurement=select_reference_data_for_uk_who_chart(
-                uk_who_reference=reference, 
-                measurement_method=measurement_method, 
-                sex=sex)
-            centile_data=[]
-            try:
-                centile_data= build_centile_object(
-                    measurement_method=measurement_method,
-                    sex=sex,
-                    lms_array_for_measurement=lms_array_for_measurement,
-                    z=z,
-                    centile=custom_centile
-                )
-            except:
-                print("Could not generate centile data.")
-                centile_data=[]
-        # all data can now be tagged by reference_name and added to reference_data
-        reference_data.append({reference: centile_data})
-    else:
-        # get the reference data
-        lms_array_for_measurement=[]
-        try:
-            lms_array_for_measurement=select_reference_lms_data(
-                reference=reference,
-                measurement_method=measurement_method,
-                sex=sex
-            )
-        except:
-            print(f"It was not possible to retrieve {reference} data.")
-            lms_array_for_measurement=[]
-
-        try:
-            centile_data=[]
-            centile_data= build_centile_object(
-                    measurement_method=measurement_method,
-                    sex=sex,
-                    lms_array_for_measurement=lms_array_for_measurement,
-                    z=z,
-                    centile=custom_centile
-                )
-        except:
-            print("Could not generate centile data.")
-            centile_data=[]
-
-        reference_data.append({reference: centile_data})
-
-    return reference_data
-
-
-def create_plottable_child_data(child_results_array):
-    """
-    DEPRECATED
-    Global method - receives a measurement object and returns the data in plottable format - the ages as x, the measurements
-    as y and the centile values as l (label)
-    """
-
-    centile_data = []
-    sds_data = []
-
-    for count, child_result in enumerate(child_results_array):
-        if(child_result):
-            # create 4 plottable return objects for each measurement: one for each corrected and chronological age
-            # per measurement and per SDS score
-            # These measurement pairs and SDS pairs are stored in a 2 2-value arrays, so that each measurement/SDS
-            # can be plotted as a series in the charts.
-            # If there are multiple values to plot, the return array will be a string of arrays of paired values,
-            # which allows them to be plotted as pairs: this is because corrected and chronological values should be
-            # linked by a line, the chronological value denotes as a dot, the corrected value as a cross.
-
-            chronological_data_point = {
-                "measurement_method": child_result["child_observation_value"]["measurement_method"],
-                "x": child_result["measurement_dates"]["chronological_decimal_age"],
-                "y": child_result["child_observation_value"]["observation_value"],
-                "observation_value_error": child_result["child_observation_value"]["observation_value_error"],
-                "centile_band": child_result["measurement_calculated_values"]["chronological_centile_band"],
-                "centile_value": child_result["measurement_calculated_values"]["chronological_centile"],
-                "sds": child_result["measurement_calculated_values"]["chronological_sds"],
-                "measurement_error": child_result["measurement_calculated_values"]["chronological_measurement_error"],
-                "age_error": child_result["measurement_dates"]["chronological_decimal_age_error"],
-                "age_type": "chronological_age",
-                "calendar_age": child_result["measurement_dates"]["chronological_calendar_age"],
-                "corrected_gestation_weeks": child_result["measurement_dates"]["corrected_gestational_age"]["corrected_gestation_weeks"],
-                "corrected_gestation_days": child_result["measurement_dates"]["corrected_gestational_age"]["corrected_gestation_days"],
-                "lay_chronological_decimal_age_comment": child_result["measurement_dates"]["comments"]["lay_chronological_decimal_age_comment"],
-                "clinician_chronological_decimal_age_comment": child_result["measurement_dates"]["comments"]["clinician_chronological_decimal_age_comment"]
-            }
-            corrected_data_point = {
-                "measurement_method": child_result["child_observation_value"]["measurement_method"],
-                "x": child_result["measurement_dates"]["corrected_decimal_age"],
-                "y": child_result["child_observation_value"]["observation_value"],
-                "observation_value_error": child_result["child_observation_value"]["observation_value_error"],
-                "centile_band": child_result["measurement_calculated_values"]["corrected_centile_band"],
-                "centile_value": child_result["measurement_calculated_values"]["corrected_centile"],
-                "sds": child_result["measurement_calculated_values"]["corrected_sds"],
-                "measurement_error": child_result["measurement_calculated_values"]["corrected_measurement_error"],
-                "age_error": child_result["measurement_dates"]["corrected_decimal_age_error"],
-                "age_type": "corrected_age",
-                "calendar_age": child_result["measurement_dates"]["corrected_calendar_age"],
-                "corrected_gestation_weeks": child_result["measurement_dates"]["corrected_gestational_age"]["corrected_gestation_weeks"],
-                "corrected_gestation_days": child_result["measurement_dates"]["corrected_gestational_age"]["corrected_gestation_days"],
-                "lay_corrected_decimal_age_comment": child_result["measurement_dates"]["comments"]["lay_corrected_decimal_age_comment"],
-                "clinician_corrected_decimal_age_comment": child_result["measurement_dates"]["comments"]["clinician_corrected_decimal_age_comment"],
-            }
-            chronological_sds_data_point = {
-                "measurement_method": child_result["child_observation_value"]["measurement_method"],
-                "x": child_result["measurement_dates"]["chronological_decimal_age"],
-                "y": child_result["measurement_calculated_values"]["chronological_sds"],
-                "observation_value_error": child_result["child_observation_value"]["observation_value_error"],
-                "sds": child_result["measurement_calculated_values"]["chronological_sds"],
-                "measurement_error": child_result["measurement_calculated_values"]["chronological_measurement_error"],
-                "age_error": child_result["measurement_dates"]["chronological_decimal_age_error"],
-                "age_type": "chronological_age",
-                "calendar_age": child_result["measurement_dates"]["chronological_calendar_age"],
-                "corrected_gestation_weeks": child_result["measurement_dates"]["corrected_gestational_age"]["corrected_gestation_weeks"],
-                "corrected_gestation_days": child_result["measurement_dates"]["corrected_gestational_age"]["corrected_gestation_days"],
-                "lay_chronological_decimal_age_comment": child_result["measurement_dates"]["comments"]["lay_chronological_decimal_age_comment"],
-                "clinician_chronological_decimal_age_comment": child_result["measurement_dates"]["comments"]["clinician_chronological_decimal_age_comment"]
-            }
-
-            corrected_sds_data_point = {
-                "measurement_method": child_result["child_observation_value"]["measurement_method"],
-                "x": child_result["measurement_dates"]["corrected_decimal_age"],
-                "y": child_result["measurement_calculated_values"]["corrected_sds"],
-                "observation_value_error": child_result["child_observation_value"]["observation_value_error"],
-                "sds": child_result["measurement_calculated_values"]["corrected_sds"],
-                "measurement_error": child_result["measurement_calculated_values"]["corrected_measurement_error"],
-                "age_error": child_result["measurement_dates"]["corrected_decimal_age_error"],
-                "age_type": "corrected_age",
-                "calendar_age": child_result["measurement_dates"]["corrected_calendar_age"],
-                "corrected_gestation_weeks": child_result["measurement_dates"]["corrected_gestational_age"]["corrected_gestation_weeks"],
-                "corrected_gestation_days": child_result["measurement_dates"]["corrected_gestational_age"]["corrected_gestation_days"],
-                "lay_corrected_decimal_age_comment": child_result["measurement_dates"]["comments"]["lay_corrected_decimal_age_comment"],
-                "clinician_corrected_decimal_age_comment": child_result["measurement_dates"]["comments"]["clinician_corrected_decimal_age_comment"],
-            }
-
-            measurement_data_points = [
-                corrected_data_point, chronological_data_point]
-            measurement_sds_data_points = [
-                corrected_sds_data_point, chronological_sds_data_point]
-
-            centile_data.append(measurement_data_points)
-            sds_data.append(measurement_sds_data_points)
-
-    result = {
-        "measurement_method": child_result["child_observation_value"]["measurement_method"],
-        "centile_data": centile_data,
-        "sds_data": sds_data
-    }
-
-    return result
 
     """
     Return object structure
@@ -352,7 +202,12 @@ def build_centile_object(measurement_method: str, sex: str, lms_array_for_measur
     return sex_list
 
 
-def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES, is_sds = False):
+def create_uk_who_chart(
+        measurement_method: str, 
+        sex: str, 
+        centile_format: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES, 
+        is_sds = False
+    ):
 
     # user selects which centile collection they want, for sex and measurement_method
     # If the Cole method is selected, conversion between centile and SDS
@@ -398,7 +253,9 @@ def create_uk_who_chart(measurement_method: str, sex: str, centile_format: Union
         # the centile reference data
         try:
             lms_array_for_measurement=select_reference_data_for_uk_who_chart(
-        uk_who_reference=reference, measurement_method=measurement_method, sex=sex)
+                uk_who_reference_name=reference, 
+                measurement_method=measurement_method, 
+                sex=sex)
         except:
             lms_array_for_measurement = []
 

@@ -100,7 +100,8 @@ def reference_data_absent(
 
 
 def uk_who_reference(
-    age: float
+    age: float,
+    default_youngest_reference: bool = False
 ) -> json:
     """
     The purpose of this function is to choose the correct reference for calculation.
@@ -129,6 +130,11 @@ def uk_who_reference(
         
     elif age <= UK90_UPPER_THRESHOLD:
         # All children 4 years and above are measured using UK90 child data
+        if age == 4.0 and default_youngest_reference:
+            print(f"age {age} selected")
+            # If default_youngest_reference is True, the younger reference is used to calculate values
+            # This is specifically for the overlap between WHO 2006 and UK90 in centile curve generation
+            return WHO_CHILD_DATA
         return UK90_CHILD_DATA
 
     else:
@@ -138,14 +144,16 @@ def uk_who_reference(
 def uk_who_lms_array_for_measurement_and_sex(
     age: float,
     measurement_method: str,
-    sex: str
+    sex: str,
+    default_youngest_reference: bool = False
 ) -> list:
 
     # selects the correct lms data array from the patchwork of references that make up UK-WHO
 
     try:
         selected_reference = uk_who_reference(
-            age=age
+            age=age,
+            default_youngest_reference=default_youngest_reference
         )
     except:  #  there is no reference for the age supplied
         return LookupError("There is no UK-WHO reference for the age supplied.")
@@ -164,53 +172,57 @@ def uk_who_lms_array_for_measurement_and_sex(
 
 
 def select_reference_data_for_uk_who_chart(
-    uk_who_reference: str, 
+    uk_who_reference_name: str, 
     measurement_method: str, 
     sex: str):
 
     # takes a uk_who_reference name (see parameter constants), measurement_method and sex to return
     # reference data
 
-    if uk_who_reference == UK90_PRETERM:
+    if uk_who_reference_name == UK90_PRETERM:
         try:
             uk90_preterm_reference = uk_who_lms_array_for_measurement_and_sex(
                 age=-0.01,
                 measurement_method=measurement_method,
                 sex=sex,
+                default_youngest_reference=False # should never need younger reference in this calculation
             )
         except:
             uk90_preterm_reference = []
         return uk90_preterm_reference
-    elif uk_who_reference == UK_WHO_INFANT:
+    elif uk_who_reference_name == UK_WHO_INFANT:
         try:
             uk_who_infants_reference = uk_who_lms_array_for_measurement_and_sex(
                 age=0.04,
                 measurement_method=measurement_method,
                 sex=sex,
+                default_youngest_reference=False # should never need younger reference in this calculation
             )
         except:
             uk_who_infants_reference = []
         return uk_who_infants_reference
-    elif uk_who_reference == UK_WHO_CHILD:
+    elif uk_who_reference_name == UK_WHO_CHILD:
         try:
             uk_who_children_reference = uk_who_lms_array_for_measurement_and_sex(
                 age=2.0,
                 measurement_method=measurement_method,
                 sex=sex,
+                default_youngest_reference=False # should never need younger reference in this calculation
             )
         except:
             uk_who_children_reference = []
         return uk_who_children_reference
-    elif uk_who_reference == UK90_CHILD:
+    elif uk_who_reference_name == UK90_CHILD:
         try:
             uk90_children_reference = uk_who_lms_array_for_measurement_and_sex(
                 age=4.0,
                 measurement_method=measurement_method,
                 sex=sex,
+                default_youngest_reference=False # should never need younger reference in this calculation
             )
         except:
             uk90_children_reference = []
         return uk90_children_reference
     else:
         raise LookupError(
-            f"No data found for {measurement_method} in {sex}s in {uk_who_reference}")
+            f"No data found for {measurement_method} in {sex}s in {uk_who_reference_name}")
