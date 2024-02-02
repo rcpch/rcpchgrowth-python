@@ -1,0 +1,29 @@
+# DEPENDENCIES COMMON TO ALL ENVIRONMENTS
+
+# unclear if these are actually needed
+# attrs
+# iniconfig
+# matplotlib
+# packaging
+# py
+# pyparsing
+# python-dateutil
+# toml
+
+# the below are definitely called as imports within the code
+scipy
+
+# DEVELOPMENT-ONLY DEPENDENCIES
+
+# testing
+pytest
+
+# code linting and formatting
+autopep8
+black
+
+# for bumping the version
+bump2version
+
+
+

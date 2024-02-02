@@ -1,13 +1,2 @@
-attrs
-bump2version
-iniconfig
-matplotlib
-packaging
-pluggy
-py
-pyparsing
-pytest
-python-dateutil
-scipy
-six
-toml
+# delegates to requirements/live-requirements.txt
+-r requirements/development-requirements.txt
