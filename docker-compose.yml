@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  rcpchgrowth-python:
+    build: .
+    volumes:
+      - .:/app
+    command:
