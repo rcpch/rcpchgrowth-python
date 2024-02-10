@@ -8,7 +8,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='rcpchgrowth',
-    version='version='3.2.0'',
+    version="version='3.2.1'",
     description='SDS and Centile calculations for UK Growth Data',
     long_description="https://github.com/rcpch/digital-growth-charts/blob/master/README.md",
     url='https://github.com/rcpch/digital-growth-charts/blob/master/README.md',
@@ -18,7 +18,7 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Scientific/Engineering :: Medical Science Apps.'
     ],
