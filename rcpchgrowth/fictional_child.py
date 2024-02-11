@@ -1,5 +1,5 @@
 # core imports
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 import random
 import math
 
@@ -47,7 +47,7 @@ def generate_fictional_child_data(
   The development of growth references and growth charts, T J Cole, Ann Hum Biol. 2012 Sep; 39(5): 382–394.
   Wikipedia: https://en.wikipedia.org/wiki/Philippe_Gu%C3%A9neau_de_Montbeillard
   """
-  birth_date = datetime(1759, 4, 11)  # YYYY m d
+  birth_date = date(1759, 4, 11)  # YYYY m d
   observation_date = birth_date + timedelta(days=start_chronological_age*365.25)
   
   # set the counters
