@@ -19,11 +19,6 @@ def comment_prematurity_correction(
         clinician_corrected_decimal_age_comment = "Correction for gestational age has been made."
         lay_chronological_decimal_age_comment = "This is your child's age without taking into account their gestation at birth."
         clinician_chronological_decimal_age_comment = "No correction has been made for gestational age."
-        if gestation_weeks < 23:
-            lay_corrected_decimal_age_comment = "Your child has been born below the threshold of the charts."
-            clinician_corrected_decimal_age_comment = "Your child has been born below the threshold of the charts."
-            lay_chronological_decimal_age_comment = "Your child has been born below the threshold of the charts."
-            clinician_chronological_decimal_age_comment = "Your child has been born below the threshold of the charts."
     else:
         #some error
         lay_corrected_decimal_age_comment = "It has not been possible to calculate age this time."
