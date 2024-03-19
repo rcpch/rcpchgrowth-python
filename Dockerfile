@@ -1,12 +1,7 @@
-FROM ubuntu:22.04
+FROM python:3.12-bookworm
 
-RUN apt-get update && apt-get install -y \
-    python3.11 \
-    python3.11-dev \
-    python3-pip
+COPY requirements.txt .
 
-COPY requirements/development-requirements.txt .
-
-RUN pip install -r development-requirements.txt
+RUN pip install -r requirements.txt
 
 COPY . .
