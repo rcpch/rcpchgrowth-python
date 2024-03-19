@@ -1,2 +1,6 @@
-# delegates to requirements/live-requirements.txt
--r requirements/development-requirements.txt
+bump2version
+pytest
+python-dateutil
+scipy
+matplotlib
+setuptools
