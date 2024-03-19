@@ -6,4 +6,7 @@ services:
     build: .
     volumes:
       - .:/app
-    command:
+    tty: true  # Allocate a pseudo-TTY
+    stdin_open: true  # Keep stdin open
+    command: |
+      cd app; pytest
