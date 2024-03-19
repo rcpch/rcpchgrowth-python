@@ -1,5 +1,6 @@
 import json
-import pkg_resources
+from importlib import resources
+from pathlib import Path
 from .constants import *
 # from .global_functions import z_score, cubic_interpolation, linear_interpolation, centile, measurement_for_z, nearest_lowest_index, fetch_lms
 # import timeit #see below, comment back in if timing functions in this module
@@ -18,10 +19,13 @@ lms: L, M or S
 reference: reference data
 """
 
-#load the reference data
+# load the reference data
+data_directory = resources.files("rcpchgrowth.data_tables")
 
-TRISOMY_21_DATA = pkg_resources.resource_filename(__name__, "/data_tables/trisomy_21.json")
-with open(TRISOMY_21_DATA) as json_file:
+
+
+data_path = Path(data_directory, "trisomy_21.json")
+with open(data_path) as json_file:
             TRISOMY_21_DATA = json.load(json_file)
             json_file.close()
 

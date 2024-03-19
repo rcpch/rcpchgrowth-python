@@ -553,14 +553,14 @@ class Measurement:
             if corrected_centile_value > 99 or corrected_centile_value < 1:
                 corrected_centile_value = round(corrected_centile_value, 1)
             else:
-                corrected_centile_value = int(corrected_centile_value)
+                corrected_centile_value = round(corrected_centile_value, 1)
 
         if chronological_centile_value:
             if chronological_centile_value > 99 or chronological_centile_value < 1:
                 chronological_centile_value = round(
                     chronological_centile_value, 1)
             else:
-                chronological_centile_value = int(chronological_centile_value)
+                chronological_centile_value = round(chronological_centile_value, 1)
 
         measurement_calculated_values = {
             "corrected_sds": corrected_sds_value,
