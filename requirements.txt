@@ -1,13 +1,6 @@
-attrs
 bump2version
-iniconfig
-packaging
-pluggy
-py
-pyparsing
 pytest
 python-dateutil
 scipy
-toml
 matplotlib
 setuptools

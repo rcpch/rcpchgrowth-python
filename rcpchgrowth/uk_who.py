@@ -4,7 +4,8 @@ Handles UK-WHO-specific reference data selection
 
 # standard imports
 import json
-import pkg_resources
+from importlib import resources
+from pathlib import Path
 
 # rcpch imports
 from .constants import *
@@ -24,34 +25,35 @@ reference: reference data
 """
 
 # load the reference data
+data_directory = resources.files("rcpchgrowth.data_tables")
 
-UK90_PRETERM_DATA = pkg_resources.resource_filename(
-    __name__, "/data_tables/uk90_preterm.json")  # 23 - 42 weeks gestation
-with open(UK90_PRETERM_DATA) as json_file:
+data_path = Path(
+    data_directory, "uk90_preterm.json")  # 23 - 42 weeks gestation
+with open(data_path) as json_file:
     UK90_PRETERM_DATA = json.load(json_file)
     json_file.close()
 
-UK90_TERM_DATA = pkg_resources.resource_filename(
-    __name__, "/data_tables/uk90_term.json")  # 37-42 weeks gestation
-with open(UK90_TERM_DATA) as json_file:
+data_path = Path(
+    data_directory, "uk90_term.json")  # 37-42 weeks gestation
+with open(data_path) as json_file:
     UK90_TERM_DATA = json.load(json_file)
     json_file.close()
 
-WHO_INFANTS_DATA = pkg_resources.resource_filename(
-    __name__, "/data_tables/who_infants.json")  # 2 weeks to 2 years
-with open(WHO_INFANTS_DATA) as json_file:
+data_path = Path(
+    data_directory, "who_infants.json")  # 2 weeks to 2 years
+with open(data_path) as json_file:
     WHO_INFANTS_DATA = json.load(json_file)
     json_file.close()
 
-WHO_CHILD_DATA = pkg_resources.resource_filename(
-    __name__, "/data_tables/who_children.json")  # 2 years to 4 years
-with open(WHO_CHILD_DATA) as json_file:
+data_path = Path(
+    data_directory, "who_children.json")  # 2 years to 4 years
+with open(data_path) as json_file:
     WHO_CHILD_DATA = json.load(json_file)
     json_file.close()
 
-UK90_CHILD_DATA = pkg_resources.resource_filename(
-    __name__, "/data_tables/uk90_child.json")  # 4 years to 20 years
-with open(UK90_CHILD_DATA) as json_file:
+data_path = Path(
+    data_directory, "uk90_child.json")  # 4 years to 20 years
+with open(data_path) as json_file:
     UK90_CHILD_DATA = json.load(json_file)
     json_file.close()
 

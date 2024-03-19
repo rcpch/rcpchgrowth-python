@@ -1,5 +1,6 @@
 import json
-import pkg_resources
+from importlib import resources
+from pathlib import Path
 from .constants import *
 # import timeit #see below, comment back in if timing functions in this module
 
@@ -17,10 +18,11 @@ lms: L, M or S
 reference: reference data
 """
 
-#load the reference data
+# load the reference data
+data_directory = resources.files("rcpchgrowth.data_tables")
 
-TURNER_DATA = pkg_resources.resource_filename(__name__, "/data_tables/turner.json")
-with open(TURNER_DATA) as json_file:
+data_path = Path(data_directory, "turner.json")
+with open(data_path) as json_file:
             TURNER_DATA = json.load(json_file)
             json_file.close()
 
