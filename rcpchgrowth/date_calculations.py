@@ -103,7 +103,7 @@ def chronological_calendar_age(birth_date: date, observation_date: date) -> str:
     elif len(date_string) == 1:
         return date_string[0]
     elif birth_date == observation_date:
-        return "Birth date is today."
+        return "Birth date"
     else:
         return ""
 
