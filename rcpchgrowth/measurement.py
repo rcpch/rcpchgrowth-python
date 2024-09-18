@@ -1,6 +1,5 @@
 # standard imports
 from datetime import date
-from pprint import pprint
 
 # rcpch imports
 from .centile_bands import centile_band_for_centile

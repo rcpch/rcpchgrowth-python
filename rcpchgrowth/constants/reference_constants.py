@@ -16,6 +16,10 @@ UK_WHO_CHILD = "uk_who_child"
 UK90_CHILD = "uk90_child"
 UK_WHO_REFERENCES = [UK90_PRETERM, UK_WHO_INFANT, UK_WHO_CHILD, UK90_CHILD]
 
+CDC = "cdc"
+FENTON = "fenton"
+CDC_REFERENCES = [FENTON, UK_WHO_INFANT, CDC]
+
 # 23 weeks is the lowest decimal age available on the UK90 charts
 UK90_REFERENCE_LOWER_THRESHOLD = (
     (23 * 7) - (40 * 7)
@@ -41,6 +45,9 @@ UK90_UPPER_THRESHOLD = 20
 WHO_NEWBORN_LOWER_THRESHOLD = 0.0
 CDC_LOWER_THRESHOLD = 2.0
 CDC_UPPER_THRESHOLD = 20.0
+
+FENTON_LOWER_THRESHOLD = ((22 * 7) - (40 * 7)) / 365.25  # 22 weeks as decimal age
+FENTON_UPPER_THRESHOLD = ((50 * 7) - (40 * 7)) / 365.25  # 50 weeks as decimal age
 
 
 # Generic constants
