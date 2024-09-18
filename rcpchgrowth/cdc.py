@@ -122,14 +122,14 @@ def cdc_lms_array_for_measurement_and_sex(
 
 
 def select_reference_data_for_cdc_chart(
-    cdc_reference_name: str,
     measurement_method: str,
-    sex: str):
+    sex: str,
+    fenton_data: bool = False):
 
     # takes a uk_who_reference name (see parameter constants), measurement_method and sex to return
     # reference data
 
-    if cdc_reference_name == FENTON:
+    if fenton_data:
         try:
             fenton_preterm_reference = cdc_lms_array_for_measurement_and_sex(
                 age=-0.01,
@@ -140,7 +140,7 @@ def select_reference_data_for_cdc_chart(
         except:
             cdc_preterm_reference = []
         return cdc_preterm_reference
-    elif cdc_reference_name == CDC:
+    else:
         try:
             cdc_children_reference = cdc_lms_array_for_measurement_and_sex(
                 age=0.04,
@@ -151,5 +151,3 @@ def select_reference_data_for_cdc_chart(
         except:
             cdc_children_reference = []
         return cdc_children_reference
-    else:
-        raise LookupError(f"No data found for {measurement_method} in {sex}s in {cdc_reference_name}")

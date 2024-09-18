@@ -2,8 +2,9 @@ from typing import Union
 from .global_functions import centile, lms_value_array_for_measurement_for_reference, sds_for_centile, rounded_sds_for_centile, generate_centile
 from .uk_who import select_reference_data_for_uk_who_chart
 from .trisomy_21 import select_reference_data_for_trisomy_21
+from .cdc import select_reference_data_for_cdc_chart
 from .turner import select_reference_data_for_turner
-from .constants.reference_constants import FEMALE, HEIGHT, UK_WHO, TURNERS, TRISOMY_21, COLE_TWO_THIRDS_SDS_NINE_CENTILES, COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION, THREE_PERCENT_CENTILE_COLLECTION, UK_WHO_REFERENCES
+from .constants.reference_constants import FEMALE, HEIGHT, UK_WHO, TURNERS, TRISOMY_21, COLE_TWO_THIRDS_SDS_NINE_CENTILES, COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION, THREE_PERCENT_CENTILE_COLLECTION, UK_WHO_REFERENCES, CDC
 
 """
 Public chart functions
@@ -32,6 +33,12 @@ def create_chart(
             is_sds=is_sds)
     elif reference == TRISOMY_21:
         return create_trisomy_21_chart(
+            measurement_method=measurement_method, 
+            sex=sex, 
+            centile_format=centile_format, 
+            is_sds=is_sds)
+    elif reference == CDC:
+        return create_cdc_chart(
             measurement_method=measurement_method, 
             sex=sex, 
             centile_format=centile_format, 
@@ -159,6 +166,8 @@ def select_reference_lms_data(reference: str, measurement_method: str, sex: str)
         lms_array_for_measurement=select_reference_data_for_turner(measurement_method=measurement_method, sex=sex)
     elif reference == TRISOMY_21:
         lms_array_for_measurement=select_reference_data_for_trisomy_21(measurement_method=measurement_method, sex=sex)
+    elif reference == CDC:
+        lms_array_for_measurement=select_reference_data_for_cdc_chart(measurement_method=measurement_method, sex=sex)
     else: 
         raise Exception("No data has been selected!")
     
@@ -533,6 +542,108 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: U
     """
     # return object structure
     [trisomy_21: {
+        male: {
+            height: [
+                {
+                    sds: -2.667,
+                    centile: 0.4
+                    data: [{l: , x: , y: }, ....]
+                }
+            ],
+            weight: [...]
+        },
+        female {...}
+    }]
+    """
+
+def create_cdc_chart(measurement_method: str, sex: str, centile_format: Union[str, list], is_sds=False):
+   # user selects which centile collection they want
+    # If the Cole method is selected, conversion between centile and SDS
+    # is different as SDS is rounded to the nearest 2/3
+    # Cole method selection is stored in the cole_method flag.
+    # If no parameter is passed, default is the Cole method
+
+    centile_sds_collection = []
+    cole_method = False
+
+    if (type(centile_format) is list):
+        centile_sds_collection = centile_format
+    elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
+        centile_sds_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
+        cole_method = True
+        is_sds=False
+    else:
+        centile_sds_collection = THREE_PERCENT_CENTILE_COLLECTION
+        is_sds=False
+
+    # all data for a the reference are stored here: this is returned to the user
+    reference_data = {}
+    sex_list: dict = {}
+
+    # for sex_index, sex in enumerate(SEXES):
+    # For each sex we have 4 measurement_methods
+
+    measurements: dict = {}  # all the data for a given measurement_method are stored here
+
+    # for measurement_index, measurement_method in enumerate(MEASUREMENT_METHODS):
+    # for every measurement method we have as many centiles
+    # as have been requested
+
+    centiles = []  # all generated centiles for a selected centile collection are stored here
+
+    for centile_index, centile_sds in enumerate(centile_sds_collection):
+        # we must create a z for each requested centile
+        # if the Cole 9 centiles were selected, these are rounded,
+        # so conversion to SDS is different
+        # Otherwise standard conversation of centile to z is used
+        if cole_method:
+            z = rounded_sds_for_centile(centile_sds)
+            centile_value=centile_sds
+        else:
+            if is_sds:
+                z = centile_sds
+                centile_value=centile(z)
+            else:
+                z = sds_for_centile(centile_sds)
+                centile_value=centile_sds
+        # Collect the LMS values from the correct reference
+        lms_array_for_measurement = select_reference_data_for_cdc_chart(
+            measurement_method=measurement_method, sex=sex , fenton_data=False)
+        # Generate a centile. there will be nine of these if Cole method selected.
+        # Some data does not exist at all ages, so any error reflects missing data.
+        # If this happens, an empty list is returned.
+        try:    
+            centile_data = generate_centile(
+                z=z, 
+                centile=centile_value, 
+                measurement_method=measurement_method,
+                sex=sex, 
+                lms_array_for_measurement=lms_array_for_measurement, 
+                reference=TRISOMY_21,
+                is_sds=is_sds)
+
+            # Store this centile for a given measurement
+            centiles.append({"sds": round(z, 2),
+                            "centile": centile_value, "data": centile_data})
+        except Exception as e:
+            print(f"{e}")
+
+    # this is the end of the centile_collection for loop
+    # All the centiles for this measurement, sex and reference are added to the measurements list
+    measurements.update({measurement_method: centiles})
+
+    # this is the end of the measurement_methods loop
+    # All data for all measurement_methods for this sex are added to the sex_list list
+
+    sex_list.update({sex: measurements})
+
+    # all data can now be tagged by reference_name and added to reference_data
+    reference_data = [{CDC: sex_list}]
+    return reference_data
+
+    """
+    # return object structure
+    [cdc: {
         male: {
             height: [
                 {
