@@ -16,9 +16,12 @@ UK_WHO_CHILD = "uk_who_child"
 UK90_CHILD = "uk90_child"
 UK_WHO_REFERENCES = [UK90_PRETERM, UK_WHO_INFANT, UK_WHO_CHILD, UK90_CHILD]
 
-CDC = "cdc"
-FENTON = "fenton"
-CDC_REFERENCES = [FENTON, UK_WHO_INFANT, CDC]
+# CDC constants
+CDC = "cdc" # CDC is the overarching reference
+CDC_INFANT = "cdc_infant" # CDC infant is the reference name for children 0-2 years
+CDC_CHILD = "cdc_child" # CDC child is the reference name for children 2-20 years
+FENTON = "fenton" # Fenton is the reference name for preterm infants
+CDC_REFERENCES = [FENTON, CDC_INFANT, CDC_CHILD] # CDC references
 
 # 23 weeks is the lowest decimal age available on the UK90 charts
 UK90_REFERENCE_LOWER_THRESHOLD = (
@@ -70,7 +73,8 @@ THREE_PERCENT_CENTILES = "three-percent-centiles"
 COLE_TWO_THIRDS_SDS_NINE_CENTILES = "cole-nine-centiles"
 CENTILE_FORMATS = [THREE_PERCENT_CENTILES, COLE_TWO_THIRDS_SDS_NINE_CENTILES]
 
-THREE_PERCENT_CENTILE_COLLECTION = [3.0, 5.0, 10.0, 25.0, 50.0, 75.0, 90.0, 95.0, 97.0]
+THREE_PERCENT_CENTILE_COLLECTION = [3.0, 10.0, 25.0, 50.0, 75.0, 90.0, 97.0]
+FIVE_PERCENT_CENTILE_COLLECTION = [5.0, 10.0, 25.0, 50.0, 75.0, 90.0, 95.0]
 COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION = [
     0.4,
     2.0,

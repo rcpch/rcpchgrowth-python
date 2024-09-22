@@ -32,12 +32,12 @@ with open(data_path) as json_file:
     FENTON_DATA = json.load(json_file)
     json_file.close()
 
-data_path = Path(data_directory, "who_infants.json")  # 2 weeks to 2 years
+data_path = Path(data_directory, "cdc_infants.json")  # CDC interpretation of WHO 0-2y
 with open(data_path) as json_file:
-    WHO_INFANTS_DATA = json.load(json_file)
+    CDC_INFANT_DATA = json.load(json_file)
     json_file.close()
 
-data_path = Path(data_directory, "cdc.json")  # 2 years to 20 years
+data_path = Path(data_directory, "cdc2-20.json")  # 2 years to 20 years
 with open(data_path) as json_file:
     CDC_CHILD_DATA = json.load(json_file)
     json_file.close()
@@ -84,9 +84,13 @@ def cdc_reference(age: float, default_youngest_reference: bool = False) -> json:
     elif age < 0:
         # Below 40 weeks, Fenton data is always used
         return FENTON_DATA
+    
+    elif age < 2 or (age == 2 and default_youngest_reference):
+        # Below 2 years, CDC interpretation of WHO is used
+        return CDC_INFANT_DATA
 
     elif age <= CDC_UPPER_THRESHOLD:
-        # CDC data is used for all children 0-20 years
+        # CDC data is used for all children 2-20 years
         return CDC_CHILD_DATA 
 
     else:
@@ -122,28 +126,41 @@ def cdc_lms_array_for_measurement_and_sex(
 
 
 def select_reference_data_for_cdc_chart(
+    cdc_reference_name: str,
     measurement_method: str,
     sex: str,
-    fenton_data: bool = False):
+    default_youngest_reference: bool = False,
+):
 
     # takes a uk_who_reference name (see parameter constants), measurement_method and sex to return
     # reference data
 
-    if fenton_data:
+    if cdc_reference_name == FENTON:
         try:
             fenton_preterm_reference = cdc_lms_array_for_measurement_and_sex(
-                age=-0.01,
+                age=-0.01, # an arbritrary age to select the preterm data
                 measurement_method=measurement_method,
                 sex=sex,
                 default_youngest_reference=False # should never need younger reference in this calculation
             )
         except:
-            cdc_preterm_reference = []
-        return cdc_preterm_reference
+            fenton_preterm_reference = []
+        return fenton_preterm_reference
+    elif cdc_reference_name == CDC_INFANT:
+        try:
+            cdc_infant_reference = cdc_lms_array_for_measurement_and_sex(
+                age=0.04, # an arbritrary age to select the infant data
+                measurement_method=measurement_method,
+                sex=sex,
+                default_youngest_reference=default_youngest_reference
+            )
+        except:
+            cdc_infant_reference = []
+        return cdc_infant_reference
     else:
         try:
             cdc_children_reference = cdc_lms_array_for_measurement_and_sex(
-                age=0.04,
+                age=2.04, # an arbritrary age to select the child data
                 measurement_method=measurement_method,
                 sex=sex,
                 default_youngest_reference=False # There is no younger reference data for CDC
