@@ -579,7 +579,8 @@ def lms_value_array_for_measurement_for_reference(
             lms_value_array_for_measurement = cdc_lms_array_for_measurement_and_sex(
                 age=age,
                 measurement_method=measurement_method,
-                sex=sex
+                sex=sex,
+                default_youngest_reference=default_youngest_reference
             )
         except LookupError as error:
             raise LookupError(error)

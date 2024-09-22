@@ -12,8 +12,11 @@ from .constants.reference_constants import (
     TRISOMY_21, 
     COLE_TWO_THIRDS_SDS_NINE_CENTILES, 
     COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION,
+    THREE_PERCENT_CENTILES,
     THREE_PERCENT_CENTILE_COLLECTION,
+    FIVE_PERCENT_CENTILES,
     FIVE_PERCENT_CENTILE_COLLECTION,
+    EIGHTY_FIVE_PERCENT_CENTILES,
     EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION,
     UK_WHO_REFERENCES, 
     CDC_REFERENCES, 
@@ -88,6 +91,7 @@ def generate_custom_sds_line(
             centile_data=[]
             try:
                 centile_data= build_centile_object(
+                    reference=UK_WHO,
                     measurement_method=measurement_method,
                     sex=sex,
                     lms_array_for_measurement=lms_array_for_measurement,
@@ -99,8 +103,30 @@ def generate_custom_sds_line(
                 centile_data=[]
         # all data can now be tagged by reference_name and added to reference_data
         reference_data.append({reference: centile_data})
+    elif reference == CDC:
+        for reference_index, reference in enumerate(CDC_REFERENCES):
+            # the centile reference data
+            lms_array_for_measurement=select_reference_data_for_cdc_chart(
+                cdc_reference_name=reference, 
+                measurement_method=measurement_method, 
+                sex=sex)
+            centile_data=[]
+            try:
+                centile_data= build_centile_object(
+                    reference=CDC,
+                    measurement_method=measurement_method,
+                    sex=sex,
+                    lms_array_for_measurement=lms_array_for_measurement,
+                    z=custom_sds,
+                    centile=custom_centile
+                )
+            except:
+                print(f"Could not generate SDS centile data.")
+                centile_data=[]
+        # all data can now be tagged by reference_name and added to reference_data
+        reference_data.append({reference: centile_data})
     else:
-        # get the reference data
+        # get the reference data (Trisomy 21, Turner both hav a single reference)
         lms_array_for_measurement=[]
         try:
             lms_array_for_measurement=select_reference_lms_data(
@@ -115,6 +141,7 @@ def generate_custom_sds_line(
         try:
             centile_data=[]
             centile_data= build_centile_object(
+                    reference=reference,
                     measurement_method=measurement_method,
                     sex=sex,
                     lms_array_for_measurement=lms_array_for_measurement,
@@ -189,7 +216,7 @@ def select_reference_lms_data(reference: str, measurement_method: str, sex: str)
     
 
 
-def build_centile_object(measurement_method: str, sex: str, lms_array_for_measurement: list, z: float, centile: float):
+def build_centile_object(reference, measurement_method: str, sex: str, lms_array_for_measurement: list, z: float, centile: float):
     sex_list: dict = {}  # all the data for a given sex are stored here
     measurements: dict = {}  # all the data for a given measurement_method are stored here
     centiles = []  # all generated centiles for a selected centile collection are stored here
@@ -204,7 +231,7 @@ def build_centile_object(measurement_method: str, sex: str, lms_array_for_measur
             measurement_method=measurement_method,
             sex=sex,
             lms_array_for_measurement=lms_array_for_measurement,
-            reference=UK_WHO
+            reference=reference
         )
     except:
         centile_data=None
@@ -578,7 +605,7 @@ def create_cdc_chart(
     # Cole method selection is stored in the cole_method flag.
     # If no parameter is passed, default is the Cole method
     # Alternatively it is possible to pass a custom list of values - if the is_sds flag is False (default) these are centiles
-
+    
     centile_sds_collection = []
     cole_method = False
 
@@ -723,11 +750,11 @@ def select_centile_format(centile_format: str):
     """
     if centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
         return COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
-    elif centile_format == THREE_PERCENT_CENTILE_COLLECTION:
+    elif centile_format == THREE_PERCENT_CENTILES:
         return THREE_PERCENT_CENTILE_COLLECTION
-    elif centile_format == FIVE_PERCENT_CENTILE_COLLECTION:
+    elif centile_format == FIVE_PERCENT_CENTILES:
         return FIVE_PERCENT_CENTILE_COLLECTION
-    elif centile_format == EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION:
+    elif centile_format == EIGHTY_FIVE_PERCENT_CENTILES:
         return EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION
     else:
         return COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION

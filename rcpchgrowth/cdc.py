@@ -67,7 +67,7 @@ def reference_data_absent(age: float, measurement_method: str, sex: str):
         return False, None
 
 
-def cdc_reference(age: float, default_youngest_reference: bool = False) -> json:
+def cdc_reference(age: float, measurement_method, default_youngest_reference: bool = False) -> json:
     """
     The purpose of this function is to choose the correct reference for calculation.
     The CDC standard is an unusual case because it combines two different reference sources: the 1977 National Center for Health Statistics (NCHS) and the WHO2006.
@@ -87,7 +87,7 @@ def cdc_reference(age: float, default_youngest_reference: bool = False) -> json:
         # Below 40 weeks, Fenton data is always used
         return FENTON_DATA
     
-    elif age < 2 or (age == 2 and default_youngest_reference):
+    elif age < 2 or (age == 2 and default_youngest_reference) or (measurement_method == HEAD_CIRCUMFERENCE and age <= 3):
         # Below 2 years, CDC interpretation of WHO is used
         return CDC_INFANT_DATA
 
@@ -110,7 +110,7 @@ def cdc_lms_array_for_measurement_and_sex(
 
     try:
         selected_reference = cdc_reference(
-            age=age, default_youngest_reference=default_youngest_reference
+            age=age, measurement_method=measurement_method, default_youngest_reference=default_youngest_reference
         )
     except:  #  there is no reference for the age supplied
         return LookupError("There is no CDC reference for the age supplied.")
