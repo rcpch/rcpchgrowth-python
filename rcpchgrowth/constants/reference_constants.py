@@ -66,14 +66,19 @@ MEASUREMENT_METHODS = [HEIGHT, WEIGHT, HEAD_CIRCUMFERENCE, BMI]
 
 # Nomenclature
 # Centile formats describe the collection - the two most common used are the cole-nine-centiles format used in UK-WHO
-# and the three-percent-centiles used by the CDC. They use 5/10/25/50/75/90/95 and suggest 3rd centile
-# is unlikely necessary.
+# Each centile in the cole format is 2/3 of a standard deviation apart. They map to 0.04/2/9/25/50/75/91/98/99.6
+
+# and the three-percent-centiles and five-percent-centiles are used by the CDC. They use 5/10/25/50/75/90/95 but also replace the 5th centile with a 3rd/97th centile..
+# The eight-five-percent-centiles format is also used by the CDC and adds an extra 85th centile  [3/10/25/50/75/85/90/97 centiles] for use in BMI calculations
 
 THREE_PERCENT_CENTILES = "three-percent-centiles"
+FIVE_PERCENT_CENTILES = "five-percent-centiles"
+EIGHTY_FIVE_PERCENT_CENTILES = "eighty-five-percent-centiles"
 COLE_TWO_THIRDS_SDS_NINE_CENTILES = "cole-nine-centiles"
 CENTILE_FORMATS = [THREE_PERCENT_CENTILES, COLE_TWO_THIRDS_SDS_NINE_CENTILES]
 
 THREE_PERCENT_CENTILE_COLLECTION = [3.0, 10.0, 25.0, 50.0, 75.0, 90.0, 97.0]
+EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION = [3.0, 10.0, 25.0, 50.0, 75.0, 85, 90.0, 97.0]
 FIVE_PERCENT_CENTILE_COLLECTION = [5.0, 10.0, 25.0, 50.0, 75.0, 90.0, 95.0]
 COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION = [
     0.4,

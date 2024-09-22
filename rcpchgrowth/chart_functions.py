@@ -4,7 +4,21 @@ from .uk_who import select_reference_data_for_uk_who_chart
 from .trisomy_21 import select_reference_data_for_trisomy_21
 from .cdc import select_reference_data_for_cdc_chart
 from .turner import select_reference_data_for_turner
-from .constants.reference_constants import FEMALE, HEIGHT, UK_WHO, TURNERS, TRISOMY_21, COLE_TWO_THIRDS_SDS_NINE_CENTILES, COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION, THREE_PERCENT_CENTILE_COLLECTION, UK_WHO_REFERENCES, CDC_REFERENCES, CDC
+from .constants.reference_constants import (
+    FEMALE, 
+    HEIGHT, 
+    UK_WHO, 
+    TURNERS, 
+    TRISOMY_21, 
+    COLE_TWO_THIRDS_SDS_NINE_CENTILES, 
+    COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION,
+    THREE_PERCENT_CENTILE_COLLECTION,
+    FIVE_PERCENT_CENTILE_COLLECTION,
+    EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION,
+    UK_WHO_REFERENCES, 
+    CDC_REFERENCES, 
+    CDC
+)
 
 """
 Public chart functions
@@ -229,14 +243,13 @@ def create_uk_who_chart(
     cole_method = False
 
     if (type(centile_format) is list):
+        # a custom list of centiles was provided
         centile_sds_collection = centile_format
-    elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
-        centile_sds_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
-        cole_method = True
-        is_sds=False
     else:
-        centile_sds_collection = THREE_PERCENT_CENTILE_COLLECTION
+        # a standard centile collection was selected
+        centile_sds_collection = select_centile_format(centile_format)
         is_sds=False
+
     ##
     # iterate through the 4 references that make up UK-WHO
     # There will be a list for each one
@@ -359,13 +372,11 @@ def create_turner_chart(centile_format: Union[str, list], is_sds=False):
     cole_method = False
 
     if (type(centile_format) is list):
+        # a custom list of centiles was provided
         centile_sds_collection = centile_format
-    elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
-        centile_sds_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
-        cole_method = True
-        is_sds=False
     else:
-        centile_sds_collection = THREE_PERCENT_CENTILE_COLLECTION
+        # a standard centile collection was selected
+        centile_sds_collection = select_centile_format(centile_format)
         is_sds=False
 
     # all data for a the reference are stored here: this is returned to the user
@@ -465,13 +476,11 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: U
     cole_method = False
 
     if (type(centile_format) is list):
+        # a custom list of centiles was provided
         centile_sds_collection = centile_format
-    elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
-        centile_sds_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
-        cole_method = True
-        is_sds=False
     else:
-        centile_sds_collection = THREE_PERCENT_CENTILE_COLLECTION
+        # a standard centile collection was selected
+        centile_sds_collection = select_centile_format(centile_format)
         is_sds=False
 
     # all data for a the reference are stored here: this is returned to the user
@@ -574,14 +583,13 @@ def create_cdc_chart(
     cole_method = False
 
     if (type(centile_format) is list):
+        # a custom list of centiles was provided
         centile_sds_collection = centile_format
-    elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
-        centile_sds_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
-        cole_method = True
-        is_sds=False
     else:
-        centile_sds_collection = THREE_PERCENT_CENTILE_COLLECTION
+        # a standard centile collection was selected
+        centile_sds_collection = select_centile_format(centile_format)
         is_sds=False
+
     ##
     # iterate through the 4 references that make up UK-WHO
     # There will be a list for each one
@@ -705,3 +713,21 @@ def create_cdc_chart(
         }
     ]
     """
+
+# Private functions
+def select_centile_format(centile_format: str):
+    """
+    Select the centile format
+    Helper function to select the correct centile collection
+    the pre-defined collections are in the constants file and have string names: 'cole-nine-centiles', 'three-percent-centiles', 'five-percent-centiles', 'eighty-five-percent_centiles'
+    """
+    if centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
+        return COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
+    elif centile_format == THREE_PERCENT_CENTILE_COLLECTION:
+        return THREE_PERCENT_CENTILE_COLLECTION
+    elif centile_format == FIVE_PERCENT_CENTILE_COLLECTION:
+        return FIVE_PERCENT_CENTILE_COLLECTION
+    elif centile_format == EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION:
+        return EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION
+    else:
+        return COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION

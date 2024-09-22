@@ -61,6 +61,8 @@ def reference_data_absent(age: float, measurement_method: str, sex: str):
         return True, "CDC data does not exist above 20 years."
     if measurement_method == HEAD_CIRCUMFERENCE and age > THREE_YEARS:
         return True, "CDC data does not exist for head circumference above 3 years."
+    if measurement_method == BMI and age < TWO_YEARS:
+        return True, "CDC data does not exist for BMI below 2 years."
     else:
         return False, None
 
@@ -160,7 +162,7 @@ def select_reference_data_for_cdc_chart(
     else:
         try:
             cdc_children_reference = cdc_lms_array_for_measurement_and_sex(
-                age=2.04, # an arbritrary age to select the child data
+                age=3, # an arbritrary age to select the child data
                 measurement_method=measurement_method,
                 sex=sex,
                 default_youngest_reference=False # There is no younger reference data for CDC
