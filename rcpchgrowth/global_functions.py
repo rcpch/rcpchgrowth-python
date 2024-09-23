@@ -130,6 +130,10 @@ def generate_centile(
     """
     Generates a centile curve for a given reference.
     Takes the z-score equivalent of the centile, the centile to be used as a label, the sex and measurement method.
+
+    Complexity is introduced to this function by CDC BMI curves. These introduce an extra step when calculating the 
+    plottable measurements as they apply the cumulative distribution function to the z-score to get the centile if the centile
+    is below 95% (or the inverse if the centile is above 95%). 
     """
 
     if len(lms_array_for_measurement) == 0:
@@ -430,7 +434,7 @@ def nearest_lowest_index(lms_array: list, age: float) -> int:
 
 def fetch_lms(age: float, lms_value_array_for_measurement: list):
     """
-    Retuns the LMS for a given age. If there is no exact match in the reference
+    Retuns the LMS for a given age, and sigma if present (CDC BMI references). If there is no exact match in the reference
     an interpolated LMS is returned. Cubic interpolation is used except at the fringes of the
     reference where linear interpolation is used.
     It accepts the age and a python list of the LMS values for that measurement_method and sex.
@@ -445,6 +449,11 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list):
         l = lms_value_array_for_measurement[age_matched_index]["L"]
         m = lms_value_array_for_measurement[age_matched_index]["M"]
         s = lms_value_array_for_measurement[age_matched_index]["S"]
+
+        if "sigma" in lms_value_array_for_measurement[age_matched_index]:
+            # CDC BMI references have an additional sigma value
+            sigma = lms_value_array_for_measurement[age_matched_index]["sigma"]
+            return {"l": l, "m": m, "s": s, "sigma": sigma}
     else:
         # there has not been an exact match in the reference data
         # Interpolation will be required.
@@ -507,6 +516,20 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list):
                 parameter_one_above=parameter_one_above["S"],
                 parameter_two_above=parameter_two_above["S"],
             )
+            if "sigma" in lms_value_array_for_measurement[age_matched_index]:
+                # CDC BMI references have an additional sigma value
+                sigma = cubic_interpolation(
+                    age=age,
+                    age_one_below=age_one_below,
+                    age_two_below=age_two_below,
+                    age_one_above=age_one_above,
+                    age_two_above=age_two_above,
+                    parameter_two_below=parameter_two_below["sigma"],
+                    parameter_one_below=parameter_one_below["sigma"],
+                    parameter_one_above=parameter_one_above["sigma"],
+                    parameter_two_above=parameter_two_above["sigma"],
+                )
+                return {"l": l, "m": m, "s": s, "sigma": sigma}
         else:
             # we are at the thresholds of this reference. Only linear interpolation is possible
             l = linear_interpolation(
@@ -530,6 +553,16 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list):
                 parameter_one_below=parameter_one_below["S"],
                 parameter_one_above=parameter_one_above["S"],
             )
+            if "sigma" in lms_value_array_for_measurement[age_matched_index]:
+                # CDC BMI references have an additional sigma value
+                sigma = linear_interpolation(
+                    age=age,
+                    age_one_below=age_one_below,
+                    age_one_above=age_one_above,
+                    parameter_one_below=parameter_one_below["sigma"],
+                    parameter_one_above=parameter_one_above["sigma"],
+                )
+                return {"l": l, "m": m, "s": s, "sigma": sigma}
 
     return {"l": l, "m": m, "s": s}
 
@@ -543,7 +576,7 @@ def lms_value_array_for_measurement_for_reference(
 ) -> list:
     """
     This is a private function which returns the LMS array for measurement_method and sex and reference
-    It accepts the reference ('uk-who', 'turners-syndrome' or 'trisomy-21')
+    It accepts the reference ('uk-who', 'turners-syndrome', 'trisomy-21', 'cdc')
     If the UK-WHO reference is requested, it is possible to be select the younger reference for overlap values,
     using the default_youngest_reference flag.
     """
