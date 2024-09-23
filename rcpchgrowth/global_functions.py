@@ -43,11 +43,30 @@ def measurement_from_sds(
     s = lms["s"]
 
     observation_value = None
-    try:
-        observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
-    except Exception as e:
-        print(e)
-        return None
+
+    if reference == CDC and measurement_method == BMI:
+        # CDC BMI references require a different method to calculate the centile
+        # This is because the centile is calculated from the z-score using the cumulative distribution function
+        # if the centile is below 95% (or the inverse if the centile is above 95%)
+        # It takes the sigma value from the reference data and applies the cdf to the z-score
+       
+        sigma = lms["sigma"]
+        if requested_sds <= 1.645: # 95th centile
+            observation_value = m * (1 + l * s * requested_sds)**(1/l)
+        else:
+            # inverse of the cdf applied to the bmi percentile - 90 / 10,
+            # then multiplied by the sigma value and added to the 95th centile
+            p95 = m * (1 + l * s * 1.645)**(1/l) # 95th centile measurement
+            centile = stats.norm.cdf(requested_sds) * 100 # convert z-score to centile
+            observation_value = stats.norm.ppf((centile - 90)/10) * sigma + p95
+    else:
+        # all other references use the standard method    
+        try:
+            observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
+        except Exception as e:
+            print(e)
+            return None
+    
     return observation_value
 
 
@@ -77,6 +96,18 @@ def sds_for_measurement(
     l = lms["l"]
     m = lms["m"]
     s = lms["s"]
+
+    # this calculation is different for CDC BMI references and uses the
+    # cumulative distribution function to calculate the z-score
+    # (if the centile is below 95% (or the inverse if the centile is above 95%)
+    if reference == CDC and measurement_method == BMI:
+        sigma = lms["sigma"]
+        if observation_value > m * (1 + l * s * 1.645)**(1/l):
+            # above 95th centile
+            p95 = m * (1 + l * s * 1.645)**(1/l)
+            centile = stats.norm.cdf((observation_value - p95) / sigma)*10 + 90
+            z = stats.norm.ppf(centile/100)
+            return z
 
     return z_score(l=l, m=m, s=s, observation=observation_value)
 
@@ -154,7 +185,6 @@ def generate_centile(
 
     while age < max_age:
         # loop through the reference in steps of 0.1y
-
         try:
             measurement = measurement_from_sds(
                 reference=reference,
