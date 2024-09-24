@@ -297,7 +297,7 @@ def create_data_point(age: float, measurement: float, label_value: str):
         try:
             rounded = round(measurement, 4)
         except Exception as e:
-            print(f"{e} z:{z} age:{age} measurement: {measurement}")
+            print(f"{e} age:{age} measurement: {measurement}")
             return
     else:
         rounded = None
