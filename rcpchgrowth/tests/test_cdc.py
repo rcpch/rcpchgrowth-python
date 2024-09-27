@@ -22,7 +22,7 @@ def load_valid_data_set():
     """
     Loads in the testing data from JSON file
     """
-    with open(os.path.abspath(os.path.dirname(__file__)) + "/cdc/height_weight_validation.json") as f:
+    with open(os.path.abspath(os.path.dirname(__file__)) + "/cdc/bmi_height_weight_validation.json") as f:
         return json.load(f)
 
 
@@ -36,9 +36,9 @@ def test_measurement_class_cdc_data(line):
 
     measurement_object = Measurement(
         sex=str(line["sex"]),
-        birth_date=datetime.strptime(line["birth_date"], "%d/%m/%Y"),
+        birth_date=datetime.strptime(line["birth_date"], "%Y-%m-%d"),
         observation_date=datetime.strptime(
-            line["observation_date"], "%d/%m/%Y"),
+            line["observation_date"], "%Y-%m-%d"),
         measurement_method=str(line["measurement_method"]),
         observation_value=float(line["observation_value"]),
         gestation_weeks=40,

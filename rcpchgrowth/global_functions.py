@@ -502,6 +502,8 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list):
         if (
             age_matched_index >= 1
             and age_matched_index < len(lms_value_array_for_measurement) - 2
+            and "sigma" not in lms_value_array_for_measurement[age_matched_index] # CDC BMI references have an additional sigma value
+            # and CDC only use linear interpolation
         ):
             # cubic interpolation is possible
             age_two_below = lms_value_array_for_measurement[age_matched_index - 1][
@@ -561,7 +563,7 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list):
                 )
                 return {"l": l, "m": m, "s": s, "sigma": sigma}
         else:
-            # we are at the thresholds of this reference. Only linear interpolation is possible
+            # we are at the thresholds of this reference or are using CDC BMI. Only linear interpolation is possible
             l = linear_interpolation(
                 age=age,
                 age_one_below=age_one_below,
