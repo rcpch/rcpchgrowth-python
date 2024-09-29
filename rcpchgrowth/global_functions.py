@@ -161,10 +161,6 @@ def generate_centile(
     """
     Generates a centile curve for a given reference.
     Takes the z-score equivalent of the centile, the centile to be used as a label, the sex and measurement method.
-
-    Complexity is introduced to this function by CDC BMI curves. These introduce an extra step when calculating the 
-    plottable measurements as they apply the cumulative distribution function to the z-score to get the centile if the centile
-    is below 95% (or the inverse if the centile is above 95%). 
     """
 
     if len(lms_array_for_measurement) == 0:

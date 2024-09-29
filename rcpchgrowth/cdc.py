@@ -27,7 +27,7 @@ reference: reference data
 # load the reference data
 data_directory = resources.files("rcpchgrowth.data_tables")
 
-data_path = Path(data_directory, "fenton.json")  # 23 weeks to 50 weeks - currently not in the code base
+data_path = Path(data_directory,"fenton", "fenton.json")  # 23 weeks to 50 weeks - currently not in the code base
 with open(data_path) as json_file:
     FENTON_DATA = json.load(json_file)
     json_file.close()
@@ -55,8 +55,8 @@ def reference_data_absent(age: float, measurement_method: str, sex: str):
     - CDC data is used from 2-20 years
     """
 
-    if age < 0:
-        return True, "CDC data does not exist below 40 weeks."
+    # if age < 0:
+    #     return True, "CDC data does not exist below 40 weeks."
     if age > TWENTY_YEARS:  # upper threshold of UK90 data
         return True, "CDC data does not exist above 20 years."
     if measurement_method == HEAD_CIRCUMFERENCE and age > THREE_YEARS:
