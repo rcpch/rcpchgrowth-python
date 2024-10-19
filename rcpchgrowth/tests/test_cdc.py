@@ -2,7 +2,7 @@
 from datetime import datetime
 import json
 import os
-from pprint import pprint
+# from pprint import pprint
 
 # third-party imports
 import pytest
@@ -46,8 +46,8 @@ def test_measurement_class_cdc_data(line):
         reference="cdc"
     )
 
-    pprint(vars(measurement_object))
-    pprint(line)
+    # pprint(vars(measurement_object))
+    # pprint(line)
 
     # all comparisons using absolute tolerance (not relative)
 
