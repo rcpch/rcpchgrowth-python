@@ -133,3 +133,6 @@ dmypy.json
 
 # MacOS DS_Store files
 .DS_Store
+
+# Fenton data is licenced and not to be shared
+rcpchgrowth/data_tables/fenton/*.*

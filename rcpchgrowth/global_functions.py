@@ -4,9 +4,11 @@ from scipy.interpolate import interp1d
 from .uk_who import uk_who_lms_array_for_measurement_and_sex
 from .turner import turner_lms_array_for_measurement_and_sex
 from .trisomy_21 import trisomy_21_lms_array_for_measurement_and_sex
+from .cdc import cdc_lms_array_for_measurement_and_sex
+
 # from scipy import interpolate  #see below, comment back in if swapping interpolation method
 # from scipy.interpolate import CubicSpline #see below, comment back in if swapping interpolation method
-from .constants.reference_constants import MALE, UK_WHO, TURNERS, TRISOMY_21, SEXES, BMI
+from .constants.reference_constants import MALE, UK_WHO, TURNERS, TRISOMY_21, SEXES, BMI, CDC
 
 
 """Public functions"""
@@ -18,68 +20,101 @@ def measurement_from_sds(
     measurement_method: str,
     sex: str,
     age: float,
-    default_youngest_reference: bool = False
+    default_youngest_reference: bool = False,
 ) -> float:
 
     try:
         lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, 
-            age=age, 
-            measurement_method=measurement_method, 
+            reference=reference,
+            age=age,
+            measurement_method=measurement_method,
             sex=sex,
-            default_youngest_reference=default_youngest_reference
+            default_youngest_reference=default_youngest_reference,
         )
     except LookupError as err:
         raise LookupError(err)
 
     # get LMS values from the reference: check for age match, interpolate if none
     lms = fetch_lms(
-        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement)
+        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement
+    )
     l = lms["l"]
     m = lms["m"]
     s = lms["s"]
 
     observation_value = None
-    try:
-        observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
-    except Exception as e:
-        print(e) 
-        return None
+
+    if reference == CDC and measurement_method == BMI:
+        # CDC BMI references require a different method to calculate the centile
+        # This is because the centile is calculated from the z-score using the cumulative distribution function
+        # if the centile is below 95% (or the inverse if the centile is above 95%)
+        # It takes the sigma value from the reference data and applies the cdf to the z-score
+       
+        sigma = lms["sigma"]
+        if requested_sds <= 1.645: # 95th centile
+            observation_value = m * (1 + l * s * requested_sds)**(1/l)
+        else:
+            # inverse of the cdf applied to the bmi percentile - 90 / 10,
+            # then multiplied by the sigma value and added to the 95th centile
+            p95 = m * (1 + l * s * 1.645)**(1/l) # 95th centile measurement
+            centile = stats.norm.cdf(requested_sds) * 100 # convert z-score to centile
+            observation_value = stats.norm.ppf((centile - 90)/10) * sigma + p95
+    else:
+        # all other references use the standard method    
+        try:
+            observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
+        except Exception as e:
+            print(e)
+            return None
+    
     return observation_value
+
 
 def sds_for_measurement(
     reference: str,
     age: float,
     measurement_method: str,
     observation_value: float,
-    sex: str
+    sex: str,
 ) -> float:
 
     try:
         lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, 
-            age=age, 
-            measurement_method=measurement_method, 
+            reference=reference,
+            age=age,
+            measurement_method=measurement_method,
             sex=sex,
-            default_youngest_reference=False # The oldest child reference should always be selected for SDS calculation
+            default_youngest_reference=False,  # The oldest child reference should always be selected for SDS calculation
         )
     except LookupError as err:
         raise LookupError(err)
 
     # get LMS values from the reference: check for age match, interpolate if none
     lms = fetch_lms(
-        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement)
+        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement
+    )
     l = lms["l"]
     m = lms["m"]
     s = lms["s"]
 
+    # this calculation is different for CDC BMI references and uses the
+    # cumulative distribution function to calculate the z-score
+    # (if the centile is below 95% (or the inverse if the centile is above 95%)
+    if reference == CDC and measurement_method == BMI:
+        sigma = lms["sigma"]
+        if observation_value > m * (1 + l * s * 1.645)**(1/l):
+            # above 95th centile
+            p95 = m * (1 + l * s * 1.645)**(1/l)
+            centile = stats.norm.cdf((observation_value - p95) / sigma)*10 + 90
+            z = stats.norm.ppf(centile/100)
+            return z
+
     return z_score(l=l, m=m, s=s, observation=observation_value)
 
+
 def percentage_median_bmi(
-        reference: str, 
-        age: float, 
-        actual_bmi: float, 
-        sex: str) -> float:
+    reference: str, age: float, actual_bmi: float, sex: str
+) -> float:
     """
     public method
     This returns a child"s BMI expressed as a percentage of the median value for age and sex.
@@ -90,17 +125,20 @@ def percentage_median_bmi(
     # fetch the LMS values for the requested measurement
     try:
         lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
-            reference=reference, 
-            measurement_method=BMI, sex=sex, 
+            reference=reference,
+            measurement_method=BMI,
+            sex=sex,
             age=age,
-            default_youngest_reference=False) # The oldest reference should always be chosen for this calculation
+            default_youngest_reference=False,
+        )  # The oldest reference should always be chosen for this calculation
     except LookupError as err:
         raise LookupError(err)
 
     # get LMS values from the reference: check for age match, interpolate if none
     try:
         lms = fetch_lms(
-            age=age, lms_value_array_for_measurement=lms_value_array_for_measurement)
+            age=age, lms_value_array_for_measurement=lms_value_array_for_measurement
+        )
     except LookupError as err:
         print(err)
         return None
@@ -110,59 +148,60 @@ def percentage_median_bmi(
     percent_median_bmi = (actual_bmi / m) * 100.0
     return percent_median_bmi
 
+
 def generate_centile(
-        z: float, 
-        centile: float, 
-        measurement_method: str, 
-        sex: str, 
-        lms_array_for_measurement: list, 
-        reference: str, 
-        is_sds: bool=False) -> list:
+    z: float,
+    centile: float,
+    measurement_method: str,
+    sex: str,
+    lms_array_for_measurement: list,
+    reference: str,
+    is_sds: bool = False,
+) -> list:
     """
-    Generates a centile curve for a given reference. 
+    Generates a centile curve for a given reference.
     Takes the z-score equivalent of the centile, the centile to be used as a label, the sex and measurement method.
     """
 
-    if (len(lms_array_for_measurement)==0):
-        raise Exception(f"No reference data available for {measurement_method} in {sex} in {reference}")
-    
+    if len(lms_array_for_measurement) == 0:
+        raise Exception(
+            f"No reference data available for {measurement_method} in {sex} in {reference}"
+        )
+
     min_age = lms_array_for_measurement[0]["decimal_age"]
     max_age = lms_array_for_measurement[-1]["decimal_age"]
 
     # if this is an sds line, the label reflects the sds value. The default is to reflect the centile
     label_value = centile
     if is_sds:
-        label_value=round(z, 3)
+        label_value = round(z, 3)
 
     centile_measurements = []
     age = min_age
 
     while age < max_age:
         # loop through the reference in steps of 0.1y
-
         try:
             measurement = measurement_from_sds(
-                reference=reference, 
-                measurement_method=measurement_method, 
-                requested_sds=z, 
-                sex=sex, 
+                reference=reference,
+                measurement_method=measurement_method,
+                requested_sds=z,
+                sex=sex,
                 age=age,
-                default_youngest_reference=False
+                default_youngest_reference=False,
             )
         except Exception as err:
             print(err)
 
         value = create_data_point(
-            age=age,
-            measurement=measurement,
-            label_value=label_value
+            age=age, measurement=measurement, label_value=label_value
         )
 
         centile_measurements.append(value)
 
         # weekly intervals until 4 y, then monthly
         if age <= 2:
-            age += (7 / 365.25)  # weekly intervals
+            age += 7 / 365.25  # weekly intervals
         else:
             age += 1 / 12  # monthly intervals
 
@@ -170,47 +209,46 @@ def generate_centile(
         # even after minifying, which are not practical. Weekly values makes plotting easier.
         # Here we have used weekly points from preterm to 2 y, monthly values after.
         # age += (7/365.25) # weekly intervals
-    
+
     # add the final value in the data set so the lines overlap cleanly
     try:
         measurement = measurement_from_sds(
-            reference=reference, 
-            measurement_method=measurement_method, 
-            requested_sds=z, 
-            sex=sex, 
+            reference=reference,
+            measurement_method=measurement_method,
+            requested_sds=z,
+            sex=sex,
             age=max_age,
-            default_youngest_reference=True
+            default_youngest_reference=True,
         )
     except Exception as err:
         print(err)
-    
+
     value = create_data_point(
-            age=max_age,
-            measurement=measurement,
-            label_value=label_value
-        )
+        age=max_age, measurement=measurement, label_value=label_value
+    )
 
     centile_measurements.append(value)
 
     return centile_measurements
 
+
 def mid_parental_height(
-    height_paternal: float,
-    height_maternal: float,
-    sex: str
+    height_paternal: float, height_maternal: float, sex: str
 ) -> float:
     """
     Calculates mid-parental height for the child.
     All units are in cm
     """
     if sex == MALE:
-        return (height_paternal + height_maternal + 13)/2
+        return (height_paternal + height_maternal + 13) / 2
     else:
-        return (height_paternal + height_maternal - 13)/2
+        return (height_paternal + height_maternal - 13) / 2
+
 
 """
 *** PUBLIC FUNCTIONS THAT CONVERT BETWEEN CENTILE AND SDS
 """
+
 
 def sds_for_centile(centile: float) -> float:
     """
@@ -218,6 +256,7 @@ def sds_for_centile(centile: float) -> float:
     """
     sds = stats.norm.ppf(centile / 100)
     return sds
+
 
 def rounded_sds_for_centile(centile: float) -> float:
     """
@@ -230,12 +269,13 @@ def rounded_sds_for_centile(centile: float) -> float:
         rounded_to_nearest_two_thirds = round(sds / (2 / 3))
         return rounded_to_nearest_two_thirds * (2 / 3)
 
+
 def centile(z_score: float):
     """
     Converts a Z Score to a p value (2-tailed) using the SciPy library, which it returns as a percentage
     """
     try:
-        centile = (stats.norm.cdf(z_score) * 100)
+        centile = stats.norm.cdf(z_score) * 100
         return centile
     except TypeError as err:
         raise TypeError(err)
@@ -246,28 +286,37 @@ Private Functions
 These are essential to the public functions but are not needed outside this file
 """
 
+
 def create_data_point(age: float, measurement: float, label_value: str):
     # creates a data point
     if measurement is not None:
         try:
             rounded = round(measurement, 4)
         except Exception as e:
-            print(f"{e} z:{z} age:{age} measurement: {measurement}")
+            print(f"{e} age:{age} measurement: {measurement}")
             return
     else:
         rounded = None
-    value = {
-        "l": label_value,
-        "x": round(age, 4),
-        "y": rounded
-    }
+    value = {"l": label_value, "x": round(age, 4), "y": rounded}
     return value
+
 
 """
 ***** INTERPOLATION FUNCTIONS *****
 """
 
-def cubic_interpolation(age: float, age_one_below: float, age_two_below: float, age_one_above: float, age_two_above: float, parameter_two_below: float, parameter_one_below: float, parameter_one_above: float, parameter_two_above: float) -> float:
+
+def cubic_interpolation(
+    age: float,
+    age_one_below: float,
+    age_two_below: float,
+    age_one_above: float,
+    age_two_above: float,
+    parameter_two_below: float,
+    parameter_one_below: float,
+    parameter_one_above: float,
+    parameter_two_above: float,
+) -> float:
     """
     See sds function. This method tests if the age of the child (either corrected for prematurity or chronological) is at a threshold of the reference data
     This method is specific to the UK-WHO data set.
@@ -303,9 +352,12 @@ def cubic_interpolation(age: float, age_one_below: float, age_two_below: float, 
     t13 = age_one_below - age_two_above
     t23 = age_one_above - age_two_above
 
-    cubic_interpolated_value = parameter_two_below * tt1 * tt2 * tt3 / t01 / t02 / t03 - parameter_one_below * tt0 * tt2 * tt3 / t01 / \
-        t12 / t13 + parameter_one_above * tt0 * tt1 * tt3 / t02 / t12 / \
-        t23 - parameter_two_above * tt0 * tt1 * tt2 / t03 / t13 / t23
+    cubic_interpolated_value = (
+        parameter_two_below * tt1 * tt2 * tt3 / t01 / t02 / t03
+        - parameter_one_below * tt0 * tt2 * tt3 / t01 / t12 / t13
+        + parameter_one_above * tt0 * tt1 * tt3 / t02 / t12 / t23
+        - parameter_two_above * tt0 * tt1 * tt2 / t03 / t13 / t23
+    )
 
     # prerequisite arrays for either of below functions
     # xpoints = [age_two_below, age_one_below, age_one_above, age_two_above]
@@ -322,7 +374,13 @@ def cubic_interpolation(age: float, age_one_below: float, age_two_below: float, 
     return cubic_interpolated_value
 
 
-def linear_interpolation(age: float, age_one_below: float, age_one_above: float, parameter_one_below: float, parameter_one_above: float) -> float:
+def linear_interpolation(
+    age: float,
+    age_one_below: float,
+    age_one_above: float,
+    parameter_one_below: float,
+    parameter_one_above: float,
+) -> float:
     """
     See sds function. This method is to do linear interpolation of L, M and S values for children whose ages are at the threshold of the reference data, making cubic interpolation impossible
     """
@@ -336,26 +394,28 @@ def linear_interpolation(age: float, age_one_below: float, age_one_above: float,
     linear_interpolated_value = intermediate(age)
     return linear_interpolated_value
 
+
 """
 ***** DO THE CALCULATIONS *****
 """
+
 
 def measurement_for_z(z: float, l: float, m: float, s: float) -> float:
     """
     Returns a measurement for a z score, L, M and S
     x = M (1 + L S z)^(1/L)
-    Note, in some circumstances, 1 + l * s * z will be negative, and 
+    Note, in some circumstances, 1 + l * s * z will be negative, and
     it will not be possible to calculate a power.
     In these circumstances, None is returned
     """
-    measurement_value=0.0
+    measurement_value = 0.0
     if l != 0.0:
-        first_step= (1 + l * s * z)
-        exponent= 1 / l
+        first_step = 1 + l * s * z
+        exponent = 1 / l
         if first_step < 0:
             return None
         try:
-            measurement_value= (first_step ** exponent) * m
+            measurement_value = (first_step**exponent) * m
         except Exception as e:
             print(e)
             return
@@ -363,15 +423,16 @@ def measurement_for_z(z: float, l: float, m: float, s: float) -> float:
         measurement_value = math.exp(s * z) * m
     return measurement_value
 
+
 def z_score(l: float, m: float, s: float, observation: float):
     """
     Converts the (age-specific) L, M and S parameters into a z-score
     """
     sds = 0.0
     if l != 0.0:
-        sds = (((observation / m) ** l) - 1) / (l*s)
+        sds = (((observation / m) ** l) - 1) / (l * s)
     else:
-        sds = (math.log(observation / m) / s)
+        sds = math.log(observation / m) / s
     return sds
 
 
@@ -379,12 +440,10 @@ def z_score(l: float, m: float, s: float, observation: float):
 ***** LOOKUP FUNCTIONS *****
 """
 
-def nearest_lowest_index(
-    lms_array: list,
-    age: float
-) -> int:
+
+def nearest_lowest_index(lms_array: list, age: float) -> int:
     """
-    loops through the array of LMS values and returns either 
+    loops through the array of LMS values and returns either
     the index of an exact match or the lowest nearest decimal age
     """
     lowest_index = 0
@@ -401,67 +460,151 @@ def nearest_lowest_index(
 
 def fetch_lms(age: float, lms_value_array_for_measurement: list):
     """
-    Retuns the LMS for a given age. If there is no exact match in the reference
-    an interpolated LMS is returned. Cubic interpolation is used except at the fringes of the 
+    Retuns the LMS for a given age, and sigma if present (CDC BMI references). If there is no exact match in the reference
+    an interpolated LMS is returned. Cubic interpolation is used except at the fringes of the
     reference where linear interpolation is used.
     It accepts the age and a python list of the LMS values for that measurement_method and sex.
     """
     age_matched_index = nearest_lowest_index(
-        lms_value_array_for_measurement, age)  # returns nearest LMS for age
-    if round(lms_value_array_for_measurement[age_matched_index]["decimal_age"], 16) == round(age, 16):
+        lms_value_array_for_measurement, age
+    )  # returns nearest LMS for age
+    if round(
+        lms_value_array_for_measurement[age_matched_index]["decimal_age"], 16
+    ) == round(age, 16):
         # there is an exact match in the data with the requested age
         l = lms_value_array_for_measurement[age_matched_index]["L"]
         m = lms_value_array_for_measurement[age_matched_index]["M"]
         s = lms_value_array_for_measurement[age_matched_index]["S"]
+
+        if "sigma" in lms_value_array_for_measurement[age_matched_index]:
+            # CDC BMI references have an additional sigma value
+            sigma = lms_value_array_for_measurement[age_matched_index]["sigma"]
+            return {"l": l, "m": m, "s": s, "sigma": sigma}
     else:
         # there has not been an exact match in the reference data
         # Interpolation will be required.
         # The age_matched_index is one below the age supplied. There
         # needs to be a value below that, and two values above the supplied age,
         # for cubic interpolation to be possible.
-        age_one_below = lms_value_array_for_measurement[age_matched_index]["decimal_age"]
-        age_one_above = lms_value_array_for_measurement[age_matched_index + 1]["decimal_age"]
+        age_one_below = lms_value_array_for_measurement[age_matched_index][
+            "decimal_age"
+        ]
+        age_one_above = lms_value_array_for_measurement[age_matched_index + 1][
+            "decimal_age"
+        ]
         parameter_one_below = lms_value_array_for_measurement[age_matched_index]
         parameter_one_above = lms_value_array_for_measurement[age_matched_index + 1]
 
-        if age_matched_index >= 1 and age_matched_index < len(lms_value_array_for_measurement) - 2:
+        if (
+            age_matched_index >= 1
+            and age_matched_index < len(lms_value_array_for_measurement) - 2
+            and "sigma" not in lms_value_array_for_measurement[age_matched_index] # CDC BMI references have an additional sigma value
+            # and CDC only use linear interpolation
+        ):
             # cubic interpolation is possible
-            age_two_below = lms_value_array_for_measurement[age_matched_index - 1]["decimal_age"]
-            age_two_above = lms_value_array_for_measurement[age_matched_index + 2]["decimal_age"]
+            age_two_below = lms_value_array_for_measurement[age_matched_index - 1][
+                "decimal_age"
+            ]
+            age_two_above = lms_value_array_for_measurement[age_matched_index + 2][
+                "decimal_age"
+            ]
             parameter_two_below = lms_value_array_for_measurement[age_matched_index - 1]
             parameter_two_above = lms_value_array_for_measurement[age_matched_index + 2]
 
-            l = cubic_interpolation(age=age, age_one_below=age_one_below, age_two_below=age_two_below, age_one_above=age_one_above, age_two_above=age_two_above,
-                                    parameter_two_below=parameter_two_below["L"], parameter_one_below=parameter_one_below["L"], parameter_one_above=parameter_one_above["L"], parameter_two_above=parameter_two_above["L"])
-            m = cubic_interpolation(age=age, age_one_below=age_one_below, age_two_below=age_two_below, age_one_above=age_one_above, age_two_above=age_two_above,
-                                    parameter_two_below=parameter_two_below["M"], parameter_one_below=parameter_one_below["M"], parameter_one_above=parameter_one_above["M"], parameter_two_above=parameter_two_above["M"])
-            s = cubic_interpolation(age=age, age_one_below=age_one_below, age_two_below=age_two_below, age_one_above=age_one_above, age_two_above=age_two_above,
-                                    parameter_two_below=parameter_two_below["S"], parameter_one_below=parameter_one_below["S"], parameter_one_above=parameter_one_above["S"], parameter_two_above=parameter_two_above["S"])
+            l = cubic_interpolation(
+                age=age,
+                age_one_below=age_one_below,
+                age_two_below=age_two_below,
+                age_one_above=age_one_above,
+                age_two_above=age_two_above,
+                parameter_two_below=parameter_two_below["L"],
+                parameter_one_below=parameter_one_below["L"],
+                parameter_one_above=parameter_one_above["L"],
+                parameter_two_above=parameter_two_above["L"],
+            )
+            m = cubic_interpolation(
+                age=age,
+                age_one_below=age_one_below,
+                age_two_below=age_two_below,
+                age_one_above=age_one_above,
+                age_two_above=age_two_above,
+                parameter_two_below=parameter_two_below["M"],
+                parameter_one_below=parameter_one_below["M"],
+                parameter_one_above=parameter_one_above["M"],
+                parameter_two_above=parameter_two_above["M"],
+            )
+            s = cubic_interpolation(
+                age=age,
+                age_one_below=age_one_below,
+                age_two_below=age_two_below,
+                age_one_above=age_one_above,
+                age_two_above=age_two_above,
+                parameter_two_below=parameter_two_below["S"],
+                parameter_one_below=parameter_one_below["S"],
+                parameter_one_above=parameter_one_above["S"],
+                parameter_two_above=parameter_two_above["S"],
+            )
+            if "sigma" in lms_value_array_for_measurement[age_matched_index]:
+                # CDC BMI references have an additional sigma value
+                sigma = cubic_interpolation(
+                    age=age,
+                    age_one_below=age_one_below,
+                    age_two_below=age_two_below,
+                    age_one_above=age_one_above,
+                    age_two_above=age_two_above,
+                    parameter_two_below=parameter_two_below["sigma"],
+                    parameter_one_below=parameter_one_below["sigma"],
+                    parameter_one_above=parameter_one_above["sigma"],
+                    parameter_two_above=parameter_two_above["sigma"],
+                )
+                return {"l": l, "m": m, "s": s, "sigma": sigma}
         else:
-            # we are at the thresholds of this reference. Only linear interpolation is possible
-            l = linear_interpolation(age=age, age_one_below=age_one_below, age_one_above=age_one_above,
-                                     parameter_one_below=parameter_one_below["L"], parameter_one_above=parameter_one_above["L"])
-            m = linear_interpolation(age=age, age_one_below=age_one_below, age_one_above=age_one_above,
-                                     parameter_one_below=parameter_one_below["M"], parameter_one_above=parameter_one_above["M"])
-            s = linear_interpolation(age=age, age_one_below=age_one_below, age_one_above=age_one_above,
-                                     parameter_one_below=parameter_one_below["S"], parameter_one_above=parameter_one_above["S"])
+            # we are at the thresholds of this reference or are using CDC. Only linear interpolation is possible
+            l = linear_interpolation(
+                age=age,
+                age_one_below=age_one_below,
+                age_one_above=age_one_above,
+                parameter_one_below=parameter_one_below["L"],
+                parameter_one_above=parameter_one_above["L"],
+            )
+            m = linear_interpolation(
+                age=age,
+                age_one_below=age_one_below,
+                age_one_above=age_one_above,
+                parameter_one_below=parameter_one_below["M"],
+                parameter_one_above=parameter_one_above["M"],
+            )
+            s = linear_interpolation(
+                age=age,
+                age_one_below=age_one_below,
+                age_one_above=age_one_above,
+                parameter_one_below=parameter_one_below["S"],
+                parameter_one_above=parameter_one_above["S"],
+            )
+            if "sigma" in lms_value_array_for_measurement[age_matched_index]:
+                # CDC BMI references have an additional sigma value
+                sigma = linear_interpolation(
+                    age=age,
+                    age_one_below=age_one_below,
+                    age_one_above=age_one_above,
+                    parameter_one_below=parameter_one_below["sigma"],
+                    parameter_one_above=parameter_one_above["sigma"],
+                )
+                return {"l": l, "m": m, "s": s, "sigma": sigma}
 
-    return {
-        "l": l,
-        "m": m,
-        "s": s
-    }
+    return {"l": l, "m": m, "s": s}
+
 
 def lms_value_array_for_measurement_for_reference(
     reference: str,
     age: float,
     measurement_method: str,
     sex: str,
-    default_youngest_reference: bool = False
+    default_youngest_reference: bool = False,
 ) -> list:
     """
     This is a private function which returns the LMS array for measurement_method and sex and reference
-    It accepts the reference ('uk-who', 'turners-syndrome' or 'trisomy-21')
+    It accepts the reference ('uk-who', 'turners-syndrome', 'trisomy-21', 'cdc')
     If the UK-WHO reference is requested, it is possible to be select the younger reference for overlap values,
     using the default_youngest_reference flag.
     """
@@ -469,23 +612,37 @@ def lms_value_array_for_measurement_for_reference(
     if reference == UK_WHO:
         try:
             lms_value_array_for_measurement = uk_who_lms_array_for_measurement_and_sex(
-                age=age, 
-                measurement_method=measurement_method, 
+                age=age,
+                measurement_method=measurement_method,
                 sex=sex,
-                default_youngest_reference=default_youngest_reference
+                default_youngest_reference=default_youngest_reference,
             )
         except LookupError as error:
             raise LookupError(error)
     elif reference == TURNERS:
         try:
             lms_value_array_for_measurement = turner_lms_array_for_measurement_and_sex(
-                measurement_method=measurement_method, sex=sex, age=age)
+                measurement_method=measurement_method, sex=sex, age=age
+            )
         except LookupError as error:
             raise LookupError(error)
     elif reference == TRISOMY_21:
         try:
-            lms_value_array_for_measurement = trisomy_21_lms_array_for_measurement_and_sex(
-                measurement_method=measurement_method, sex=sex, age=age)
+            lms_value_array_for_measurement = (
+                trisomy_21_lms_array_for_measurement_and_sex(
+                    measurement_method=measurement_method, sex=sex, age=age
+                )
+            )
+        except LookupError as error:
+            raise LookupError(error)
+    elif reference == CDC:
+        try:
+            lms_value_array_for_measurement = cdc_lms_array_for_measurement_and_sex(
+                age=age,
+                measurement_method=measurement_method,
+                sex=sex,
+                default_youngest_reference=default_youngest_reference
+            )
         except LookupError as error:
             raise LookupError(error)
     else:

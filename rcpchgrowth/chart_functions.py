@@ -2,8 +2,26 @@ from typing import Union
 from .global_functions import centile, lms_value_array_for_measurement_for_reference, sds_for_centile, rounded_sds_for_centile, generate_centile
 from .uk_who import select_reference_data_for_uk_who_chart
 from .trisomy_21 import select_reference_data_for_trisomy_21
+from .cdc import select_reference_data_for_cdc_chart
 from .turner import select_reference_data_for_turner
-from .constants.reference_constants import FEMALE, HEIGHT, UK_WHO, TURNERS, TRISOMY_21, COLE_TWO_THIRDS_SDS_NINE_CENTILES, COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION, THREE_PERCENT_CENTILE_COLLECTION, UK_WHO_REFERENCES
+from .constants.reference_constants import (
+    FEMALE, 
+    HEIGHT, 
+    UK_WHO, 
+    TURNERS, 
+    TRISOMY_21, 
+    COLE_TWO_THIRDS_SDS_NINE_CENTILES, 
+    COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION,
+    THREE_PERCENT_CENTILES,
+    THREE_PERCENT_CENTILE_COLLECTION,
+    FIVE_PERCENT_CENTILES,
+    FIVE_PERCENT_CENTILE_COLLECTION,
+    EIGHTY_FIVE_PERCENT_CENTILES,
+    EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION,
+    UK_WHO_REFERENCES, 
+    CDC_REFERENCES, 
+    CDC
+)
 
 """
 Public chart functions
@@ -32,6 +50,12 @@ def create_chart(
             is_sds=is_sds)
     elif reference == TRISOMY_21:
         return create_trisomy_21_chart(
+            measurement_method=measurement_method, 
+            sex=sex, 
+            centile_format=centile_format, 
+            is_sds=is_sds)
+    elif reference == CDC:
+        return create_cdc_chart(
             measurement_method=measurement_method, 
             sex=sex, 
             centile_format=centile_format, 
@@ -67,6 +91,7 @@ def generate_custom_sds_line(
             centile_data=[]
             try:
                 centile_data= build_centile_object(
+                    reference=UK_WHO,
                     measurement_method=measurement_method,
                     sex=sex,
                     lms_array_for_measurement=lms_array_for_measurement,
@@ -78,8 +103,30 @@ def generate_custom_sds_line(
                 centile_data=[]
         # all data can now be tagged by reference_name and added to reference_data
         reference_data.append({reference: centile_data})
+    elif reference == CDC:
+        for reference_index, reference in enumerate(CDC_REFERENCES):
+            # the centile reference data
+            lms_array_for_measurement=select_reference_data_for_cdc_chart(
+                cdc_reference_name=reference, 
+                measurement_method=measurement_method, 
+                sex=sex)
+            centile_data=[]
+            try:
+                centile_data= build_centile_object(
+                    reference=CDC,
+                    measurement_method=measurement_method,
+                    sex=sex,
+                    lms_array_for_measurement=lms_array_for_measurement,
+                    z=custom_sds,
+                    centile=custom_centile
+                )
+            except:
+                print(f"Could not generate SDS centile data.")
+                centile_data=[]
+        # all data can now be tagged by reference_name and added to reference_data
+        reference_data.append({reference: centile_data})
     else:
-        # get the reference data
+        # get the reference data (Trisomy 21, Turner both hav a single reference)
         lms_array_for_measurement=[]
         try:
             lms_array_for_measurement=select_reference_lms_data(
@@ -94,6 +141,7 @@ def generate_custom_sds_line(
         try:
             centile_data=[]
             centile_data= build_centile_object(
+                    reference=reference,
                     measurement_method=measurement_method,
                     sex=sex,
                     lms_array_for_measurement=lms_array_for_measurement,
@@ -159,6 +207,8 @@ def select_reference_lms_data(reference: str, measurement_method: str, sex: str)
         lms_array_for_measurement=select_reference_data_for_turner(measurement_method=measurement_method, sex=sex)
     elif reference == TRISOMY_21:
         lms_array_for_measurement=select_reference_data_for_trisomy_21(measurement_method=measurement_method, sex=sex)
+    elif reference == CDC:
+        lms_array_for_measurement=select_reference_data_for_cdc_chart(measurement_method=measurement_method, sex=sex)
     else: 
         raise Exception("No data has been selected!")
     
@@ -166,7 +216,7 @@ def select_reference_lms_data(reference: str, measurement_method: str, sex: str)
     
 
 
-def build_centile_object(measurement_method: str, sex: str, lms_array_for_measurement: list, z: float, centile: float):
+def build_centile_object(reference, measurement_method: str, sex: str, lms_array_for_measurement: list, z: float, centile: float):
     sex_list: dict = {}  # all the data for a given sex are stored here
     measurements: dict = {}  # all the data for a given measurement_method are stored here
     centiles = []  # all generated centiles for a selected centile collection are stored here
@@ -181,7 +231,7 @@ def build_centile_object(measurement_method: str, sex: str, lms_array_for_measur
             measurement_method=measurement_method,
             sex=sex,
             lms_array_for_measurement=lms_array_for_measurement,
-            reference=UK_WHO
+            reference=reference
         )
     except:
         centile_data=None
@@ -220,14 +270,13 @@ def create_uk_who_chart(
     cole_method = False
 
     if (type(centile_format) is list):
+        # a custom list of centiles was provided
         centile_sds_collection = centile_format
-    elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
-        centile_sds_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
-        cole_method = True
-        is_sds=False
     else:
-        centile_sds_collection = THREE_PERCENT_CENTILE_COLLECTION
+        # a standard centile collection was selected
+        centile_sds_collection = select_centile_format(centile_format)
         is_sds=False
+
     ##
     # iterate through the 4 references that make up UK-WHO
     # There will be a list for each one
@@ -350,13 +399,11 @@ def create_turner_chart(centile_format: Union[str, list], is_sds=False):
     cole_method = False
 
     if (type(centile_format) is list):
+        # a custom list of centiles was provided
         centile_sds_collection = centile_format
-    elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
-        centile_sds_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
-        cole_method = True
-        is_sds=False
     else:
-        centile_sds_collection = THREE_PERCENT_CENTILE_COLLECTION
+        # a standard centile collection was selected
+        centile_sds_collection = select_centile_format(centile_format)
         is_sds=False
 
     # all data for a the reference are stored here: this is returned to the user
@@ -456,13 +503,11 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: U
     cole_method = False
 
     if (type(centile_format) is list):
+        # a custom list of centiles was provided
         centile_sds_collection = centile_format
-    elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
-        centile_sds_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
-        cole_method = True
-        is_sds=False
     else:
-        centile_sds_collection = THREE_PERCENT_CENTILE_COLLECTION
+        # a standard centile collection was selected
+        centile_sds_collection = select_centile_format(centile_format)
         is_sds=False
 
     # all data for a the reference are stored here: this is returned to the user
@@ -546,3 +591,170 @@ def create_trisomy_21_chart(measurement_method: str, sex: str, centile_format: U
         female {...}
     }]
     """
+
+def create_cdc_chart(
+        measurement_method: str, 
+        sex: str, 
+        centile_format: Union[str, list] = COLE_TWO_THIRDS_SDS_NINE_CENTILES, 
+        is_sds = False
+    ):
+
+    # user selects which centile collection they want, for sex and measurement_method
+    # If the Cole method is selected, conversion between centile and SDS
+    # is different as SDS is rounded to the nearest 2/3
+    # Cole method selection is stored in the cole_method flag.
+    # If no parameter is passed, default is the Cole method
+    # Alternatively it is possible to pass a custom list of values - if the is_sds flag is False (default) these are centiles
+    
+    centile_sds_collection = []
+    cole_method = False
+
+    if (type(centile_format) is list):
+        # a custom list of centiles was provided
+        centile_sds_collection = centile_format
+    else:
+        # a standard centile collection was selected
+        centile_sds_collection = select_centile_format(centile_format)
+        is_sds=False
+
+    ##
+    # iterate through the 4 references that make up UK-WHO
+    # There will be a list for each one
+    ##
+
+    # all data for a given reference are stored here: this is returned to the user
+    reference_data = []
+
+    for reference_index, reference in enumerate(CDC_REFERENCES):
+        sex_list: dict = {}  # all the data for a given sex are stored here
+        # For each reference we have 2 sexes
+        # for sex_index, sex in enumerate(SEXES):
+        # For each sex we have 4 measurement_methods
+
+        measurements: dict = {}  # all the data for a given measurement_method are stored here
+
+        # for measurement_index, measurement_method in enumerate(MEASUREMENT_METHODS):
+        # for every measurement method we have as many centiles
+        # as have been requested
+
+        centiles = []  # all generated centiles for a selected centile collection are stored here
+
+        # the centile reference data
+        try:
+            lms_array_for_measurement=select_reference_data_for_cdc_chart(
+                cdc_reference_name=reference, 
+                measurement_method=measurement_method, 
+                sex=sex)
+        except:
+            lms_array_for_measurement = []
+
+        for centile_index, centile_sds in enumerate(centile_sds_collection):
+            # we must create a z for each requested centile
+            # if the Cole 9 centiles were selected, these are rounded,
+            # so conversion to SDS is different
+            # Otherwise standard conversation of centile to z is used
+
+            z=0.0 #initialise
+            centile_value=0.0 #initialise
+
+            if cole_method:
+                z = rounded_sds_for_centile(centile_sds) # a centile was provided, so convert to z
+                centile_value=centile_sds # store the original centile value 
+            else:
+                if (is_sds):
+                    z=centile_sds # an sds was supplied
+                    centile_value=centile(centile_sds) # convert the z to a centile and store
+                else:
+                    z = sds_for_centile(centile_sds) # a centile was provided, so convert to z
+                    centile_value=centile_sds # store the original centile value 
+            centile_data = []
+
+            try:
+                # Generate a centile. there will be nine of these if Cole method selected.
+                # Some data does not exist at all ages, so any error reflects missing data.
+                # If this happens, an empty list is returned.
+                centile_data = generate_centile(
+                    z=z,
+                    centile=centile_value,
+                    measurement_method=measurement_method,
+                    sex=sex,
+                    lms_array_for_measurement=lms_array_for_measurement,
+                    reference=CDC,
+                    is_sds=is_sds
+                )
+            except:
+                print(f"Not possible to generate centile data for CDC {measurement_method} in {sex}s.")
+                centile_data=None
+            # Store this centile for a given measurement
+            
+            centiles.append({"sds": round(z * 100) / 100,
+                        "centile": centile_value, "data": centile_data})
+
+        # this is the end of the centile_collection for loop
+        # All the centiles for this measurement, sex and reference are added to the measurements list
+        measurements.update({measurement_method: centiles})
+
+        # this is the end of the measurement_methods loop
+        # All data for all measurement_methods for this sex are added to the sex_list list
+
+        sex_list.update({sex: measurements})
+
+        # all data can now be tagged by reference_name and added to reference_data
+        reference_data.append({reference: sex_list})
+
+    # returns a list of 4 references, each containing 2 lists for each sex,
+    # each sex in turn containing 4 datasets for each measurement_method
+    return reference_data
+
+    """
+    # return object structure
+    [ cdc_infant: {
+        male: {
+            height: [
+                {
+                    sds: -2.667,
+                    centile: 0.4
+                    data: [{l: , x: , y: }, ....]
+                }
+            ],
+            weight: [...],
+            bmi: [...],
+            ofc: [...]
+        },
+        female {...}
+    },
+    cdc_child: {
+        male: {
+            height: [
+                {
+                    sds: -2.667,
+                    centile: 0.4
+                    data: [{l: , x: , y: }, ....]
+                }
+            ],
+            weight: [...],
+            bmi: [...],
+            ofc: [...]
+            },
+        female {...}
+        }
+    ]
+    """
+
+# Private functions
+def select_centile_format(centile_format: str):
+    """
+    Select the centile format
+    Helper function to select the correct centile collection
+    the pre-defined collections are in the constants file and have string names: 'cole-nine-centiles', 'three-percent-centiles', 'five-percent-centiles', 'eighty-five-percent_centiles'
+    """
+    if centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
+        return COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
+    elif centile_format == THREE_PERCENT_CENTILES:
+        return THREE_PERCENT_CENTILE_COLLECTION
+    elif centile_format == FIVE_PERCENT_CENTILES:
+        return FIVE_PERCENT_CENTILE_COLLECTION
+    elif centile_format == EIGHTY_FIVE_PERCENT_CENTILES:
+        return EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION
+    else:
+        return COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
