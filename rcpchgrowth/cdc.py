@@ -27,10 +27,11 @@ reference: reference data
 # load the reference data
 data_directory = resources.files("rcpchgrowth.data_tables")
 
-data_path = Path(data_directory,"fenton", "fenton.json")  # 23 weeks to 50 weeks - currently not in the code base
-with open(data_path) as json_file:
-    FENTON_DATA = json.load(json_file)
-    json_file.close()
+# data_path = Path(data_directory,"fenton", "fenton.json")  # 23 weeks to 50 weeks - currently not in the code base
+# with open(data_path) as json_file:
+#     FENTON_DATA = json.load(json_file)
+#     json_file.close()
+FENTON_DATA = []
 
 data_path = Path(data_directory, "cdc_infants.json")  # CDC interpretation of WHO 0-2y
 with open(data_path) as json_file:
@@ -134,8 +135,8 @@ def select_reference_data_for_cdc_chart(
     default_youngest_reference: bool = False,
 ):
 
-    # takes a uk_who_reference name (see parameter constants), measurement_method and sex to return
-    # reference data
+    # takes a cdc reference name (see parameter constants), measurement_method and sex to return
+    # reference data - NOTE for the moment Fenton is not implemented as license not yet secured and reference data therefore not committed to the repo
 
     if cdc_reference_name == FENTON:
         try:

@@ -559,7 +559,7 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list):
                 )
                 return {"l": l, "m": m, "s": s, "sigma": sigma}
         else:
-            # we are at the thresholds of this reference or are using CDC BMI. Only linear interpolation is possible
+            # we are at the thresholds of this reference or are using CDC. Only linear interpolation is possible
             l = linear_interpolation(
                 age=age,
                 age_one_below=age_one_below,

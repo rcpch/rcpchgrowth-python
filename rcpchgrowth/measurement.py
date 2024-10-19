@@ -71,6 +71,7 @@ class Measurement:
         # self.height_prediction_reference = height_prediction_reference
         self.events_text = events_text
 
+        # validate the measurement method to ensure that the observation value is within the expected range - TODO this will be changed to SDS-based cutoffs
         try:
             self.__validate_measurement_method(
                 measurement_method=measurement_method, observation_value=observation_value)
@@ -85,12 +86,14 @@ class Measurement:
             observation_date=self.observation_date,
             gestation_weeks=self.gestation_weeks,
             gestation_days=self.gestation_days)
-
+        
+        
         # the calculate_measurements_object receives the child_observation_value and measurement_calculated_values objects
         self.calculated_measurements_object = self.sds_and_centile_for_measurement_method(
             sex=self.sex,
             corrected_age=self.ages_object['measurement_dates']['corrected_decimal_age'],
             chronological_age=self.ages_object['measurement_dates']['chronological_decimal_age'],
+            gestation_weeks=self.gestation_weeks,
             measurement_method=self.measurement_method,
             observation_value=self.observation_value,
             observation_value_error=observation_value_error,
@@ -223,6 +226,7 @@ class Measurement:
         sex: str,
         corrected_age: float,
         chronological_age: float,
+        gestation_weeks: int,
         observation_value_error: str,
         measurement_method: str,
         observation_value: float,
@@ -235,7 +239,8 @@ class Measurement:
         # calculate sds based on reference, age, measurement, sex and prematurity
 
         if corrected_age is None or chronological_age is None:
-            # there has been an age calculation error. Further calculation impossible
+            # there has been an age calculation error. Further calculation impossible - this may be due to a date error or because CDC reference data is not available in preterm infants
+
             self.return_measurement_object = self.__create_measurement_object(
                 measurement_method=measurement_method,
                 observation_value=observation_value,
@@ -252,13 +257,19 @@ class Measurement:
                 chronological_percentage_median_bmi=None
             )
             return self.return_measurement_object
-
-        try:
-            corrected_measurement_sds = sds_for_measurement(reference=reference, age=corrected_age, measurement_method=measurement_method,
-                                                            observation_value=observation_value, sex=sex)
-        except Exception as err:
-            corrected_measurement_error = f"{err}"
+        
+            # CDC data cannot be used for preterm infants who are not yet term. We will treat this baby as term, but signpost to the user that this is what we are doing.
+        if corrected_age < 0 and reference == "cdc":
+            corrected_measurement_error = "This baby is born premature. CDC data is not available for preterm infants."
+            corrected_age = None
             corrected_measurement_sds = None
+        else:
+            try:
+                corrected_measurement_sds = sds_for_measurement(reference=reference, age=corrected_age, measurement_method=measurement_method,
+                                                                observation_value=observation_value, sex=sex)
+            except Exception as err:
+                corrected_measurement_error = f"{err}"
+                corrected_measurement_sds = None
 
         try:
             chronological_measurement_sds = sds_for_measurement(reference=reference, age=chronological_age, measurement_method=measurement_method,
@@ -309,7 +320,8 @@ class Measurement:
             except TypeError as err:
                 corrected_measurement_error = "Not possible to calculate centile"
                 corrected_centile_band = None
-        
+
+        # calculate BMI centiles and percentage median BMI
         corrected_percentage_median_bmi = None
         chronological_percentage_median_bmi = None
         if measurement_method == BMI and corrected_age is not None and chronological_age is not None:
@@ -465,17 +477,14 @@ class Measurement:
                 self.estimated_date_delivery_string = None
                 chronological_decimal_age_error = "Estimated date of delivery calculation error."
 
-            # ISSUE: #155 observation date COULD be before estimated date delivery in a preterm
             try:
                 self.corrected_calendar_age = chronological_calendar_age(
                     self.estimated_date_delivery, observation_date)
-            except:
+            except Exception as err:
+                # The EDD is still in the future as this preterm baby is not yet term. The error returned is not useful as the function is expecting a birth date in the past but is being passed an EDD in the future.
+                # It is not really an error, but a limitation of the function. The calendar age really is the same as the corrected gestational age here.
                 self.corrected_calendar_age = None
-                if self.estimated_date_delivery > observation_date:
-                    # ISSUE: #157 if observation date is BEFORE birth date then an error should be raised
-                    chronological_decimal_age_error = "The due date is after the observation date - a calendar age cannot be calculated."
-                else:
-                    chronological_decimal_age_error = "A calendar age cannot be calculated."
+                chronological_decimal_age_error = None
 
             try:
                 self.estimated_date_delivery_string = self.estimated_date_delivery.strftime(
