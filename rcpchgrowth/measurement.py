@@ -93,7 +93,6 @@ class Measurement:
             sex=self.sex,
             corrected_age=self.ages_object['measurement_dates']['corrected_decimal_age'],
             chronological_age=self.ages_object['measurement_dates']['chronological_decimal_age'],
-            gestation_weeks=self.gestation_weeks,
             measurement_method=self.measurement_method,
             observation_value=self.observation_value,
             observation_value_error=observation_value_error,
@@ -226,7 +225,6 @@ class Measurement:
         sex: str,
         corrected_age: float,
         chronological_age: float,
-        gestation_weeks: int,
         observation_value_error: str,
         measurement_method: str,
         observation_value: float,
@@ -258,10 +256,9 @@ class Measurement:
             )
             return self.return_measurement_object
         
-            # CDC data cannot be used for preterm infants who are not yet term. We will treat this baby as term, but signpost to the user that this is what we are doing.
+            # CDC data cannot be used for preterm infants who are not yet term. We will not be able to calculate SDS scores and centiles so will return none, but signpost to the user that this is what we are doing.
         if corrected_age < 0 and reference == "cdc":
             corrected_measurement_error = "This baby is born premature. CDC data is not available for preterm infants."
-            corrected_age = None
             corrected_measurement_sds = None
         else:
             try:
