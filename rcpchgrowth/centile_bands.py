@@ -1,7 +1,7 @@
 # imports from rcpchgrowth
 from rcpchgrowth.constants.reference_constants import COLE_TWO_THIRDS_SDS_NINE_CENTILES, THREE_PERCENT_CENTILES
-from .constants import BMI, HEAD_CIRCUMFERENCE,THREE_PERCENT_CENTILE_COLLECTION,COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION 
-from .global_functions import rounded_sds_for_centile
+from .constants import BMI, HEAD_CIRCUMFERENCE,THREE_PERCENT_CENTILE_COLLECTION,COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION ,FIVE_PERCENT_CENTILES, FIVE_PERCENT_CENTILE_COLLECTION, EIGHTY_FIVE_PERCENT_CENTILES, EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION
+from .global_functions import rounded_sds_for_centile, sds_for_centile
 
 # Recommendations from Project board for reporting Centiles
 
@@ -79,7 +79,7 @@ def quarter_distances(centile):
     this distance from centile line is used for all centile patterns, regardless of 
      whether the centile lines are equally spaced apart
     """
-    sds = rounded_sds_for_centile(centile)
+    sds = sds_for_centile(centile)
     quarter_distance = 0.25 * 0.666
     return sds - quarter_distance, sds + quarter_distance
 
@@ -96,7 +96,7 @@ def generate_centile_band_ranges(centile_collection):
     return centile_bands
 
 
-def centile_band_for_centile(sds: float, measurement_method: str, centile_format: str)->str:
+def centile_band_for_centile(sds: float, measurement_method: str, centile_format: str = COLE_TWO_THIRDS_SDS_NINE_CENTILES)->str:
     """
         this function returns a centile band into which the sds falls
     
@@ -104,10 +104,15 @@ def centile_band_for_centile(sds: float, measurement_method: str, centile_format
         params: accepts a measurement_method as string
         params: accepts array of centiles representing the centile lines
     """
+    from scipy.stats import norm
     
     centile_collection = []
     if centile_format == THREE_PERCENT_CENTILES:
         centile_collection = THREE_PERCENT_CENTILE_COLLECTION
+    elif centile_format == FIVE_PERCENT_CENTILES:
+        centile_collection = FIVE_PERCENT_CENTILE_COLLECTION
+    elif centile_format == EIGHTY_FIVE_PERCENT_CENTILES:
+        centile_collection = EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION
     elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
         centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
 
@@ -123,12 +128,13 @@ def centile_band_for_centile(sds: float, measurement_method: str, centile_format
     elif sds > 6:
         return f"This {measurement_method} measurement is well above the normal range. Please review its accuracy."
     elif sds <= centile_band_ranges[0][0]:
-        return f"This {measurement_method} measurement is below the normal range"
+        return f"This {measurement_method} measurement is below the normal range."
     elif sds > centile_band_ranges[-1][1]:
-        return f"This {measurement_method} measurement is above the normal range"        
+        return f"This {measurement_method} measurement is above the normal range."        
     else:
         #even indices of centile_bands list is always on centile
-        #odd indices of cnetile_bands list is always between centiles
+                    
+        #odd indices of centile_bands list is always between centiles
         for r in range(len(centile_band_ranges)):
             if centile_band_ranges[r][0] <= sds < centile_band_ranges[r][1]:
                 if r%2 == 0:

@@ -309,10 +309,14 @@ class Measurement:
                 corrected_measurement_centile = None
 
             try:
+                if reference == CDC:
+                    centile_format = EIGHTY_FIVE_PERCENT_CENTILES
+                else:
+                    centile_format = COLE_TWO_THIRDS_SDS_NINE_CENTILES
                 corrected_centile_band = centile_band_for_centile(
                     sds=corrected_measurement_sds, 
                     measurement_method=measurement_method,
-                    centile_format=COLE_TWO_THIRDS_SDS_NINE_CENTILES
+                    centile_format=centile_format
                 )
             except TypeError as err:
                 corrected_measurement_error = "Not possible to calculate centile"
