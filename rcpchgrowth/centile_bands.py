@@ -104,7 +104,6 @@ def centile_band_for_centile(sds: float, measurement_method: str, centile_format
         params: accepts a measurement_method as string
         params: accepts array of centiles representing the centile lines
     """
-    from scipy.stats import norm
     
     centile_collection = []
     if centile_format == THREE_PERCENT_CENTILES:
