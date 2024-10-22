@@ -40,6 +40,7 @@ def return_suffix(centile: float)->str:
     # This function only works if the centile is received already rounded to 1 decimal place or 2 decimal places if reference is CDC and measurement method is BMI
 
     # Note that if reference is CDC and measurement method is BMI, the centile is rounded to 2 decimal places if centile > 99.9
+
     
     # centile should not be < 0 or > 100
     if centile <=0:
@@ -47,11 +48,12 @@ def return_suffix(centile: float)->str:
     if centile >= 100:
         return "above highest centile."
 
-    suffix="th" # this is the default
+    
     final_number = centile
-
     if isinstance(centile, float) and centile.is_integer():
-        final_number = int(centile) # convert to integer if it is a whole number
+        final_number = int(centile) # convert to integer if it is a whole number as removes the decimal point
+
+    suffix="th" # this is the default
     
     # get the final digit
     string_from_number = str(final_number)
@@ -65,7 +67,7 @@ def return_suffix(centile: float)->str:
     
     # 11, 12, 13 are special cases as they take 'th'
     # get the final 2 digits if not a decimal
-    if isinstance(final_number, float) and final_number.is_integer():
+    if isinstance(final_number, float) and final_number.is_integer() or (isinstance(final_number, int) and len(string_from_number) > 1):
         final_two_digits = string_from_number[len(string_from_number)-2: len(string_from_number)]
         if int(final_two_digits) > 10 and int(final_two_digits) < 14:
             suffix = "th"
