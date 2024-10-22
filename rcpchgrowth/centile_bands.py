@@ -49,6 +49,9 @@ def return_suffix(centile: float)->str:
 
     suffix="th" # this is the default
     final_number = centile
+
+    if isinstance(centile, float) and centile.is_integer():
+        final_number = int(centile) # convert to integer if it is a whole number
     
     # get the final digit
     string_from_number = str(final_number)
@@ -62,8 +65,7 @@ def return_suffix(centile: float)->str:
     
     # 11, 12, 13 are special cases as they take 'th'
     # get the final 2 digits if not a decimal
-    print(final_number, string_from_number)
-    if isinstance(final_number, float) and final_number.is_integer() or isinstance(final_number, int):
+    if isinstance(final_number, float) and final_number.is_integer():
         final_two_digits = string_from_number[len(string_from_number)-2: len(string_from_number)]
         if int(final_two_digits) > 10 and int(final_two_digits) < 14:
             suffix = "th"

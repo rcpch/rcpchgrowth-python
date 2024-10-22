@@ -571,28 +571,6 @@ class Measurement:
         # Only those calculations relevant to the measurement_method requested populate the final JSON
         # object.
 
-        if corrected_centile_value:
-            if reference == CDC and self.measurement_method == BMI:
-                if corrected_centile_value >= 99.99 and corrected_centile_value < 100:
-                    corrected_centile_value = 99.99
-                elif corrected_centile_value > 99.9 and corrected_centile_value < 100:
-                    corrected_centile_value = round(corrected_centile_value, 2)
-                else:
-                    corrected_centile_value = round(corrected_centile_value, 1)
-            else:
-                corrected_centile_value = round(corrected_centile_value, 1)
-
-        if chronological_centile_value:
-            if reference == CDC and self.measurement_method == BMI:
-                if chronological_centile_value >= 99.99 or chronological_centile_value < 100:
-                    chronological_centile_value = 99.99
-                elif chronological_centile_value > 99.9 and chronological_centile_value < 100:
-                    chronological_centile_value = round(chronological_centile_value, 2)
-                else:
-                    chronological_centile_value = round(chronological_centile_value, 1)
-            else:
-                chronological_centile_value = round(chronological_centile_value, 1)
-
         measurement_calculated_values = {
             "corrected_sds": corrected_sds_value,
             "corrected_centile": corrected_centile_value,
