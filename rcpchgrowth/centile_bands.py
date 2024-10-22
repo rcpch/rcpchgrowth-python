@@ -1,5 +1,5 @@
 # imports from rcpchgrowth
-from rcpchgrowth.constants.reference_constants import COLE_TWO_THIRDS_SDS_NINE_CENTILES, THREE_PERCENT_CENTILES
+from rcpchgrowth.constants.reference_constants import COLE_TWO_THIRDS_SDS_NINE_CENTILES, THREE_PERCENT_CENTILES, UK_WHO, CDC
 from .constants import BMI, HEAD_CIRCUMFERENCE,THREE_PERCENT_CENTILE_COLLECTION,COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION ,FIVE_PERCENT_CENTILES, FIVE_PERCENT_CENTILE_COLLECTION, EIGHTY_FIVE_PERCENT_CENTILES, EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION
 from .global_functions import rounded_sds_for_centile, sds_for_centile
 
@@ -37,6 +37,9 @@ to these numbers and would accommodate different centile formats.
 def return_suffix(centile: float)->str:
     # Converts a cardinal number to an ordinal by adding a suffix 'st', 'nd', 'rd' or 'th'
     # Accepts decimals and negative numbers
+    # This function only works if the centile is received already rounded to 1 decimal place or 2 decimal places if reference is CDC and measurement method is BMI
+
+    # Note that if reference is CDC and measurement method is BMI, the centile is rounded to 2 decimal places if centile > 99.9
     
     # centile should not be < 0 or > 100
     if centile <=0:
@@ -46,10 +49,6 @@ def return_suffix(centile: float)->str:
 
     suffix="th" # this is the default
     final_number = centile
-    if (centile > 99 and centile <100) or (centile < 1 and centile > 0):
-        final_number=round(centile,1)
-    else:
-       final_number=int(round(final_number))
     
     # get the final digit
     string_from_number = str(final_number)
@@ -96,7 +95,7 @@ def generate_centile_band_ranges(centile_collection):
     return centile_bands
 
 
-def centile_band_for_centile(sds: float, measurement_method: str, centile_format: str = COLE_TWO_THIRDS_SDS_NINE_CENTILES)->str:
+def centile_band_for_centile(sds: float, measurement_method: str, centile_format: str = COLE_TWO_THIRDS_SDS_NINE_CENTILES, reference=UK_WHO)->str:
     """
         this function returns a centile band into which the sds falls
     

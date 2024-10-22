@@ -240,6 +240,7 @@ class Measurement:
             # there has been an age calculation error. Further calculation impossible - this may be due to a date error or because CDC reference data is not available in preterm infants
 
             self.return_measurement_object = self.__create_measurement_object(
+                reference=reference,
                 measurement_method=measurement_method,
                 observation_value=observation_value,
                 observation_value_error=observation_value_error,
@@ -359,6 +360,7 @@ class Measurement:
                 chronological_percentage_median_bmi = None
 
         self.return_measurement_object = self.__create_measurement_object(
+            reference=reference,
             measurement_method=measurement_method,
             observation_value=observation_value,
             observation_value_error=observation_value_error,
@@ -541,6 +543,7 @@ class Measurement:
 
     def __create_measurement_object(
         self,
+        reference: str,
         measurement_method: str,
         observation_value: float,
         observation_value_error: str,
@@ -569,15 +572,24 @@ class Measurement:
         # object.
 
         if corrected_centile_value:
-            if corrected_centile_value > 99 or corrected_centile_value < 1:
-                corrected_centile_value = round(corrected_centile_value, 1)
+            if reference == CDC and self.measurement_method == BMI:
+                if corrected_centile_value >= 99.99 and corrected_centile_value < 100:
+                    corrected_centile_value = 99.99
+                elif corrected_centile_value > 99.9 and corrected_centile_value < 100:
+                    corrected_centile_value = round(corrected_centile_value, 2)
+                else:
+                    corrected_centile_value = round(corrected_centile_value, 1)
             else:
                 corrected_centile_value = round(corrected_centile_value, 1)
 
         if chronological_centile_value:
-            if chronological_centile_value > 99 or chronological_centile_value < 1:
-                chronological_centile_value = round(
-                    chronological_centile_value, 1)
+            if reference == CDC and self.measurement_method == BMI:
+                if chronological_centile_value >= 99.99 or chronological_centile_value < 100:
+                    chronological_centile_value = 99.99
+                elif chronological_centile_value > 99.9 and chronological_centile_value < 100:
+                    chronological_centile_value = round(chronological_centile_value, 2)
+                else:
+                    chronological_centile_value = round(chronological_centile_value, 1)
             else:
                 chronological_centile_value = round(chronological_centile_value, 1)
 
