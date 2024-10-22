@@ -62,6 +62,7 @@ def return_suffix(centile: float)->str:
     
     # 11, 12, 13 are special cases as they take 'th'
     # get the final 2 digits if not a decimal
+    print(final_number, string_from_number)
     if isinstance(final_number, float) and final_number.is_integer() or isinstance(final_number, int):
         final_two_digits = string_from_number[len(string_from_number)-2: len(string_from_number)]
         if int(final_two_digits) > 10 and int(final_two_digits) < 14:
