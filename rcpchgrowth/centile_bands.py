@@ -1,7 +1,7 @@
 # imports from rcpchgrowth
-from rcpchgrowth.constants.reference_constants import COLE_TWO_THIRDS_SDS_NINE_CENTILES, THREE_PERCENT_CENTILES
-from .constants import BMI, HEAD_CIRCUMFERENCE,THREE_PERCENT_CENTILE_COLLECTION,COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION 
-from .global_functions import rounded_sds_for_centile
+from rcpchgrowth.constants.reference_constants import COLE_TWO_THIRDS_SDS_NINE_CENTILES, THREE_PERCENT_CENTILES, UK_WHO, CDC
+from .constants import BMI, HEAD_CIRCUMFERENCE,THREE_PERCENT_CENTILE_COLLECTION,COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION ,FIVE_PERCENT_CENTILES, FIVE_PERCENT_CENTILE_COLLECTION, EIGHTY_FIVE_PERCENT_CENTILES, EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION
+from .global_functions import rounded_sds_for_centile, sds_for_centile
 
 # Recommendations from Project board for reporting Centiles
 
@@ -37,6 +37,10 @@ to these numbers and would accommodate different centile formats.
 def return_suffix(centile: float)->str:
     # Converts a cardinal number to an ordinal by adding a suffix 'st', 'nd', 'rd' or 'th'
     # Accepts decimals and negative numbers
+    # This function only works if the centile is received already rounded to 1 decimal place or 2 decimal places if reference is CDC and measurement method is BMI
+
+    # Note that if reference is CDC and measurement method is BMI, the centile is rounded to 2 decimal places if centile > 99.9
+
     
     # centile should not be < 0 or > 100
     if centile <=0:
@@ -44,12 +48,12 @@ def return_suffix(centile: float)->str:
     if centile >= 100:
         return "above highest centile."
 
-    suffix="th" # this is the default
+    
     final_number = centile
-    if (centile > 99 and centile <100) or (centile < 1 and centile > 0):
-        final_number=round(centile,1)
-    else:
-       final_number=int(round(final_number))
+    if isinstance(centile, float) and centile.is_integer():
+        final_number = int(centile) # convert to integer if it is a whole number as removes the decimal point
+
+    suffix="th" # this is the default
     
     # get the final digit
     string_from_number = str(final_number)
@@ -63,7 +67,7 @@ def return_suffix(centile: float)->str:
     
     # 11, 12, 13 are special cases as they take 'th'
     # get the final 2 digits if not a decimal
-    if isinstance(final_number, float) and final_number.is_integer() or isinstance(final_number, int):
+    if isinstance(final_number, float) and final_number.is_integer() or (isinstance(final_number, int) and len(string_from_number) > 1):
         final_two_digits = string_from_number[len(string_from_number)-2: len(string_from_number)]
         if int(final_two_digits) > 10 and int(final_two_digits) < 14:
             suffix = "th"
@@ -79,7 +83,7 @@ def quarter_distances(centile):
     this distance from centile line is used for all centile patterns, regardless of 
      whether the centile lines are equally spaced apart
     """
-    sds = rounded_sds_for_centile(centile)
+    sds = sds_for_centile(centile)
     quarter_distance = 0.25 * 0.666
     return sds - quarter_distance, sds + quarter_distance
 
@@ -96,7 +100,7 @@ def generate_centile_band_ranges(centile_collection):
     return centile_bands
 
 
-def centile_band_for_centile(sds: float, measurement_method: str, centile_format: str)->str:
+def centile_band_for_centile(sds: float, measurement_method: str, centile_format: str = COLE_TWO_THIRDS_SDS_NINE_CENTILES, reference=UK_WHO)->str:
     """
         this function returns a centile band into which the sds falls
     
@@ -108,6 +112,10 @@ def centile_band_for_centile(sds: float, measurement_method: str, centile_format
     centile_collection = []
     if centile_format == THREE_PERCENT_CENTILES:
         centile_collection = THREE_PERCENT_CENTILE_COLLECTION
+    elif centile_format == FIVE_PERCENT_CENTILES:
+        centile_collection = FIVE_PERCENT_CENTILE_COLLECTION
+    elif centile_format == EIGHTY_FIVE_PERCENT_CENTILES:
+        centile_collection = EIGHTY_FIVE_PERCENT_CENTILE_COLLECTION
     elif centile_format == COLE_TWO_THIRDS_SDS_NINE_CENTILES:
         centile_collection = COLE_TWO_THIRDS_SDS_NINE_CENTILE_COLLECTION
 
@@ -123,12 +131,13 @@ def centile_band_for_centile(sds: float, measurement_method: str, centile_format
     elif sds > 6:
         return f"This {measurement_method} measurement is well above the normal range. Please review its accuracy."
     elif sds <= centile_band_ranges[0][0]:
-        return f"This {measurement_method} measurement is below the normal range"
+        return f"This {measurement_method} measurement is below the normal range."
     elif sds > centile_band_ranges[-1][1]:
-        return f"This {measurement_method} measurement is above the normal range"        
+        return f"This {measurement_method} measurement is above the normal range."        
     else:
         #even indices of centile_bands list is always on centile
-        #odd indices of cnetile_bands list is always between centiles
+                    
+        #odd indices of centile_bands list is always between centiles
         for r in range(len(centile_band_ranges)):
             if centile_band_ranges[r][0] <= sds < centile_band_ranges[r][1]:
                 if r%2 == 0:

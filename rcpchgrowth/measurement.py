@@ -240,6 +240,7 @@ class Measurement:
             # there has been an age calculation error. Further calculation impossible - this may be due to a date error or because CDC reference data is not available in preterm infants
 
             self.return_measurement_object = self.__create_measurement_object(
+                reference=reference,
                 measurement_method=measurement_method,
                 observation_value=observation_value,
                 observation_value_error=observation_value_error,
@@ -287,10 +288,17 @@ class Measurement:
                 chronological_measurement_error = "Not possible to calculate centile"
                 chronological_measurement_centile = None
             try:
+                if reference == CDC:
+                    if measurement_method == BMI:
+                        centile_format = EIGHTY_FIVE_PERCENT_CENTILES
+                    else:
+                        centile_format = THREE_PERCENT_CENTILES
+                else:
+                    centile_format = COLE_TWO_THIRDS_SDS_NINE_CENTILES
                 chronological_centile_band = centile_band_for_centile(
                     sds=chronological_measurement_sds, 
                     measurement_method=measurement_method,
-                    centile_format=COLE_TWO_THIRDS_SDS_NINE_CENTILES
+                    centile_format=centile_format
                     )
             except TypeError as err:
                 chronological_measurement_error = "Not possible to calculate centile"
@@ -309,10 +317,17 @@ class Measurement:
                 corrected_measurement_centile = None
 
             try:
+                if reference == CDC:
+                    if measurement_method == BMI:
+                        centile_format = EIGHTY_FIVE_PERCENT_CENTILES
+                    else:
+                        centile_format = THREE_PERCENT_CENTILES
+                else:
+                    centile_format = COLE_TWO_THIRDS_SDS_NINE_CENTILES
                 corrected_centile_band = centile_band_for_centile(
                     sds=corrected_measurement_sds, 
                     measurement_method=measurement_method,
-                    centile_format=COLE_TWO_THIRDS_SDS_NINE_CENTILES
+                    centile_format=centile_format
                 )
             except TypeError as err:
                 corrected_measurement_error = "Not possible to calculate centile"
@@ -345,6 +360,7 @@ class Measurement:
                 chronological_percentage_median_bmi = None
 
         self.return_measurement_object = self.__create_measurement_object(
+            reference=reference,
             measurement_method=measurement_method,
             observation_value=observation_value,
             observation_value_error=observation_value_error,
@@ -527,6 +543,7 @@ class Measurement:
 
     def __create_measurement_object(
         self,
+        reference: str,
         measurement_method: str,
         observation_value: float,
         observation_value_error: str,
@@ -553,19 +570,6 @@ class Measurement:
         # All Measurement objects return the "birth_data" and "measurement_dates" elements
         # Only those calculations relevant to the measurement_method requested populate the final JSON
         # object.
-
-        if corrected_centile_value:
-            if corrected_centile_value > 99 or corrected_centile_value < 1:
-                corrected_centile_value = round(corrected_centile_value, 1)
-            else:
-                corrected_centile_value = round(corrected_centile_value, 1)
-
-        if chronological_centile_value:
-            if chronological_centile_value > 99 or chronological_centile_value < 1:
-                chronological_centile_value = round(
-                    chronological_centile_value, 1)
-            else:
-                chronological_centile_value = round(chronological_centile_value, 1)
 
         measurement_calculated_values = {
             "corrected_sds": corrected_sds_value,
