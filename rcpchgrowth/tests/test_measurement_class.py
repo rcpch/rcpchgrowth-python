@@ -57,6 +57,7 @@ def test_measurement_class_ukwho_data(line):
         assert measurement_object.measurement[
             "measurement_calculated_values"]['corrected_sds'] is None
     else:
+        age = measurement_object.measurement['measurement_dates']['corrected_decimal_age']
         # Check if the value is a float and has no fractional part
         assert measurement_object.measurement[
             "measurement_calculated_values"]['corrected_sds'] == pytest.approx(
@@ -74,7 +75,7 @@ def test_measurement_class_ukwho_data(line):
                 measurement_method = "height/length"
             elif measurement_method == "weight":
                 units="kg"
-            assert measurement_object.measurement["child_observation_value"]["observation_value_error"] == f'The {measurement_method} of {observation_value} {units} is above +8 SD and considered to be an error.'
+            assert measurement_object.measurement["child_observation_value"]["observation_value_error"] == f'The {measurement_method} of {observation_value} {units} in a child of {round(age, 1)} years is above +8 SD and considered to be an error.'
         elif line["corrected_sds"] > 4 and line["corrected_sds"] <= 15 and line["measurement_method"] == BMI:
             assert measurement_object.measurement[
                 "measurement_calculated_values"]['corrected_centile_band'] == f"This {line['measurement_method']} measurement is well outside the normal range. Please check its accuracy."
