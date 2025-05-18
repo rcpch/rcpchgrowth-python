@@ -644,10 +644,10 @@ class Measurement:
                     'Height/length must be passed in cm, not metres')
             elif observation_value_z_score < MINIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS:
                 raise ValueError(
-                    f'The height/length of {observation_value} cm is below -8 SD and considered to be an error.')
+                    f'The height/length of {observation_value} cm in a child of {round(corrected_decimal_age, 1)} years is below -8 SD and considered to be an error.')
             elif observation_value_z_score > MAXIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS:
                 raise ValueError(
-                    f'The height/length of {observation_value} cm is above +8 SD and considered to be an error.')
+                    f'The height/length of {observation_value} cm in a child of {round(corrected_decimal_age, 1)} years is above +8 SD and considered to be an error.')
             else:
                 is_valid = True
 
@@ -657,11 +657,11 @@ class Measurement:
                     'Missing observation_value for weight. Please pass a weight in kilograms.')
             elif observation_value_z_score < MINIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS:
                 raise ValueError(
-                    f'The weight of {observation_value} kg is below -8 SD and considered to be an error.')
+                    f'The weight of {observation_value} kg is below -8 SD in a child of {round(corrected_decimal_age, 1)} years and considered to be an error.')
             elif observation_value_z_score > MAXIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS:
                 # it is likely the weight is passed in grams, not kg.
                 raise ValueError(
-                    f'The weight of {observation_value} kg is above +8 SD and considered to be an error. Note that the weight should be supplied in kilograms.')
+                    f'The weight of {observation_value} kg is above +8 SD in a child of {round(corrected_decimal_age, 1)} years and considered to be an error. Note that the weight should be supplied in kilograms.')
             else:
                 is_valid = True
 
@@ -671,10 +671,10 @@ class Measurement:
                     'Missing observation_value for head circumference. Please pass a head circumference in centimetres.')
             elif observation_value_z_score < MINIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS:
                 raise ValueError(
-                    f'The head circumference of {observation_value} cm is below -8 SD and considered to be an error.')
+                    f'The head circumference of {observation_value} cm in a child of {round(corrected_decimal_age, 1)} years is below -8 SD and considered to be an error.')
             elif observation_value_z_score > MAXIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS:
                 raise ValueError(
-                    f'The head circumference of {observation_value} cm is above +8 SD and considered to be an error.')
+                    f'The head circumference of {observation_value} cm in a child of {round(corrected_decimal_age, 1)} years is above +8 SD and considered to be an error.')
             else:
                 is_valid = True
 
