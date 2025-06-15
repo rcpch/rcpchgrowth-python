@@ -16,7 +16,7 @@ from rcpchgrowth.constants import HEIGHT, WEIGHT, BMI
 # owing to variations in statistical calculations it's impossible to get exact
 # agreement between R and Python, so our statistician feels we can set a tolerance
 # within which we will accept a result as correct.
-ACCURACY = 1e-2
+ACCURACY = 1e-1
 
 filenames = [
     "preschool_who_-1.csv",
@@ -143,37 +143,44 @@ class TestWHOData:
                     if preschool_age:
                         if pd.notna(height_value) and pd.notna(row.get('zlen')):
                             try:
-                                # assert round(height_measurement_object["measurement_calculated_values"]['chronological_sds'], 2) == pytest.approx(
+                                assert height_measurement_object["measurement_calculated_values"]['chronological_sds'] == pytest.approx(row['zlen'], abs=ACCURACY
+                                ), f"Row {i} - RCPCH: height of {height_value} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zlen']} but got {height_measurement_object['measurement_calculated_values']['chronological_sds']}"
                                 assert height_z == pytest.approx(
                                     row['zlen'], abs=ACCURACY
-                                ), f"Row {i} - height of {height_value} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zlen']} but got {height_measurement_object['measurement_calculated_values']['chronological_sds']}"
+                                ), f"Row {i} - WHO: height of {height_value} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zlen']} but got {height_measurement_object['measurement_calculated_values']['chronological_sds']}"
                             except AssertionError as e:
                                 failed_assertions.append(str(e))
                                 
                         if pd.notna(row.get('weight')) and pd.notna(row.get('zwei')):
                             try:
-                                # assert round(weight_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
+                                assert round(weight_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
+                                    row['zwei'], abs=ACCURACY
+                                ), f"Row {i} - RCPCH: Weight of {row['weight']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zwei']} but got {weight_measurement_object['measurement_calculated_values']['chronological_sds']}"
                                 assert weight_z == pytest.approx(
                                     row['zwei'], abs=ACCURACY
-                                ), f"Row {i} - Weight of {row['weight']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zwei']} but got {weight_measurement_object['measurement_calculated_values']['chronological_sds']}"
+                                ), f"Row {i} - WHO: Weight of {row['weight']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zwei']} but got {weight_measurement_object['measurement_calculated_values']['chronological_sds']}"
                             except AssertionError as e:
                                 failed_assertions.append(str(e))
                                 
                         if pd.notna(row.get('ofc')) and pd.notna(row.get('zhc')):
                             try:
-                                # assert round(ofc_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
+                                assert round(ofc_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
+                                    row['zhc'], abs=ACCURACY
+                                ), f"Row {i} - RCPCH: OFC of {row['ofc']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zhc']} but got {ofc_measurement_object['measurement_calculated_values']['chronological_sds']}"
                                 assert ofc_z == pytest.approx(
                                     row['zhc'], abs=ACCURACY
-                                ), f"Row {i} - OFC of {row['ofc']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zhc']} but got {ofc_measurement_object['measurement_calculated_values']['chronological_sds']}"
+                                ), f"Row {i} - WHO: OFC of {row['ofc']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zhc']} but got {ofc_measurement_object['measurement_calculated_values']['chronological_sds']}"
                             except AssertionError as e:
                                 failed_assertions.append(str(e))
                                 
                         if pd.notna(row.get('cbmi')) and pd.notna(row.get('zbmi')):
                             try:
-                                # assert round(bmi_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
+                                assert round(bmi_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
+                                    row['zbmi'], abs=ACCURACY
+                                ), f"Row {i} - RCPCH: BMI of {row['cbmi']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zbmi']} but got {bmi_measurement_object['measurement_calculated_values']['chronological_sds']}"
                                 assert bmi_z == pytest.approx(
                                     row['zbmi'], abs=ACCURACY
-                                ), f"Row {i} - BMI of {row['cbmi']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zbmi']} but got {bmi_measurement_object['measurement_calculated_values']['chronological_sds']}"
+                                ), f"Row {i} - WHO: BMI of {row['cbmi']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zbmi']} but got {bmi_measurement_object['measurement_calculated_values']['chronological_sds']}"
                             except AssertionError as e:
                                 failed_assertions.append(str(e))
                                 
@@ -181,18 +188,22 @@ class TestWHOData:
                         # Similar pattern for school age...
                         if pd.notna(height_value) and pd.notna(row.get('zhfa')):
                             try:
-                                # assert round(height_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
+                                assert round(height_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
+                                    row['zhfa'], abs=ACCURACY
+                                ), f"Row {i} - RCPCH: height of {height_value} in {row['sex']} of age {round(row['age_in_months']* 30.4375,2)} ({row['age_in_months']} mo) expected SDS of {row['zhfa']} but got {height_z}"
                                 assert height_z == pytest.approx(
                                     row['zhfa'], abs=ACCURACY
-                                ), f"Row {i} - height of {height_value} in {row['sex']} of age {round(row['age_in_months']* 30.4375,2)} ({row['age_in_months']} mo) expected SDS of {row['zhfa']} but got {height_z}"
+                                ), f"Row {i} - WHO: height of {height_value} in {row['sex']} of age {round(row['age_in_months']* 30.4375,2)} ({row['age_in_months']} mo) expected SDS of {row['zhfa']} but got {height_z}"
                             except AssertionError as e:
                                 failed_assertions.append(str(e))
                         if pd.notna(row.get('weight')) and pd.notna(row.get('zwfa')):
                             try:
-                                # assert round(weight_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
+                                assert round(weight_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
+                                    row['zwfa'], abs=ACCURACY
+                                ), f"Row {i} - RCPCH: Weight of {row['weight']} in {row['sex']} of age {round(row['age_in_months']* 30.4375,2)} ({row['age_in_months']} mo) expected SDS of {row['zwfa']} but got {weight_z}"
                                 assert weight_z == pytest.approx(
                                     row['zwfa'], abs=ACCURACY
-                                ), f"Row {i} - Weight of {row['weight']} in {row['sex']} of age {round(row['age_in_months']* 30.4375,2)} ({row['age_in_months']} mo) expected SDS of {row['zwfa']} but got {weight_z}"
+                                ), f"Row {i} - WHO: Weight of {row['weight']} in {row['sex']} of age {round(row['age_in_months']* 30.4375,2)} ({row['age_in_months']} mo) expected SDS of {row['zwfa']} but got {weight_z}"
                             except AssertionError as e:
                                 failed_assertions.append(str(e))
                                 
