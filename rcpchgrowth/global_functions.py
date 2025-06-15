@@ -6,7 +6,11 @@ from .turner import turner_lms_array_for_measurement_and_sex
 from .trisomy_21 import trisomy_21_lms_array_for_measurement_and_sex
 from .cdc import cdc_lms_array_for_measurement_and_sex
 from .trisomy_21_aap import trisomy_21_aap_lms_array_for_measurement_and_sex
-from .who import who_lms_array_for_measurement_and_sex
+from .who import who_lms_array_for_measurement_and_sex, who_csv_reference_data_for_age_and_sex
+
+from importlib import resources
+from pathlib import Path
+import pandas as pd
 
 # from scipy import interpolate  #see below, comment back in if swapping interpolation method
 # from scipy.interpolate import CubicSpline #see below, comment back in if swapping interpolation method
@@ -369,6 +373,58 @@ def create_data_point(age: float, measurement: float, label_value: str):
         rounded = None
     value = {"l": label_value, "x": round(age, 4), "y": rounded}
     return value
+
+def who_z_for_measurement(
+    measurement_method: str, age_days: float, sex: str, observation_value: float):
+    """
+    This function calculates the z-score for a given observation value based on WHO reference data.
+    It uses the WHO reference data for the specified age and imports  the reference data from a CSV file.
+    It performs linear interpolation if the age is not found in the reference data.
+    It returns the z-score for the observation value.
+    If the age is below 1856 days (5 years), it uses the "Day" column for lookup.
+    If the age is above 1856 days, it uses the "Month" column for lookup.
+    If the age is not found in the reference data, it performs linear interpolation between the nearest months.
+    """
+    match = True
+    
+    who_data_df = who_csv_reference_data_for_age_and_sex(
+        age_days=age_days, measurement_method=measurement_method, sex=sex)
+    
+    if age_days <= 1828:
+        # there is an L, M and S value for each day in the first 5 years of life
+        lookup_row = who_data_df.loc[who_data_df["Day"] == age_days]
+
+    else:
+        age_months = age_days / 30.4375  # convert days to months
+        if who_data_df.loc[who_data_df["Month"] == age_months].empty:
+            # If the month is not found, use the nearest month below
+            match = False
+            
+            row_below_index = who_data_df.loc[who_data_df["Month"] < age_months, "Month"].idxmax()
+            row_above_index = row_below_index + 1
+            if row_below_index is None or row_above_index is None:
+                raise LookupError(f"Age {int(age_days / 30.4375)} months not found in WHO data, no interpolation possible")
+            
+            l = linear_interpolation(age=age_months, age_one_below=who_data_df.loc[row_below_index, "Month"], age_one_above=who_data_df.loc[row_above_index, "Month"],
+                                     parameter_one_below=who_data_df.loc[row_below_index, "L"],
+                                     parameter_one_above=who_data_df.loc[row_above_index, "L"])
+            m = linear_interpolation(age=age_months, age_one_below=who_data_df.loc[row_below_index, "Month"], age_one_above=who_data_df.loc[row_above_index, "Month"],
+                                     parameter_one_below=who_data_df.loc[row_below_index, "M"],
+                                     parameter_one_above=who_data_df.loc[row_above_index, "M"])
+            s = linear_interpolation(age=age_months, age_one_below=who_data_df.loc[row_below_index, "Month"], age_one_above=who_data_df.loc[row_above_index, "Month"],
+                                     parameter_one_below=who_data_df.loc[row_below_index, "S"],
+                                     parameter_one_above=who_data_df.loc[row_above_index, "S"])
+        else:
+            # There is an exact match for the month in the reference data
+            lookup_row = who_data_df.loc[who_data_df["Month"] == age_months]
+
+    if match:
+        l = lookup_row["L"].values[0]
+        m = lookup_row["M"].values[0]
+        s = lookup_row["S"].values[0]
+
+    return z_score(l=l, m=m, s=s, observation=observation_value)
+
 
 
 """

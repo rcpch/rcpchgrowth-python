@@ -6,6 +6,7 @@ Handles WHO reference data selection
 import json
 from importlib import resources
 from pathlib import Path
+import pandas as pd
 
 # rcpch imports
 from .constants import *
@@ -191,3 +192,31 @@ def select_reference_data_for_who_chart(
     else:
         raise LookupError(
             f"No data found for {measurement_method} in {sex}s in {who_reference_name}")
+
+def who_csv_reference_data_for_age_and_sex(age_days: float, sex: str, measurement_method: str) -> dict:
+    """
+    Returns the WHO reference data for a given age
+
+    :param age_days: Age in days
+    :param sex
+    """
+    
+    if age_days < 0:
+        raise ValueError("Age cannot be negative")
+    
+    if age_days <= 1828:  # 5 years in days
+        base_name = "who_2006"
+        filename =  f"{base_name}_{measurement_method}_{sex}.csv"
+        return pd.read_csv(
+            Path(data_directory, filename), 
+            parse_dates=True
+        )
+    else:
+        if measurement_method == HEAD_CIRCUMFERENCE:
+            raise ValueError("Head circumference data is not available for children over 5 years of age.")
+        base_name = "who_2007"
+        filename = f"{base_name}_{measurement_method}_{sex}.csv"
+        return pd.read_csv(
+            Path(data_directory, filename), 
+            parse_dates=True
+        )
