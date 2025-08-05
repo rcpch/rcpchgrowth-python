@@ -426,6 +426,46 @@ def who_z_for_measurement(
     return z_score(l=l, m=m, s=s, observation=observation_value)
 
 
+def test_lms_uk_who(measurement_method, sex):
+    """
+    Function to test the LMS values for the UK-WHO reference data against the WHO standard for the ages 0-2 years.
+    """
+
+    # fetch the LMS values for the UK-WHO reference data for the specified measurement and sex
+    lms_value_array = lms_value_array_for_measurement_for_reference(
+        reference=UK_WHO,
+        age=1,
+        measurement_method=measurement_method,
+        sex=sex,
+        default_youngest_reference=True,  # The youngest reference should always be chosen for this calculation
+    )
+
+    # create an empty dataframe to store the results
+    results_df = pd.DataFrame(columns=["age", "l", "m", "s"])
+    data = []
+    # loop through ages 2 weeks to 2 years in days
+    for age in range(14, 730, 1):  # daily ages
+        try:
+            lms = fetch_lms(
+                age=age / 365.25,  # convert days to years
+                lms_value_array_for_measurement=lms_value_array,
+            )
+            l = lms["l"]
+            m = lms["m"]
+            s = lms["s"]
+            # append the results to the dataframe
+            data.append({
+                "age": age / 365.25,  # convert days to years
+                "l": l,
+                "m": m,
+                "s": s
+            })
+        except Exception as e:
+            print(f"Error fetching LMS values for age {age}: {e}")
+    
+    # save the results to a CSV file
+    results_df = pd.DataFrame(data)
+    results_df.to_csv(Path(resources.files("rcpchgrowth") / f"{sex}_{measurement_method}_uk_who_lms_test.csv"), index=False)
 
 """
 ***** INTERPOLATION FUNCTIONS *****
