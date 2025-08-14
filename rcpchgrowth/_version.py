@@ -1,5 +1,11 @@
 __all__ = ["__version__"]
 
-# Single source of truth for the package version.
-# Updated by bump2version.
-__version__ = "4.3.8"
+try:
+	from importlib.metadata import version as _meta_version
+except ImportError:  # Python <3.8 fallback not needed, but kept minimal
+	from importlib_metadata import version as _meta_version  # type: ignore
+
+try:
+	__version__ = _meta_version("rcpchgrowth")
+except Exception:
+	__version__ = "0.0.0+unknown"

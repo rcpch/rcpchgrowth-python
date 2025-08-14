@@ -1,11 +1,26 @@
 version: "3.12"
 
 services:
-  rcpchgrowth-python:
+  rcpchgrowth-dev:
     build: .
+    container_name: rcpchgrowth-dev
     volumes:
       - .:/app
     working_dir: /app
-    tty: true # Allocate a pseudo-TTY
-    stdin_open: true # Keep stdin open
-    container_name: rcpchgrowth-python
+    command: bash
+    tty: true
+    stdin_open: true
+
+  rcpchgrowth-notebooks:
+    build: .
+    container_name: rcpchgrowth-notebooks
+    volumes:
+      - .:/app
+    working_dir: /app/notebooks
+    ports:
+      - "8888:8888"
+    command: bash -c "jupyter lab --ip=0.0.0.0 --no-browser --NotebookApp.token='' --NotebookApp.password='' --allow-root"
+    environment:
+      - PYTHONPATH=/app
+    depends_on:
+      - rcpchgrowth-dev
