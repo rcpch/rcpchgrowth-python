@@ -1,14 +1,16 @@
 from setuptools import setup, find_packages
-from os import path
+from pathlib import Path
 
-here = path.abspath(path.dirname(__file__))
+here = Path(__file__).parent.resolve()
+long_description = (here / "README.md").read_text(encoding="utf-8")
 
-with open(path.join(here, "README.md"), encoding="utf-8") as f:
-    long_description = f.read()
+# Single-source version import (no full package import to avoid side-effects)
+version_ns = {}
+exec((here / "rcpchgrowth" / "_version.py").read_text(encoding="utf-8"), version_ns)
 
 setup(
     name="rcpchgrowth",
-    version="4.3.8",
+    version=version_ns["__version__"],
     description="SDS and Centile calculations for UK Growth Data",
     long_description=long_description,
     url="https://github.com/rcpch/digital-growth-charts/blob/master/README.md",
@@ -25,6 +27,14 @@ setup(
     packages=find_packages(),
     python_requires=">3.8",
     install_requires=["python-dateutil", "scipy"],
+    extras_require={
+        "notebook": [
+            "pandas>=1.5",
+            "matplotlib>=3.7",
+            "jupyterlab",
+            "ipykernel",
+        ]
+    },
     include_package_data=True,
     project_urls={
         "Bug Reports": "https://github.com/rcpch/rcpchgrowth-python/issues",
