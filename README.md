@@ -13,7 +13,29 @@ Issues can be raised here <https://github.com/rcpch/rcpchgrowth-python/issues>
 
 ## Installation
 
-Minimal (algorithm only):
+### Docker
+
+If you want to avoid setting up docker environments, there are shortcut scripts the create a dockerized environment with RCPCHGrowth already installed.
+
+First ensure the folders have the correct permissions:
+
+```bash
+chmod +x s/dev s/notebooks
+```
+
+To generate a container with the installed package for development
+
+```bash
+s/dev
+```
+
+To generate a container that launches the jupyter notebooks to port 8888
+
+```bash
+s/notebooks
+```
+
+### Minimal installation (assuming you have a python virtual env setup)
 
 ```bash
 pip install rcpchgrowth
@@ -61,7 +83,7 @@ Do NOT place identifiable patient data in a public fork or commit history. De‑
 from datetime import date
 from rcpchgrowth import Measurement
 
-sex = 'F'
+sex = 'female'
 dob = date(2022, 6, 15)
 md  = date(2024, 2, 1)
 weight_kg = 12.3
