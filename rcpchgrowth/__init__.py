@@ -5,7 +5,7 @@ from .centile_bands import centile_band_for_centile
 from .chart_functions import create_chart
 from .constants import *  # noqa: F401,F403
 from .date_calculations import chronological_decimal_age, corrected_decimal_age, chronological_calendar_age, estimated_date_delivery, corrected_gestational_age
-from .dynamic_growth import create_thrive_line, return_correlation, create_thrive_lines
+from .dynamic_growth import create_thrive_line, return_correlation, create_thrive_lines, velocity, acceleration
 from .global_functions import centile, sds_for_measurement, measurement_from_sds, percentage_median_bmi, measurement_for_z, cubic_interpolation, linear_interpolation
 from .fictional_child import generate_fictional_child_data
 from .measurement import Measurement
