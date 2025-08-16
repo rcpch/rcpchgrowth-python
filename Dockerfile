@@ -21,7 +21,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy metadata first for build cache
 COPY pyproject.toml README.md ./
 COPY requirements.txt ./
-COPY rcpchgrowth/_version.py rcpchgrowth/_version.py
 
 # Copy the full source (needed for editable install)
 COPY rcpchgrowth rcpchgrowth

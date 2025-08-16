@@ -1,26 +1,27 @@
-version: "3.12"
-
+version: "3.9"
 services:
-  rcpchgrowth-dev:
+  dev:
     build: .
     container_name: rcpchgrowth-dev
     volumes:
       - .:/app
     working_dir: /app
-    command: bash
-    tty: true
-    stdin_open: true
-
-  rcpchgrowth-notebooks:
-    build: .
-    container_name: rcpchgrowth-notebooks
-    volumes:
-      - .:/app
-    working_dir: /app/notebooks
-    ports:
-      - "8888:8888"
-    command: bash -c "jupyter lab --ip=0.0.0.0 --no-browser --NotebookApp.token='' --NotebookApp.password='' --allow-root"
     environment:
       - PYTHONPATH=/app
-    depends_on:
-      - rcpchgrowth-dev
+    ports:
+      - "8888:8888"
+    command:
+      - bash
+      - -lc
+      - |
+        set -e
+        mkdir -p /app/notebooks
+        echo '[DEV] Editable install'
+        pip install -e /app[notebook]
+        echo '[DEV] Sanity import'
+        echo '[DEV] Register kernel'
+        python -m ipykernel install --name rcpchgrowth --display-name 'rcpchgrowth' --sys-prefix
+        echo '[DEV] Launching JupyterLab'
+        exec jupyter lab --ip=0.0.0.0 --no-browser --allow-root \
+          --NotebookApp.token='' --NotebookApp.password='' \
+          --notebook-dir=/app/notebooks
