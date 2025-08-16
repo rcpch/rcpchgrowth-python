@@ -6,5 +6,5 @@ set -e  # Exit on error
 # scripts may need to be made executable on some platforms before they can be run
 # chmod +x <filename> is the command to do this on unixy systems
 
-# starts all docker compose services
+# starts all docker compose services - will create a notebooks container and a development container
 docker compose up

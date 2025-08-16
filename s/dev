@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+# Launch an interactive shell in the dev container (build if needed)
+# Usage: s/dev
+
+# Ensure images are built
+docker compose build rcpchgrowth-dev
+
+# Start (detached) if not already running
+if ! docker compose ps --status=running | grep -q rcpchgrowth-dev; then
+  docker compose up -d rcpchgrowth-dev
+fi
+
+# Exec into container
+exec docker compose exec rcpchgrowth-dev bash
