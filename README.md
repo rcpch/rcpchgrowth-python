@@ -1,9 +1,11 @@
-# RCPCH Digital Growth Python library
+# RCPCHGrowth Python library
 
-[![PyPI version](https://img.shields.io/pypi/v/rcpchgrowth.svg)](https://pypi.org/project/rcpchgrowth/)
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rcpch/rcpchgrowth-python/live?labpath=notebooks%2FQuickstart.ipynb)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/rcpch/rcpchgrowth-python?quickstart=1)
+## Calculations for children's measurements against UK and international growth references.
+
+[![PyPI version](https://img.shields.io/pypi/v/rcpchgrowth.svg?style=flat-square&labelColor=%2311a7f2&color=%230d0d58)](https://pypi.org/project/rcpchgrowth/)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat-square&labelColor=%2311a7f2&color=%230d0d58)](https://www.gnu.org/licenses/agpl-3.0)
+[![Binder](https://img.shields.io/badge/Binder-?style=flat-square&labelColor=%2311a7f2&color=%230d0d58&logo=binder&logoColor=white)](https://mybinder.org/v2/gh/rcpch/rcpchgrowth-python/live?labpath=notebooks%2FQuickstart.ipynb)
+[![Codespaces](https://img.shields.io/badge/Codespaces-Open_in_Cloud?style=flat-square&labelColor=%2311a7f2&color=%230d0d58&logo=github&logoColor=white)](https://codespaces.new/rcpch/rcpchgrowth-python?quickstart=1)
 
 Please go to <https://growth.rcpch.ac.uk/products/python-library/> for full documentation.
 
