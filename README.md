@@ -4,7 +4,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/rcpchgrowth.svg?style=flat-square&labelColor=%2311a7f2&color=%230d0d58)](https://pypi.org/project/rcpchgrowth/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat-square&labelColor=%2311a7f2&color=%230d0d58)](https://www.gnu.org/licenses/agpl-3.0)
-[![Binder](https://img.shields.io/badge/Binder-?style=flat-square&labelColor=%2311a7f2&color=%230d0d58&logo=binder&logoColor=white)](https://mybinder.org/v2/gh/rcpch/rcpchgrowth-python/live?labpath=notebooks%2FQuickstart.ipynb)
+[![Binder](https://img.shields.io/badge/Binder-Launch?style=flat-square&labelColor=%2311a7f2&color=%230d0d58&logo=binder&logoColor=white)](https://mybinder.org/v2/gh/rcpch/rcpchgrowth-python/live?labpath=notebooks%2FQuickstart.ipynb)
 [![Codespaces](https://img.shields.io/badge/Codespaces-Open_in_Cloud?style=flat-square&labelColor=%2311a7f2&color=%230d0d58&logo=github&logoColor=white)](https://codespaces.new/rcpch/rcpchgrowth-python?quickstart=1)
 
 Please go to <https://growth.rcpch.ac.uk/products/python-library/> for full documentation.
@@ -22,19 +22,13 @@ If you want to avoid setting up docker environments, there are shortcut scripts 
 First ensure the folders have the correct permissions:
 
 ```bash
-chmod +x s/dev s/notebooks
+chmod +x s/dev
 ```
 
-To generate a container with the installed package for development
+To generate a container which will launch the notebooks in a browser and allow local dev ( with hot reload)
 
 ```bash
 s/dev
-```
-
-To generate a container that launches the jupyter notebooks to port 8888
-
-```bash
-s/notebooks
 ```
 
 ### Minimal installation (assuming you have a python virtual env setup)
@@ -43,7 +37,7 @@ s/notebooks
 pip install rcpchgrowth
 ```
 
-With notebook & plotting convenience dependencies:
+With notebook & package dependencies:
 
 ```bash
 pip install "rcpchgrowth[notebook]"
@@ -64,54 +58,26 @@ Example notebooks live in `notebooks/`:
 
 - `Quickstart.ipynb` – single measurement, small batch, simple plot.
 - `ResearchTemplate.ipynb` – structured workflow for batch CSV processing (ages, SDS, centiles, quality flags, export).
-
-### Launch options
-
-- Binder badge above opens the Quickstart notebook (branch `live`). Binder builds from this repo's `requirements.txt`; to add notebook extras inside Binder run:
-
-  ```bash
-  pip install "rcpchgrowth[notebook]"
-  ```
-
-- Codespaces badge launches a ready cloud dev environment; open the notebooks folder afterwards.
+- `AdditionalFunctions.ipynb` - exposes some of the date and calculation functions for more in-depth exploration
+- `ExperimentalFunctions.ipynb` - exposes functions that are in development and more experimental
 
 ## Data handling / privacy
 
-Do NOT place identifiable patient data in a public fork or commit history. De‑identify and keep raw data outside version control. The research template includes guidance for exporting enriched results safely.
+<table>
+<tr>
+  <td width="6" style="background:#2311a7f2;"></td>
+  <td>
+    <strong>Data handling & privacy</strong><br>
+    <strong>Never commit identifiable patient data.</strong><br>
+    • Keep raw identifiable data outside version control (secure, access‑controlled).<br>
+    • De‑identify before analysis (remove names, NHS numbers, full DOB; date‑shift if required).<br>
+    • Do not push raw exports to forks, PRs or gists.<br>
+    • Use <code>ResearchTemplate.ipynb</code> for generating de‑identified derived outputs.<br>
+    <em>If in doubt, stop and seek local information governance guidance.</em>
+  </td>
+</tr>
+</table>
 
-## Basic usage (programmatic)
-
-```python
-from datetime import date
-from rcpchgrowth import Measurement
-
-sex = 'female'
-dob = date(2022, 6, 15)
-md  = date(2024, 2, 1)
-weight_kg = 12.3
-
-measurement = Measurement(birth_date=dob, measurement_method='weight', observation_date=md, observation_value=weight_kg, reference='uk-who', gestation_weeks=40, gestation_days=0).measurement
-
-# Extracting the results from the measurement dictionary
-
-# Calculated ages
-chronological_age_decimal_years = measurement['measurement_dates']["chronological_decimal_age"]
-corrected_age_decimal_years = measurement['measurement_dates']["corrected_decimal_age"]
-chronological_calendar_age = measurement['measurement_dates']["chronological_calendar_age"] # returns age as readable text in years, months, weeks and days
-corrected_calendar_age = measurement['measurement_dates']["corrected_calendar_age"] # returns age as readable text in years, months, weeks and days
-# This returns corrected gestational age in weeks if the baby was premature and is not yet term.
-corrected_gestational_age = measurement['measurement_dates']["corrected_gestational_age"]["corrected_gestation_weeks"]
-corrected_gestational_age = measurement['measurement_dates']["corrected_gestational_age"]["corrected_gestation_days"]
-
-# calculated SDS and centiles
-corrected_weight_sds = measurement["measurement_calculated_values"]["corrected_sds"]
-corrected_weight_centile = measurement["measurement_calculated_values"]["corrected_centile"]
-chronological_weight_sds = measurement["measurement_calculated_values"]["chronological_sds"]
-chronological_weight_centile = measurement["measurement_calculated_values"]["chronological_centile"]
-
-print(f"Age (decimal years): {chronological_age_decimal_years:.3f}")
-print(f"Weight: {weight_kg} kg | SDS: {corrected_weight_sds:.2f} | Centile: {corrected_weight_centile:.1f}")
-```
 
 ---
 
