@@ -4,7 +4,6 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/rcpchgrowth.svg?style=flat-square&labelColor=%2311a7f2&color=%230d0d58)](https://pypi.org/project/rcpchgrowth/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat-square&labelColor=%2311a7f2&color=%230d0d58)](https://www.gnu.org/licenses/agpl-3.0)
-[![Binder](https://img.shields.io/badge/Binder-Launch?style=flat-square&labelColor=%2311a7f2&color=%230d0d58&logo=binder&logoColor=white)](https://mybinder.org/v2/gh/rcpch/rcpchgrowth-python/live?labpath=notebooks%2FQuickstart.ipynb)
 [![Codespaces](https://img.shields.io/badge/Codespaces-Open_in_Cloud?style=flat-square&labelColor=%2311a7f2&color=%230d0d58&logo=github&logoColor=white)](https://codespaces.new/rcpch/rcpchgrowth-python?quickstart=1)
 
 Please go to <https://growth.rcpch.ac.uk/products/python-library/> for full documentation.
@@ -19,19 +18,13 @@ Issues can be raised here <https://github.com/rcpch/rcpchgrowth-python/issues>
 
 If you want to avoid setting up docker environments, there are shortcut scripts the create a dockerized environment with RCPCHGrowth already installed.
 
-First ensure the folders have the correct permissions:
+This will generate a container which will launch some Jupyter notebooks in a browser and allow local dev ( with hot reload).
 
 ```bash
-chmod +x s/dev
+s/up
 ```
 
-To generate a container which will launch the notebooks in a browser and allow local dev ( with hot reload)
-
-```bash
-s/dev
-```
-
-### Minimal installation (assuming you have a python virtual env setup)
+### Minimal installation (without docker) assuming you have a python virtual env setup
 
 ```bash
 pip install rcpchgrowth
@@ -44,22 +37,6 @@ pip install "rcpchgrowth[notebook]"
 ```
 
 The `notebook` extra currently pulls in: `pandas`, `matplotlib`, `jupyterlab`, `ipykernel`.
-
-To verify versions inside a Jupyter session:
-
-```python
-import rcpchgrowth, pandas as pd, sys
-print(rcpchgrowth.__version__, pd.__version__, sys.version)
-```
-
-## Example notebooks
-
-Example notebooks live in `notebooks/`:
-
-- `Quickstart.ipynb` – single measurement, small batch, simple plot.
-- `ResearchTemplate.ipynb` – structured workflow for batch CSV processing (ages, SDS, centiles, quality flags, export).
-- `AdditionalFunctions.ipynb` - exposes some of the date and calculation functions for more in-depth exploration
-- `ExperimentalFunctions.ipynb` - exposes functions that are in development and more experimental
 
 ## Data handling / privacy
 
