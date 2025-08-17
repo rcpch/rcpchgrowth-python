@@ -426,7 +426,7 @@ def who_z_for_measurement(
     return z_score(l=l, m=m, s=s, observation=observation_value)
 
 
-def test_lms_uk_who(measurement_method, sex):
+def test_lms_uk_who(measurement_method, sex, interpolation_override=False):
     """
     Function to test the LMS values for the UK-WHO reference data against the WHO standard for the ages 0-2 years.
     """
@@ -448,7 +448,7 @@ def test_lms_uk_who(measurement_method, sex):
         try:
             lms = fetch_lms(
                 age=age / 365.25,  # convert days to years
-                lms_value_array_for_measurement=lms_value_array,
+                lms_value_array_for_measurement=lms_value_array, interpolation_override=interpolation_override
             )
             l = lms["l"]
             m = lms["m"]
@@ -465,7 +465,7 @@ def test_lms_uk_who(measurement_method, sex):
     
     # save the results to a CSV file
     results_df = pd.DataFrame(data)
-    results_df.to_csv(Path(resources.files("rcpchgrowth") / f"{sex}_{measurement_method}_uk_who_lms_test.csv"), index=False)
+    results_df.to_csv(Path(resources.files("rcpchgrowth") / f"{sex}_{measurement_method}_{'linear' if interpolation_override else 'cubic'}_uk_who_lms_test.csv"), index=False)
 
 """
 ***** INTERPOLATION FUNCTIONS *****
@@ -625,7 +625,7 @@ def nearest_lowest_index(lms_array: list, age: float) -> int:
     return lowest_index
 
 
-def fetch_lms(age: float, lms_value_array_for_measurement: list):
+def fetch_lms(age: float, lms_value_array_for_measurement: list, interpolation_override: bool=False):
     """
     Retuns the LMS for a given age, and sigma if present (CDC BMI references). If there is no exact match in the reference
     an interpolated LMS is returned. Cubic interpolation is used except at the fringes of the
@@ -667,6 +667,7 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list):
             and age_matched_index < len(lms_value_array_for_measurement) - 2
             and "sigma" not in lms_value_array_for_measurement[age_matched_index] # CDC BMI references have an additional sigma value
             # and CDC only use linear interpolation
+            and interpolation_override is False
         ):
             # cubic interpolation is possible
             age_two_below = lms_value_array_for_measurement[age_matched_index - 1][
