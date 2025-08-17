@@ -1,5 +1,1 @@
-rcpchgrowth
-pandas>=1.5
-matplotlib>=3.7
-jupyterlab
-ipykernel
+-e ".[notebook]"

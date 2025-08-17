@@ -54,6 +54,5 @@ exclude = ["notebooks"]
 file = "README.md"
 content-type = "text/markdown"
 
-# Future: you can move package-data patterns here instead of MANIFEST.in if desired:
-# [tool.setuptools.package-data]
-# rcpchgrowth = ["data_tables/**/*.csv", "data_tables/**/*.json"]
+[tool.setuptools.package-data]
+rcpchgrowth = ["data_tables/**/*.csv", "data_tables/**/*.json", "data_tables/**/*.xls", "data_tables/**/*.pdf", "data_tables/**/*.bas", "data_tables/**/*.xlsx"]
