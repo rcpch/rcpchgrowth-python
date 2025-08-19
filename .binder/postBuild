@@ -1,7 +1,9 @@
 #!/bin/bash
 set -euo pipefail
-echo "[postBuild] Editable install"
+
+echo "[postBuild] Editable install of local package"
 pip install -e .
+
 echo "[postBuild] Prune heavy, non-notebook files"
 rm -rf rcpchgrowth/tests || true
 rm -f  rcpchgrowth/data_tables/bayley-pineau.pdf || true
@@ -9,8 +11,17 @@ rm -f  rcpchgrowth/data_tables/uk-who_resources/GrowthCharts.xls || true
 rm -f  rcpchgrowth/data_tables/uk-who_resources/*.bas || true
 rm -f  rcpchgrowth/data_tables/fenton/*.* || true
 python - <<'PY'
+
+echo "[postBuild] Warm up matplotlib font cache"
+python - <<'PY'
+import matplotlib.pyplot as plt  # triggers font cache build
+print("Matplotlib imported; font cache built.")
+
 import rcpchgrowth, os
 print("rcpchgrowth version:", getattr(rcpchgrowth,'__version__','?'))
 print("Remaining data_tables entries:", os.listdir('rcpchgrowth/data_tables'))
 PY
+
+echo "[postBuild] Warm up JupyterLab (pre-build static if needed)"
+jupyter lab build --minimize=False >/dev/null 2>&1 || true
 echo "[postBuild] Done"
