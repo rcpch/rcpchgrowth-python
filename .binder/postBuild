@@ -1,10 +1,28 @@
 #!/bin/bash
 set -euo pipefail
-echo "[postBuild] Editable install"
-pip install -e .
-echo "[postBuild] Warm up matplotlib"
+
+echo "[postBuild] Python: $(python -V)"
+
+# Speed up pip (wheel cache already persisted layer-wise)
+export PIP_DISABLE_PIP_VERSION_CHECK=1
+
+echo "[postBuild] Editable install (no build isolation)"
+pip install --no-build-isolation -e .
+
+echo "[postBuild] Warm matplotlib font cache"
 python - <<'PY'
+import matplotlib
 import matplotlib.pyplot as plt
-print("Matplotlib ready")
+print("Matplotlib backend:", matplotlib.get_backend())
 PY
+
+echo "[postBuild] Pre-import light rcpchgrowth symbols (avoid loading test data)"
+python - <<'PY'
+import rcpchgrowth
+print("rcpchgrowth version:", rcpchgrowth.__version__)
+PY
+
+echo "[postBuild] (Optional) JupyterLab asset build skip if already present"
+jupyter lab build --dev-build=False --minimize=False >/dev/null 2>&1 || true
+
 echo "[postBuild] Done"
