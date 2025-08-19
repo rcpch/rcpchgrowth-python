@@ -1,0 +1,15 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[postBuild] Editable install of local package"
+pip install -e .
+
+echo "[postBuild] Warm up matplotlib font cache"
+python - <<'PY'
+import matplotlib.pyplot as plt  # triggers font cache build
+print("Matplotlib imported; font cache built.")
+PY
+
+echo "[postBuild] Warm up JupyterLab (pre-build static if needed)"
+jupyter lab build --minimize=False >/dev/null 2>&1 || true
+echo "[postBuild] Done"
