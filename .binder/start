@@ -1,2 +1,10 @@
 #!/bin/bash
-jupyter-notebook --notebook-dir=notebooks
+set -e
+set -x
+
+if [ ! -d "notebooks" ]; then
+  echo "Error: The 'notebooks' directory does not exist in the working directory."
+  exit 1
+fi
+
+jupyter-lab --notebook-dir=notebooks
