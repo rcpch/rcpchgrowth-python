@@ -4,6 +4,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/rcpchgrowth.svg?style=flat-square&labelColor=%2311a7f2&color=%230d0d58)](https://pypi.org/project/rcpchgrowth/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat-square&labelColor=%2311a7f2&color=%230d0d58)](https://www.gnu.org/licenses/agpl-3.0)
+[![Binder](https://img.shields.io/badge/Binder-Binder?style=flat-square&labelColor=%2311a7f2&color=%230d0d58&logo=jupyter)](https://mybinder.org/v2/gh/rcpch/rcpchgrowth-python/live?urlpath=lab/tree/notebooks/Quickstart.ipynb)
 [![Codespaces](https://img.shields.io/badge/Codespaces-Open_in_Cloud?style=flat-square&labelColor=%2311a7f2&color=%230d0d58&logo=github&logoColor=white)](https://codespaces.new/rcpch/rcpchgrowth-python?quickstart=1)
 
 Please go to <https://growth.rcpch.ac.uk/products/python-library/> for full documentation.
