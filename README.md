@@ -42,7 +42,7 @@ The `notebook` extra currently pulls in: `pandas`, `matplotlib`, `jupyterlab`, `
 
 <table>
 <tr>
-  <td width="6" style="background:#2311a7f2;"></td>
+  <td width="6" style="background:#11A7F2;"></td>
   <td>
     <strong>Data handling & privacy</strong><br>
     <strong>Never commit identifiable patient data.</strong><br>
