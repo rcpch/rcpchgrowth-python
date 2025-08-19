@@ -1,3 +1,10 @@
 #!/bin/bash
-# Start Jupyter in the correct directory
-exec jupyter lab --ContentsManager.root_dir=/home/jovyan
+set -euo pipefail
+echo "[start] Python: $(python -V)"
+echo "[start] rcpchgrowth import test:"
+python - <<'PY'
+import rcpchgrowth, os, sys
+print("rcpchgrowth version:", getattr(rcpchgrowth, "__version__", "?"))
+print("rcpchgrowth path:", rcpchgrowth.__file__)
+PY
+exec jupyter lab --ServerApp.root_dir=/home/jovyan --ServerApp.default_url=/lab
