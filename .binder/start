@@ -1,2 +1,2 @@
 #!/bin/bash
-jupyter-lab --notebook-dir=notebooks
+jupyter-notebook --notebook-dir=notebooks
