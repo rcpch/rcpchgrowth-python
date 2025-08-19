@@ -1,10 +1,30 @@
 #!/bin/bash
-set -e
-set -x
 
+# Enable debugging and exit on error
+set -ex
+
+# Check if the notebook directory exists
 if [ ! -d "notebooks" ]; then
-  echo "Error: The 'notebooks' directory does not exist in the working directory."
+  echo "Error: The 'notebooks' directory does not exist!"
   exit 1
 fi
 
-jupyter-lab --notebook-dir=notebooks
+# Find the full path to the jupyter-lab executable
+JUPYTER_LAB_PATH=$(which jupyter-lab)
+
+# Check if jupyter-lab was found
+if [ -z "$JUPYTER_LAB_PATH" ]; then
+  echo "Error: jupyter-lab executable not found in PATH."
+  # Fallback to an explicit path
+  JUPYTER_LAB_PATH="/srv/conda/envs/notebook/bin/jupyter-lab"
+  if [ ! -f "$JUPYTER_LAB_PATH" ]; then
+    echo "Error: jupyter-lab not found at explicit path either."
+    exit 1
+  fi
+fi
+
+# Print the command we are about to run
+echo "Starting JupyterLab server with command: $JUPYTER_LAB_PATH --notebook-dir=notebooks"
+
+# Execute the jupyter-lab command
+exec "$JUPYTER_LAB_PATH" --notebook-dir=notebooks
