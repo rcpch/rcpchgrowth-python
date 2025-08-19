@@ -1,20 +1,16 @@
 #!/bin/bash
 set -euo pipefail
-echo "[postBuild] Python: $(python -V)"
-export PIP_DISABLE_PIP_VERSION_CHECK=1
-echo "[postBuild] Upgrade build tools"
-pip install --upgrade pip setuptools wheel
 echo "[postBuild] Editable install"
 pip install -e .
-echo "[postBuild] Warm matplotlib font cache"
+echo "[postBuild] Prune heavy, non-notebook files"
+rm -rf rcpchgrowth/tests || true
+rm -f  rcpchgrowth/data_tables/bayley-pineau.pdf || true
+rm -f  rcpchgrowth/data_tables/uk-who_resources/GrowthCharts.xls || true
+rm -f  rcpchgrowth/data_tables/uk-who_resources/*.bas || true
+rm -f  rcpchgrowth/data_tables/fenton/*.* || true
 python - <<'PY'
-import matplotlib
-import matplotlib.pyplot as plt
-print("Matplotlib backend:", matplotlib.get_backend())
-PY
-echo "[postBuild] Pre-import rcpchgrowth (light)"
-python - <<'PY'
-import rcpchgrowth, time
+import rcpchgrowth, os
 print("rcpchgrowth version:", getattr(rcpchgrowth,'__version__','?'))
+print("Remaining data_tables entries:", os.listdir('rcpchgrowth/data_tables'))
 PY
 echo "[postBuild] Done"
