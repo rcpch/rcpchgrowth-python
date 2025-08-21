@@ -13,13 +13,8 @@ rm -f  rcpchgrowth/data_tables/fenton/*.* || true
 
 echo "[postBuild] Warm up matplotlib font cache"
 python - <<'PY'
-import matplotlib.pyplot as plt  # triggers font cache build
+import matplotlib.pyplot as plt
 print("Matplotlib imported; font cache built.")
-
-import rcpchgrowth, os
-print("rcpchgrowth version:", getattr(rcpchgrowth,'__version__','?'))
-print("Remaining data_tables entries:", os.listdir('rcpchgrowth/data_tables'))
 PY
 
-echo "[postBuild] Warm up JupyterLab (pre-build static if needed)"
 echo "[postBuild] Done"
