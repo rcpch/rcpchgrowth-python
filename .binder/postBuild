@@ -22,5 +22,4 @@ print("Remaining data_tables entries:", os.listdir('rcpchgrowth/data_tables'))
 PY
 
 echo "[postBuild] Warm up JupyterLab (pre-build static if needed)"
-jupyter lab build --minimize=False >/dev/null 2>&1 || true
 echo "[postBuild] Done"
