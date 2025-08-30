@@ -1,3 +1,4 @@
+import json
 import math
 import scipy.stats as stats
 from scipy.interpolate import interp1d
@@ -7,7 +8,7 @@ from .trisomy_21 import trisomy_21_lms_array_for_measurement_and_sex
 from .cdc import cdc_lms_array_for_measurement_and_sex
 from .trisomy_21_aap import trisomy_21_aap_lms_array_for_measurement_and_sex
 from .who import who_lms_array_for_measurement_and_sex, who_csv_reference_data_for_age_and_sex
-
+from .constants import *
 from importlib import resources
 from pathlib import Path
 import pandas as pd
@@ -426,47 +427,6 @@ def who_z_for_measurement(
     return z_score(l=l, m=m, s=s, observation=observation_value)
 
 
-def test_lms_uk_who(measurement_method, sex, interpolation_override=False):
-    """
-    Function to test the LMS values for the UK-WHO reference data against the WHO standard for the ages 0-2 years.
-    """
-
-    # fetch the LMS values for the UK-WHO reference data for the specified measurement and sex
-    lms_value_array = lms_value_array_for_measurement_for_reference(
-        reference=UK_WHO,
-        age=1,
-        measurement_method=measurement_method,
-        sex=sex,
-        default_youngest_reference=True,  # The youngest reference should always be chosen for this calculation
-    )
-
-    # create an empty dataframe to store the results
-    results_df = pd.DataFrame(columns=["age", "l", "m", "s"])
-    data = []
-    # loop through ages 2 weeks to 2 years in days
-    for age in range(14, 730, 1):  # daily ages
-        try:
-            lms = fetch_lms(
-                age=age / 365.25,  # convert days to years
-                lms_value_array_for_measurement=lms_value_array, interpolation_override=interpolation_override
-            )
-            l = lms["l"]
-            m = lms["m"]
-            s = lms["s"]
-            # append the results to the dataframe
-            data.append({
-                "age": age / 365.25,  # convert days to years
-                "l": l,
-                "m": m,
-                "s": s
-            })
-        except Exception as e:
-            print(f"Error fetching LMS values for age {age}: {e}")
-    
-    # save the results to a CSV file
-    results_df = pd.DataFrame(data)
-    results_df.to_csv(Path(resources.files("rcpchgrowth") / f"{sex}_{measurement_method}_{'linear' if interpolation_override else 'cubic'}_uk_who_lms_test.csv"), index=False)
-
 """
 ***** INTERPOLATION FUNCTIONS *****
 """
@@ -833,3 +793,174 @@ def lms_value_array_for_measurement_for_reference(
         raise ValueError("No or incorrect reference supplied")
     return lms_value_array_for_measurement
 
+"""
+WHO and UK-WHO parse as JSON from daily LMS values
+"""
+
+def create_daily_lms_tables_for_measurement_method_and_sex_uk_who_for_age_group(age_group):
+    """
+    Create daily LMS tables for all measurement methods and both sexes using the UK-WHO reference data.
+    """
+    from .constants import SEXES
+    for sex in SEXES:
+        for measurement_method in [WEIGHT, HEIGHT, HEAD_CIRCUMFERENCE, BMI]:
+            create_daily_lms_values_for_uk_who(measurement_method=measurement_method, sex=sex, age_group=age_group)
+
+def create_daily_lms_values_for_uk_who(measurement_method, sex, age_group, interpolation_override=False):
+    """
+    Function to test the LMS values for the UK-WHO reference data against the WHO standard for the ages 0-2 years.
+    age group must be one of ['neonate', 'infant', 'preschool', 'child']
+    """
+    age=0
+    if age_group not in ['neonate', 'infant', 'preschool', 'child']:
+        raise ValueError(f"Invalid age group: {age_group}. Must be one of ['neonate', 'infant', 'preschool', 'child'].")
+    if age_group == "neonate":
+        age = -0.05
+        start_age = TWENTY_THREE_WEEKS_GESTATION
+        end_age = 0.038329911 # 14 days
+        acknowledgement_text = "UK 1990 reference data, reanalysed 2009."
+    elif age_group == "infant":
+        acknowledgement_text = "World Health Organisation Multicentre Growth Reference Standards (WHO MGRS) (2006/2007)"
+        age = 0.5
+        start_age, end_age = 0.038329911, 2
+    elif age_group == "preschool":
+        acknowledgement_text = "World Health Organisation Multicentre Growth Reference Standards (WHO MGRS) (2006/2007)"
+        age = 2.5
+        start_age, end_age = 2, 4
+    elif age_group == "child":
+        acknowledgement_text = "UK 1990 reference data, reanalysed 2009."
+        age = 4.5
+        start_age, end_age = 4, 23
+
+    # fetch the LMS values for the UK-WHO reference data for the specified measurement and sex
+    try:
+        lms_value_array = lms_value_array_for_measurement_for_reference(
+            reference=UK_WHO,
+            age=age,
+            measurement_method=measurement_method,
+            sex=sex,
+            default_youngest_reference=True,  # The youngest reference should always be chosen for this calculation
+        )
+    except LookupError as err:
+        print(f"Error: {err}")
+        return
+
+    # create an empty dataframe to store the results
+    results_df = pd.DataFrame(columns=["age", "l", "m", "s"])
+    data = []
+
+    json_structure = {
+        "acknowledgement": acknowledgement_text,
+        "age_group": age_group,
+        "start_age": start_age,
+        "end_age": end_age,
+        "measurement_method": measurement_method,
+        "sex": sex,
+        "data": []
+    }
+    
+    age = start_age
+    while age <= end_age:
+        try:
+            lms = fetch_lms(
+                age=age,
+                lms_value_array_for_measurement=lms_value_array, interpolation_override=interpolation_override
+            )
+            l = lms["l"]
+            m = lms["m"]
+            s = lms["s"]
+            # append the results to the dataframe
+            data.append({
+                "decimal_age": float(age),
+                "l": float(l),
+                "m": float(m),
+                "s": float(s)
+            })
+        except Exception as e:
+            age += 1/365.25
+            print(f"Error fetching LMS values for age {age*365.25} days - {measurement_method}")
+            continue
+        age += 1/365.25
+
+    json_structure["data"] = data
+
+    # save the results to a JSON file
+    with open(Path(resources.files("rcpchgrowth") / f"data_tables/uk-who_resources/uk_who_{age_group}_{sex}_{measurement_method}_{'linear' if interpolation_override else 'cubic'}_daily_lms.json"), "w") as json_file:
+        json.dump(json_structure, json_file)
+
+    # save the results to a CSV file
+    # results_df = pd.DataFrame(data)
+    # results_df.to_csv(Path(resources.files("rcpchgrowth") / f"uk_who_{age_group}_{sex}_{measurement_method}_{'linear' if interpolation_override else 'cubic'}_daily_lms.csv"), index=False)
+
+def load_who_data_convert_to_json():
+    import json
+    from pathlib import Path
+    from importlib import resources
+    measurements = ["height", "weight", "ofc", "bmi"]
+    WHO_ACK = "World Health Organisation Multicentre Growth Reference Standards (WHO MGRS) (2006/2007)"
+
+    base_dir_traversable = resources.files("rcpchgrowth.data_tables")
+    base_dir = Path(str(base_dir_traversable))
+    base_dir.mkdir(parents=True, exist_ok=True)
+
+    def df_records(df):
+        return json.loads(df.to_json(orient="records"))
+
+    for sex in SEXES:
+        for measurement in measurements:
+            # Under-5 (days)
+            try:
+                under_df = who_csv_reference_data_for_age_and_sex(
+                    age_days=0, sex=sex, measurement_method=measurement
+                )
+            except Exception as e:
+                print(f"Error loading under five reference data [{sex} {measurement}]: {e}")
+                continue
+
+            # Over-5 (months) – optional (may not exist for OFC)
+            over_df = None
+            try:
+                over_df = who_csv_reference_data_for_age_and_sex(
+                    age_days=1830, sex=sex, measurement_method=measurement
+                )
+            except Exception as e:
+                print(f"No over-five WHO table for [{sex} {measurement}] or failed to load: {e}")
+
+            # Standardize under-5 -> decimal_age (years)
+            if "Day" in under_df.columns:
+                under_df = under_df.rename(columns={"Day": "decimal_age"})
+                under_df["decimal_age"] = under_df["decimal_age"].astype(float) / 365.25
+            elif "Month" in under_df.columns:
+                under_df["decimal_age"] = under_df["Month"].astype(float) / 12.0
+
+            # Standardize over-5 if available
+            if over_df is not None:
+                if "Month" in over_df.columns:
+                    over_df["decimal_age"] = over_df["Month"].astype(float) / 12.0
+                elif "Day" in over_df.columns:
+                    over_df = over_df.rename(columns={"Day": "decimal_age"})
+                    over_df["decimal_age"] = over_df["decimal_age"].astype(float) / 365.25
+
+            wanted = ["decimal_age", "L", "M", "S"]
+            under_out = under_df[wanted].astype(float)
+            under_payload = {
+                "sex": sex,
+                "measurement_method": measurement,
+                "acknowledgement_text": WHO_ACK,
+                "data": df_records(under_out),
+            }
+            under_path = base_dir / f"who_under_five_{sex}_{measurement}.json"
+            with open(under_path, "w") as f:
+                json.dump(under_payload, f, indent=2)
+
+            if over_df is not None:
+                over_out = over_df[wanted].astype(float)
+                over_payload = {
+                    "sex": sex,
+                    "measurement_method": measurement,
+                    "acknowledgement_text": WHO_ACK,
+                    "data": df_records(over_out),
+                }
+                over_path = base_dir / f"who_over_five_{sex}_{measurement}.json"
+                with open(over_path, "w") as f:
+                    json.dump(over_payload, f, indent=2)
