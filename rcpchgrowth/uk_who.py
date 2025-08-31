@@ -27,6 +27,8 @@ reference: reference data
 # load the reference data
 data_directory = resources.files("rcpchgrowth.data_tables")
 
+who_data_directory = Path(data_directory, "who")
+
 data_path = Path(
     data_directory, "uk90_preterm.json")  # 23 - 42 weeks gestation
 with open(data_path) as json_file:
@@ -40,13 +42,13 @@ with open(data_path) as json_file:
     json_file.close()
 
 data_path = Path(
-    data_directory, "who_infants.json")  # 2 weeks to 2 years
+    who_data_directory, "who_infants.json")  # 2 weeks to 2 years
 with open(data_path) as json_file:
     WHO_INFANTS_DATA = json.load(json_file)
     json_file.close()
 
 data_path = Path(
-    data_directory, "who_children.json")  # 2 years to 4 years
+    who_data_directory, "who_children.json")  # 2 years to 4 years
 with open(data_path) as json_file:
     WHO_CHILD_DATA = json.load(json_file)
     json_file.close()

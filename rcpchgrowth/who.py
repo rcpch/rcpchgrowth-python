@@ -27,21 +27,22 @@ reference: reference data
 
 # load the reference data
 data_directory = resources.files("rcpchgrowth.data_tables")
+who_data_directory = data_directory.joinpath("who")
 
 data_path = Path(
-    data_directory, "who_infants.json")  # 2 weeks to 2 years
+    who_data_directory, "who_infants.json")  # 2 weeks to 2 years
 with open(data_path) as json_file:
     WHO_INFANTS_DATA = json.load(json_file)
     json_file.close()
 
 data_path = Path(
-    data_directory, "who_children.json")  # 2 years to 5 years
+    who_data_directory, "who_children.json")  # 2 years to 5 years
 with open(data_path) as json_file:
     WHO_CHILD_DATA = json.load(json_file)
     json_file.close()
 
 data_path = Path(
-    data_directory, "who_2007_children.json")  # 5 years to 19 years
+    who_data_directory, "who_2007_children.json")  # 5 years to 19 years
 with open(data_path) as json_file:
     WHO_2007_DATA = json.load(json_file)
     json_file.close()
@@ -124,7 +125,7 @@ def who_lms_array_for_measurement_and_sex(
     default_youngest_reference: bool = False
 ) -> list:
 
-    # selects the correct lms data array from the patchwork of references that make up UK-WHO
+    # selects the correct lms data array from the patchwork of references that make up WHO
 
     try:
         selected_reference = who_reference(
@@ -193,30 +194,45 @@ def select_reference_data_for_who_chart(
         raise LookupError(
             f"No data found for {measurement_method} in {sex}s in {who_reference_name}")
 
-def who_csv_reference_data_for_age_and_sex(age_days: float, sex: str, measurement_method: str) -> dict:
+def who_csv_reference_data_for_age_and_sex(age_days: float, sex: str, measurement_method: str) -> pd.DataFrame:
     """
-    Returns the WHO reference data for a given age
-
-    :param age_days: Age in days
-    :param sex
+    Load WHO CSV for given age band, sex, and measurement from rcpchgrowth/data_tables/who/pre_2025/.
+    Filenames:
+      who_2006_{measurement}_{sex}.csv   (<=5y)
+      who_2007_{measurement}_{sex}.csv   (>5y; not available for OFC)
     """
-    
     if age_days < 0:
         raise ValueError("Age cannot be negative")
-    
-    if age_days <= 1828:  # 5 years in days
-        base_name = "who_2006"
-        filename =  f"{base_name}_{measurement_method}_{sex}.csv"
-        return pd.read_csv(
-            Path(data_directory, filename), 
-            parse_dates=True
-        )
+
+    sex_key = str(sex).strip().lower()          # "male" | "female"
+    meas_key = str(measurement_method).strip().lower()
+
+    # Map common aliases -> filename token
+    meas_token = {
+        "head_circumference": "ofc",
+        "hc": "ofc",
+        "ofc": "ofc",
+        "height": "height",
+        "length": "height",   # if your files use 'height' for all
+        "weight": "weight",
+        "bmi": "bmi",
+    }.get(meas_key, meas_key)
+
+    if age_days <= 1826:  # <=5 years
+        base = "who_2006"
     else:
-        if measurement_method == HEAD_CIRCUMFERENCE:
+        if meas_token == "ofc":
             raise ValueError("Head circumference data is not available for children over 5 years of age.")
-        base_name = "who_2007"
-        filename = f"{base_name}_{measurement_method}_{sex}.csv"
-        return pd.read_csv(
-            Path(data_directory, filename), 
-            parse_dates=True
-        )
+        base = "who_2007"
+
+    filename = f"{base}_{meas_token}_{sex_key}.csv"
+
+    # CSV source directory (pre_2025)
+    csv_dir = data_directory.joinpath("who", "csv")
+    csv_traversable = csv_dir.joinpath(filename)
+
+    with resources.as_file(csv_traversable) as p:
+        pth = Path(p)
+        if not pth.exists():
+            raise FileNotFoundError(f"CSV not found: {pth}")
+        return pd.read_csv(pth)

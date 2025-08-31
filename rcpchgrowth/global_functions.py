@@ -79,6 +79,8 @@ def measurement_from_sds(
     m = lms["m"]
     s = lms["s"]
 
+    print(f"age: {age}, l: {l}, m: {m}, s: {s}")
+
     observation_value = None
 
     if reference == CDC and measurement_method == BMI:
@@ -129,13 +131,17 @@ def sds_for_measurement(
     except LookupError as err:
         raise LookupError(err)
 
-    # get LMS values from the reference: check for age match, interpolate if none
+    # get LMS values from the reference: check for age match.
+    # There will always be an age match in the under 5s WHO, or under 4s UK-WHO and therefore no interpolation is required
+    # However, for WHO references above 5 years, interpolation will be linear, whereas for all others interpolation will be cubic
     lms = fetch_lms(
-        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement
+        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement, interpolation_override=reference==WHO
     )
     l = lms["l"]
     m = lms["m"]
     s = lms["s"]
+
+    print(f"called from within sds_for_measurement, {l}, {m}, {s}")
 
     # this calculation is different for CDC BMI references and uses the
     # cumulative distribution function to calculate the z-score
@@ -576,7 +582,7 @@ def nearest_lowest_index(lms_array: list, age: float) -> int:
     lowest_index = 0
     for num, lms_element in enumerate(lms_array):
         reference_age = lms_element["decimal_age"]
-        if round(reference_age, 16) == round(age, 16):
+        if round(reference_age, 4) == round(age, 4):
             lowest_index = num
             break
         else:
@@ -587,7 +593,7 @@ def nearest_lowest_index(lms_array: list, age: float) -> int:
 
 def fetch_lms(age: float, lms_value_array_for_measurement: list, interpolation_override: bool=False):
     """
-    Retuns the LMS for a given age, and sigma if present (CDC BMI references). If there is no exact match in the reference
+    Returns the LMS for a given age, and sigma if present (CDC BMI references). If there is no exact match in the reference
     an interpolated LMS is returned. Cubic interpolation is used except at the fringes of the
     reference where linear interpolation is used.
     It accepts the age and a python list of the LMS values for that measurement_method and sex.
@@ -602,6 +608,8 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list, interpolation_o
         l = lms_value_array_for_measurement[age_matched_index]["L"]
         m = lms_value_array_for_measurement[age_matched_index]["M"]
         s = lms_value_array_for_measurement[age_matched_index]["S"]
+
+        print(f"age: {age}, exact match found, l: {l}, m: {m}, s: {s}")
 
         if "sigma" in lms_value_array_for_measurement[age_matched_index]:
             # CDC BMI references have an additional sigma value
@@ -621,6 +629,8 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list, interpolation_o
         ]
         parameter_one_below = lms_value_array_for_measurement[age_matched_index]
         parameter_one_above = lms_value_array_for_measurement[age_matched_index + 1]
+
+        print(f"age: {age}, age_one_below: {age_one_below}, age_one_above: {age_one_above}")
 
         if (
             age_matched_index >= 1
@@ -892,75 +902,138 @@ def create_daily_lms_values_for_uk_who(measurement_method, sex, age_group, inter
     # results_df = pd.DataFrame(data)
     # results_df.to_csv(Path(resources.files("rcpchgrowth") / f"uk_who_{age_group}_{sex}_{measurement_method}_{'linear' if interpolation_override else 'cubic'}_daily_lms.csv"), index=False)
 
-def load_who_data_convert_to_json():
-    import json
-    from pathlib import Path
-    from importlib import resources
-    measurements = ["height", "weight", "ofc", "bmi"]
+# ...existing imports...
+from importlib import resources
+from pathlib import Path
+import json
+import pandas as pd
+# ...existing code...
+
+def build_who_json(individual_files: bool = True):
+    """
+    Build WHO LMS JSON.
+
+    - individual_files=True:
+        Write per-file JSONs under rcpchgrowth/data_tables/who/:
+          who_under_five_{sex}_{measurement}.json (from 2006 CSV)
+          who_over_five_{sex}_{measurement}.json (from 2007 CSV, if available)
+
+    - individual_files=False:
+        Write three combined files under rcpchgrowth/data_tables/who/:
+          who_infants.json        # decimal_age <= 2
+          who_children.json       # 2 <= decimal_age <= 5
+          who_2007_children.json  # decimal_age >= 5
+    """
     WHO_ACK = "World Health Organisation Multicentre Growth Reference Standards (WHO MGRS) (2006/2007)"
+    measurements = ["height", "weight", "bmi", "ofc"]
 
-    base_dir_traversable = resources.files("rcpchgrowth.data_tables")
-    base_dir = Path(str(base_dir_traversable))
-    base_dir.mkdir(parents=True, exist_ok=True)
+    data_root = resources.files("rcpchgrowth.data_tables")
+    out_dir = Path(str(data_root.joinpath("who")))
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    def df_records(df):
+    def to_records(df: pd.DataFrame) -> list[dict]:
         return json.loads(df.to_json(orient="records"))
 
-    for sex in SEXES:
-        for measurement in measurements:
-            # Under-5 (days)
+    def standardize(df: pd.DataFrame | None) -> pd.DataFrame | None:
+        if df is None or df.empty:
+            return None
+        df = df.copy()
+        if "Day" in df.columns:
+            df = df.rename(columns={"Day": "decimal_age"})
+            df["decimal_age"] = df["decimal_age"].astype(float) / 365.25
+        elif "Month" in df.columns:
+            df["decimal_age"] = df["Month"].astype(float) / 12.0
+        cols = [c for c in ["decimal_age", "L", "M", "S"] if c in df.columns]
+        return df[cols].astype(float)
+
+    written = []
+
+    if not individual_files:
+        infants_payload = {"measurement": {"acknowledgement_text": WHO_ACK}}
+        children_payload = {"measurement": {"acknowledgement_text": WHO_ACK}}
+        who2007_payload = {"measurement": {"acknowledgement_text": WHO_ACK}}
+        for m in measurements:
+            infants_payload["measurement"][m] = {"male": [], "female": []}
+            children_payload["measurement"][m] = {"male": [], "female": []}
+            who2007_payload["measurement"][m] = {"male": [], "female": []}
+
+    for measurement in measurements:
+        for sex in SEXES:
             try:
-                under_df = who_csv_reference_data_for_age_and_sex(
-                    age_days=0, sex=sex, measurement_method=measurement
-                )
-            except Exception as e:
-                print(f"Error loading under five reference data [{sex} {measurement}]: {e}")
-                continue
-
-            # Over-5 (months) – optional (may not exist for OFC)
-            over_df = None
+                under_df = who_csv_reference_data_for_age_and_sex(age_days=0, sex=sex, measurement_method=measurement)
+            except Exception:
+                under_df = None
             try:
-                over_df = who_csv_reference_data_for_age_and_sex(
-                    age_days=1830, sex=sex, measurement_method=measurement
-                )
-            except Exception as e:
-                print(f"No over-five WHO table for [{sex} {measurement}] or failed to load: {e}")
+                # ensure WHO 2007 (>5y) is selected
+                over_df = who_csv_reference_data_for_age_and_sex(age_days=1831, sex=sex, measurement_method=measurement)
+            except Exception:
+                over_df = None
 
-            # Standardize under-5 -> decimal_age (years)
-            if "Day" in under_df.columns:
-                under_df = under_df.rename(columns={"Day": "decimal_age"})
-                under_df["decimal_age"] = under_df["decimal_age"].astype(float) / 365.25
-            elif "Month" in under_df.columns:
-                under_df["decimal_age"] = under_df["Month"].astype(float) / 12.0
+            under_std = standardize(under_df)
+            over_std = standardize(over_df)
 
-            # Standardize over-5 if available
-            if over_df is not None:
-                if "Month" in over_df.columns:
-                    over_df["decimal_age"] = over_df["Month"].astype(float) / 12.0
-                elif "Day" in over_df.columns:
-                    over_df = over_df.rename(columns={"Day": "decimal_age"})
-                    over_df["decimal_age"] = over_df["decimal_age"].astype(float) / 365.25
+            if individual_files:
+                if under_std is not None:
+                    out = {
+                        "sex": sex,
+                        "measurement_method": measurement,
+                        "acknowledgement_text": WHO_ACK,
+                        "data": to_records(under_std),
+                    }
+                    p = out_dir / f"who_under_five_{sex}_{measurement}.json"
+                    with open(p, "w") as f:
+                        json.dump(out, f, indent=2)
+                    written.append(p)
+                if over_std is not None:
+                    out = {
+                        "sex": sex,
+                        "measurement_method": measurement,
+                        "acknowledgement_text": WHO_ACK,
+                        "data": to_records(over_std),
+                    }
+                    p = out_dir / f"who_over_five_{sex}_{measurement}.json"
+                    with open(p, "w") as f:
+                        json.dump(out, f, indent=2)
+                    written.append(p)
+            else:
+                # Split: infants (<=2), children (2–5], >5 (WHO 2007 monthly only)
+                if under_std is not None:
+                    infants_part = under_std[under_std["decimal_age"] <= 2.0]
+                    children_part = under_std[
+                        (under_std["decimal_age"] >= 2.0) & (under_std["decimal_age"] <= 5.0)
+                    ]
+                else:
+                    infants_part = pd.DataFrame(columns=["decimal_age", "L", "M", "S"])
+                    children_part = pd.DataFrame(columns=["decimal_age", "L", "M", "S"])
 
-            wanted = ["decimal_age", "L", "M", "S"]
-            under_out = under_df[wanted].astype(float)
-            under_payload = {
-                "sex": sex,
-                "measurement_method": measurement,
-                "acknowledgement_text": WHO_ACK,
-                "data": df_records(under_out),
-            }
-            under_path = base_dir / f"who_under_five_{sex}_{measurement}.json"
-            with open(under_path, "w") as f:
-                json.dump(under_payload, f, indent=2)
+                # Only take >= 5.0 from the monthly (WHO 2007) table to create overlap at 5.0 without extra daily rows
+                if over_std is not None:
+                    over5_part = over_std[over_std["decimal_age"] >= 5.0]
+                else:
+                    over5_part = pd.DataFrame(columns=["decimal_age", "L", "M", "S"])
 
-            if over_df is not None:
-                over_out = over_df[wanted].astype(float)
-                over_payload = {
-                    "sex": sex,
-                    "measurement_method": measurement,
-                    "acknowledgement_text": WHO_ACK,
-                    "data": df_records(over_out),
-                }
-                over_path = base_dir / f"who_over_five_{sex}_{measurement}.json"
-                with open(over_path, "w") as f:
-                    json.dump(over_payload, f, indent=2)
+                infants_payload["measurement"][measurement][sex] = to_records(
+                    infants_part.sort_values("decimal_age", kind="stable")
+                ) if not infants_part.empty else []
+
+                children_payload["measurement"][measurement][sex] = to_records(
+                    children_part.sort_values("decimal_age", kind="stable")
+                ) if not children_part.empty else []
+
+                who2007_payload["measurement"][measurement][sex] = to_records(
+                    over5_part.sort_values("decimal_age", kind="stable")
+                ) if not over5_part.empty else []
+
+    if not individual_files:
+        p1 = out_dir / "who_infants.json"
+        p2 = out_dir / "who_children.json"
+        p3 = out_dir / "who_2007_children.json"
+        with open(p1, "w") as f:
+            json.dump(infants_payload, f, indent=2)
+        with open(p2, "w") as f:
+            json.dump(children_payload, f, indent=2)
+        with open(p3, "w") as f:
+            json.dump(who2007_payload, f, indent=2)
+        return {"infants": p1, "children": p2, "children_2007": p3}
+
+    return written
