@@ -96,17 +96,19 @@ def who_reference(
     The function return the appropriate reference file as json
     """
 
-    if age <= WHO_2006_REFERENCE_UPPER_THRESHOLD:
+    if age <= WHO_2006_REFERENCE_UPPER_THRESHOLD:  # 5.0021 years and below
         # Children up to and including 5 years are measured using WHO 2006 data
         if (age == 2.0 and default_youngest_reference) or age < WHO_CHILD_LOWER_THRESHOLD:
             # If default_youngest_reference is True, the younger reference is used to calculate values
             # This is specifically for the overlap between WHO 2006 lying and standing in centile curve generation
             # WHO 2006 reference is used for children below 2 years or those who are 2 years old and default_youngest_reference is True
             return WHO_INFANTS_DATA
-        elif age == 5.0:
-            if default_youngest_reference:
+        elif age <= WHO_2006_REFERENCE_UPPER_THRESHOLD: # 5.0021 years
+            if default_youngest_reference and age <= WHO_2006_REFERENCE_UPPER_THRESHOLD:
+                print("default youngest reference selected at 5 years")  # --- IGNORE ---
                 return WHO_CHILD_DATA
             else:
+                print("older reference selected at 5 years")  # --- IGNORE ---
                 return WHO_2007_DATA
         return WHO_CHILD_DATA
         

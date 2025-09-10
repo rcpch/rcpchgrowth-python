@@ -79,8 +79,6 @@ def measurement_from_sds(
     m = lms["m"]
     s = lms["s"]
 
-    print(f"age: {age}, l: {l}, m: {m}, s: {s}")
-
     observation_value = None
 
     if reference == CDC and measurement_method == BMI:
@@ -141,8 +139,6 @@ def sds_for_measurement(
     m = lms["m"]
     s = lms["s"]
 
-    print(f"called from within sds_for_measurement, {l}, {m}, {s}")
-
     # this calculation is different for CDC BMI references and uses the
     # cumulative distribution function to calculate the z-score
     # (if the centile is below 95% (or the inverse if the centile is above 95%)
@@ -154,6 +150,23 @@ def sds_for_measurement(
             centile = stats.norm.cdf((observation_value - p95) / sigma)*10 + 90
             z = stats.norm.ppf(centile/100)
             return z
+    if reference == WHO and measurement_method == 'bmi':
+        # WHO BMI references require a different method to calculate the z-score if the measurement is below -3 or above +3 SDS
+        # This involves calculating the z score first to determine if it is below -3 or above +3 SDS
+        z = z_score(l=l, m=m, s=s, observation=observation_value)
+        is_beyond_three_sds = abs(z) > 3
+        if is_beyond_three_sds:
+            # if the z score is below -3 or above +3 SDS, the calculation is different
+            # see WHO Website: https://cdn.who.int/media/docs/default-source/child-growth/growth-reference-5-19-years/computation.pdf?sfvrsn=c2ff6a95_4
+            if z > 3:
+                sd3pos = m * (1 + l * s * 3)**(1/l)
+                sd2pos = m * (1 + l * s * 2)**(1/l)
+                z= 3 + ((observation_value - sd3pos) / (sd3pos - sd2pos))
+            elif z < -3:
+                sd3neg = m * (1 + l * s * -3)**(1/l)
+                sd2neg = m * (1 + l * s * -2)**(1/l)
+                z= -3 + ((observation_value - sd3neg) / (sd2neg - sd3neg))
+        return z
 
     return z_score(l=l, m=m, s=s, observation=observation_value)
 
@@ -609,8 +622,6 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list, interpolation_o
         m = lms_value_array_for_measurement[age_matched_index]["M"]
         s = lms_value_array_for_measurement[age_matched_index]["S"]
 
-        print(f"age: {age}, exact match found, l: {l}, m: {m}, s: {s}")
-
         if "sigma" in lms_value_array_for_measurement[age_matched_index]:
             # CDC BMI references have an additional sigma value
             sigma = lms_value_array_for_measurement[age_matched_index]["sigma"]
@@ -629,8 +640,6 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list, interpolation_o
         ]
         parameter_one_below = lms_value_array_for_measurement[age_matched_index]
         parameter_one_above = lms_value_array_for_measurement[age_matched_index + 1]
-
-        print(f"age: {age}, age_one_below: {age_one_below}, age_one_above: {age_one_above}")
 
         if (
             age_matched_index >= 1
