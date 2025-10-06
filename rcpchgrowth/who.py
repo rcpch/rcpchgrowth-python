@@ -96,24 +96,24 @@ def who_reference(
     The function return the appropriate reference file as json
     """
 
-    if age <= WHO_2006_REFERENCE_UPPER_THRESHOLD:  # 5.0021 years and below
+    if age <= WHO_2006_REFERENCE_UPPER_THRESHOLD:  # 5.00 years and below
         # Children up to and including 5 years are measured using WHO 2006 data
-        if (age == 2.0 and default_youngest_reference) or age < WHO_CHILD_LOWER_THRESHOLD:
+        if (age == 2.0 and default_youngest_reference) or age < WHO_CHILD_LOWER_THRESHOLD: # 2.0 years
             # If default_youngest_reference is True, the younger reference is used to calculate values
             # This is specifically for the overlap between WHO 2006 lying and standing in centile curve generation
             # WHO 2006 reference is used for children below 2 years or those who are 2 years old and default_youngest_reference is True
             return WHO_INFANTS_DATA
-        elif age <= WHO_2006_REFERENCE_UPPER_THRESHOLD: # 5.0021 years
-            if default_youngest_reference and age <= WHO_2006_REFERENCE_UPPER_THRESHOLD:
-                print("default youngest reference selected at 5 years")  # --- IGNORE ---
+        elif age <= WHO_2006_REFERENCE_UPPER_THRESHOLD: # 5.00 years
+            if age <= WHO_2006_REFERENCE_UPPER_THRESHOLD and default_youngest_reference: # 5.00 years
                 return WHO_CHILD_DATA
             else:
-                print("older reference selected at 5 years")  # --- IGNORE ---
                 return WHO_2007_DATA
         return WHO_CHILD_DATA
         
     elif age <= WHO_2007_REFERENCE_UPPER_THRESHOLD:
         # All children over 5 years and above are measured using WHO 2007 child data
+        if default_youngest_reference:
+            return WHO_CHILD_DATA
         return WHO_2007_DATA
 
     else:
@@ -128,25 +128,18 @@ def who_lms_array_for_measurement_and_sex(
 ) -> list:
 
     # selects the correct lms data array from the patchwork of references that make up WHO
-
-    try:
-        selected_reference = who_reference(
-            age=age,
-            default_youngest_reference=default_youngest_reference
-        )
-    except:  #  there is no reference for the age supplied
-        raise LookupError("There is no WHO reference for the age supplied.")
-
-    # Check that the measurement requested has reference data at that age
-
     invalid_data, data_error = reference_data_absent(
         age=age,
         measurement_method=measurement_method,
         sex=sex)
-
+    
     if invalid_data:
         raise LookupError(data_error)
     else:
+        selected_reference = who_reference(
+            age=age,
+            default_youngest_reference=default_youngest_reference
+        )
         return selected_reference["measurement"][measurement_method][sex]
 
 

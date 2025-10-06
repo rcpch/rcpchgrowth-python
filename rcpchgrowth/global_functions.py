@@ -102,12 +102,12 @@ def measurement_from_sds(
         is_beyond_three_sds = abs(requested_sds) > 3
         if is_beyond_three_sds:
             if requested_sds > 3:
-                sd3pos = m * (1 + l * s * 3)**(1/l)
-                sd2pos = m * (1 + l * s * 2)**(1/l)
+                sd3pos = measurement_for_z(z=3, l=l, m=m, s=s)
+                sd2pos = measurement_for_z(z=2, l=l, m=m, s=s)
                 observation_value = sd3pos + (requested_sds - 3) * (sd3pos - sd2pos)
             elif requested_sds < -3:
-                sd3neg = m * (1 + l * s * -3)**(1/l)
-                sd2neg = m * (1 + l * s * -2)**(1/l)
+                sd3neg = measurement_for_z(z=-3, l=l, m=m, s=s)
+                sd2neg = measurement_for_z(z=-2, l=l, m=m, s=s)
                 observation_value = sd3neg + (requested_sds + 3) * (sd2neg - sd3neg)
         else:
             try:
