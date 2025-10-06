@@ -62,63 +62,29 @@ class TestWHOData:
                         
                     if pd.isna(row.get('sex')):
                         continue
+
+                    if school_age and row['age_in_months'] < 60:
+                        # Skip school age data that is under 5 years
+                        print(f"Skipping row {i} in {filename} - age_in_months {row['age_in_months']} < 60")
+                        continue
                     
                     processed_rows += 1
                     
-                    # Height measurement
+                    # # Height measurement
                     height_value = row["clenhei"] if preschool_age else row["height"]
-                    if pd.notna(height_value):
-                        height_measurement_object = Measurement(
-                            measurement_method="height",
-                            observation_value=height_value,
+                    height_z = None
+                    weight_z = None
+                    ofc_z = None
+                    bmi_z = None
+                    if pd.notna('clenhei') or pd.notna(row.get('height')):
+                        height_z = Measurement(
+                            measurement_method=HEIGHT,
+                            observation_value=row["clenhei"] if preschool_age else row["height"],
                             birth_date=datetime.strptime(row["birth_date"], "%Y-%m-%d"),
                             observation_date=datetime.strptime(row["observation_date"], "%Y-%m-%d"),
                             sex=row["sex"],
-                            reference="who"
-                        ).measurement
-                        # assert int(row['age_days']) == (row['observation_date'] - row['birth_date']).days, f"Row {i} - Age days mismatch: {row['age_days']} vs calculated {(row['observation_date'] - row['birth_date']).days}"
-
-                    # Weight measurement (only if weight is not NaN)
-                    if pd.notna(row.get('weight')):
-                        weight_measurement_object = Measurement(
-                            measurement_method="weight",
-                            observation_value=row["weight"],
-                            birth_date=datetime.strptime(row["birth_date"], "%Y-%m-%d"),
-                            observation_date=datetime.strptime(row["observation_date"], "%Y-%m-%d"),
-                            sex=row["sex"],
-                            reference="who"
-                        ).measurement
-                    
-                    # OFC measurement (only if ofc is not NaN)
-                    if pd.notna(row.get('ofc')):
-                        ofc_measurement_object = Measurement(
-                            measurement_method="ofc",
-                            observation_value=row["ofc"],
-                            birth_date=datetime.strptime(row["birth_date"], "%Y-%m-%d"),
-                            observation_date=datetime.strptime(row["observation_date"], "%Y-%m-%d"),
-                            sex=row["sex"],
-                            reference="who"
-                        ).measurement
-                    
-                    # BMI measurement (only if cbmi is not NaN)
-                    if pd.notna(row.get('cbmi')):
-                        bmi_measurement_object = Measurement(
-                            measurement_method="bmi",
-                            observation_value=row["cbmi"],
-                            birth_date=datetime.strptime(row["birth_date"], "%Y-%m-%d"),
-                            observation_date=datetime.strptime(row["observation_date"], "%Y-%m-%d"),
-                            sex=row["sex"],
-                            reference="who"
-                        ).measurement
-                    
-                    height_z = Measurement(
-                        measurement_method=HEIGHT,
-                        observation_value=row["clenhei"] if preschool_age else row["height"],
-                        birth_date=datetime.strptime(row["birth_date"], "%Y-%m-%d"),
-                        observation_date=datetime.strptime(row["observation_date"], "%Y-%m-%d"),
-                        sex=row["sex"],
-                        reference="who",
-                    ).measurement["measurement_calculated_values"]["chronological_sds"]
+                            reference="who",
+                        ).measurement["measurement_calculated_values"]["chronological_sds"]
                     if pd.notna(row.get('weight')):
                         weight_z = Measurement(
                             measurement_method=WEIGHT,
@@ -147,14 +113,10 @@ class TestWHOData:
                             reference="who",
                         ).measurement["measurement_calculated_values"]["chronological_sds"]
                     
-
-                    
                     # Assertions - collect failures instead of stopping
-                    if preschool_age:
+                    if preschool_age and row['age_days'] <= 1825:
                         if pd.notna(height_value) and pd.notna(row.get('zlen')):
                             try:
-                                assert height_measurement_object["measurement_calculated_values"]['chronological_sds'] == pytest.approx(row['zlen'], abs=ACCURACY
-                                ), f"Row {i} - RCPCH: height of {height_value} in {row['sex']} of age {round(row['age_days']/365.25, 4)} ({row['age_days']} d) expected SDS of {row['zlen']} but got {height_measurement_object['measurement_calculated_values']['chronological_sds']}"
                                 assert height_z == pytest.approx(
                                     row['zlen'], abs=ACCURACY
                                 ), f"Row {i} - WHO: height of {height_value} in {row['sex']} of age {round(row['age_days']/365.25, 4)} ({row['age_days']} d) expected SDS of {row['zlen']} but got {height_measurement_object['measurement_calculated_values']['chronological_sds']}"
@@ -163,9 +125,6 @@ class TestWHOData:
                                 
                         if pd.notna(row.get('weight')) and pd.notna(row.get('zwei')):
                             try:
-                                assert round(weight_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
-                                    row['zwei'], abs=ACCURACY
-                                ), f"Row {i} - RCPCH: Weight of {row['weight']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zwei']} but got {weight_measurement_object['measurement_calculated_values']['chronological_sds']}"
                                 assert weight_z == pytest.approx(
                                     row['zwei'], abs=ACCURACY
                                 ), f"Row {i} - WHO: Weight of {row['weight']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zwei']} but got {weight_measurement_object['measurement_calculated_values']['chronological_sds']}"
@@ -174,9 +133,6 @@ class TestWHOData:
                                 
                         if pd.notna(row.get('ofc')) and pd.notna(row.get('zhc')):
                             try:
-                                assert round(ofc_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
-                                    row['zhc'], abs=ACCURACY
-                                ), f"Row {i} - RCPCH: OFC of {row['ofc']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zhc']} but got {ofc_measurement_object['measurement_calculated_values']['chronological_sds']}"
                                 assert ofc_z == pytest.approx(
                                     row['zhc'], abs=ACCURACY
                                 ), f"Row {i} - WHO: OFC of {row['ofc']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zhc']} but got {ofc_measurement_object['measurement_calculated_values']['chronological_sds']}"
@@ -185,29 +141,26 @@ class TestWHOData:
                                 
                         if pd.notna(row.get('cbmi')) and pd.notna(row.get('zbmi')):
                             try:
-                                assert round(bmi_measurement_object["measurement_calculated_values"]['chronological_sds'],2) == pytest.approx(
-                                    row['zbmi'], abs=ACCURACY
-                                ), f"Row {i} - RCPCH: BMI of {row['cbmi']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zbmi']} but got {bmi_measurement_object['measurement_calculated_values']['chronological_sds']}"
                                 assert bmi_z == pytest.approx(
                                     row['zbmi'], abs=ACCURACY
                                 ), f"Row {i} - WHO: BMI of {row['cbmi']} in {row['sex']} of age {round(row['age_days']/365.25, 2)} ({row['age_days']} d) expected SDS of {row['zbmi']} but got {bmi_measurement_object['measurement_calculated_values']['chronological_sds']}"
                             except AssertionError as e:
                                 failed_assertions.append(str(e))
                                 
-                    elif school_age:
+                    elif school_age and row['age_in_months'] >= 60:
                         # Similar pattern for school age...
                         if pd.notna(height_value) and pd.notna(row.get('zhfa')):
                             try:
                                 assert height_z == pytest.approx(
                                     row['zhfa'], abs=ACCURACY
-                                ), f"Row {i} - WHO: height of {height_value} in {row['sex']} of age {round(row['age_in_months']* 30.4375,2)} ({row['age_in_months']} mo) expected SDS of {row['zhfa']} but got {height_z}"
+                                ), f"Row {i} - WHO: height of {height_value} in {row['sex']} of age {round(row['age_in_months']* 30.4375,2)} ({row['age_in_months']} mo) expected SDS of {row['zhfa']} but got {height_z}" if row['age_days'] > 1825 else None
                             except AssertionError as e:
                                 failed_assertions.append(str(e))
                         if pd.notna(row.get('weight')) and pd.notna(row.get('zwfa')):
                             try:
                                 assert weight_z == pytest.approx(
                                     row['zwfa'], abs=ACCURACY
-                                ), f"Row {i} - WHO: Weight of {row['weight']} in {row['sex']} of age {round(row['age_in_months']* 30.4375,2)} ({row['age_in_months']} mo) expected SDS of {row['zwfa']} but got {weight_z}"
+                                ), f"Row {i} - WHO: Weight of {row['weight']} in {row['sex']} of age {round(row['age_in_months']* 30.4375,2)} ({row['age_in_months']} mo) expected SDS of {row['zwfa']} but got {weight_z}" if row['age_days'] > 1825 else None
                             except AssertionError as e:
                                 failed_assertions.append(str(e))
                                 

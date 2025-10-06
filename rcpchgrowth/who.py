@@ -104,10 +104,10 @@ def who_reference(
             # WHO 2006 reference is used for children below 2 years or those who are 2 years old and default_youngest_reference is True
             return WHO_INFANTS_DATA
         elif age <= WHO_2006_REFERENCE_UPPER_THRESHOLD: # 5.00 years
-            if age <= WHO_2006_REFERENCE_UPPER_THRESHOLD and default_youngest_reference: # 5.00 years
-                return WHO_CHILD_DATA
-            else:
+            if age == WHO_2006_REFERENCE_UPPER_THRESHOLD and default_youngest_reference: # 5.00 years
                 return WHO_2007_DATA
+            else:
+                return WHO_CHILD_DATA
         return WHO_CHILD_DATA
         
     elif age <= WHO_2007_REFERENCE_UPPER_THRESHOLD:

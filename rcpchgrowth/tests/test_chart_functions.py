@@ -84,7 +84,7 @@ def test_who_over_fives(series_name, age_months, expected_weight, sex, measureme
         measurement_method=measurement_method,
         sex=sex,
         age=age_years,
-        default_youngest_reference=False
+        default_youngest_reference=False if age_years > 5 else True # if we are charting over fives, don't use under-five reference at aged 5 years
     )
     assert measurement == pytest.approx(expected_weight, rel=ACCURACY), (
         f"{series_name} month {age_months}: expected {expected_weight} got {measurement} for {requested_sds} in {sex} and {measurement_method} at {age_years:.2f} years"
