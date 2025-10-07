@@ -54,22 +54,22 @@ OVER_FIVES_SERIES = [
 ]
 
 _POINT_CASES = [
-    (series_name, age_days, expected_weight, sex, method, sds)
+    (series_name, age_days, expected_measurement, sex, method, sds)
     for series_name, values, sex, method, sds in SERIES
-    for age_days, expected_weight in enumerate(values)
+    for age_days, expected_measurement in enumerate(values)
 ]
 
 _POINT_CASES_OVER_FIVES = [
-    (series_name, age_months, expected_weight, sex, method, sds)
+    (series_name, age_months, expected_measurement, sex, method, sds)
     for series_name, values, sex, method, sds in OVER_FIVES_SERIES
-    for age_months, expected_weight in enumerate(values)
+    for age_months, expected_measurement in enumerate(values)
 ]
 
 @pytest.mark.parametrize(
-    "series_name,age_days,expected_weight,sex,measurement_method,requested_sds",
+    "series_name,age_days,expected_measurement,sex,measurement_method,requested_sds",
     _POINT_CASES
 )
-def test_who_under_fives(series_name, age_days, expected_weight, sex, measurement_method, requested_sds):
+def test_who_under_fives(series_name, age_days, expected_measurement, sex, measurement_method, requested_sds):
     ACCURACY = 1e-3
     age_years = round(age_days / 365.25, 4)
     if age_years > 5.00:
@@ -82,15 +82,15 @@ def test_who_under_fives(series_name, age_days, expected_weight, sex, measuremen
         age=age_years,
         default_youngest_reference=True
     )
-    assert measurement == pytest.approx(expected_weight, rel=ACCURACY), (
-        f"{series_name} day {age_days}: expected {expected_weight} got {measurement} for {requested_sds} in {sex} and {measurement_method} at {age_years:.3f} years"
+    assert measurement == pytest.approx(expected_measurement, rel=ACCURACY), (
+        f"{series_name} day {age_days}: expected {expected_measurement} got {measurement} for {requested_sds} in {sex} and {measurement_method} at {age_years:.3f} years"
     )
 
 @pytest.mark.parametrize(
-    "series_name,age_months,expected_weight,sex,measurement_method,requested_sds",
+    "series_name,age_months,expected_measurement,sex,measurement_method,requested_sds",
     _POINT_CASES_OVER_FIVES
 )
-def test_who_over_fives(series_name, age_months, expected_weight, sex, measurement_method, requested_sds):
+def test_who_over_fives(series_name, age_months, expected_measurement, sex, measurement_method, requested_sds):
     ACCURACY = 1e-3
     age_years = 5 + round(age_months / 12, 4)
     measurement = measurement_from_sds(
@@ -101,6 +101,6 @@ def test_who_over_fives(series_name, age_months, expected_weight, sex, measureme
         age=age_years,
         default_youngest_reference=False if age_years >= 5 else True # if we are charting over fives, don't use under-five reference at aged 5 years
     )
-    assert measurement == pytest.approx(expected_weight, rel=ACCURACY), (
-        f"{series_name} month {age_months}: expected {expected_weight} got {measurement} for {requested_sds} in {sex} and {measurement_method} at {age_years:.2f} years"
+    assert measurement == pytest.approx(expected_measurement, rel=ACCURACY), (
+        f"{series_name} month {age_months}: expected {expected_measurement} got {measurement} for {requested_sds} in {sex} and {measurement_method} at {age_years:.2f} years"
     )
