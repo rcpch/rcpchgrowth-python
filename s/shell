@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e  # Exit on error
+
+# Enter the container for interactive development
+docker compose exec rcpchgrowth-python bash

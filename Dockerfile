@@ -1,20 +1,27 @@
-FROM python:3.12
+FROM python:3.12-slim
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements file into the container
-COPY requirements.txt .
+# Install system dependencies if needed
+RUN apt-get update && apt-get install -y \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create a virtual environment
-RUN python -m venv /app/venv
+# Upgrade pip
+RUN pip install --upgrade pip
 
-# Upgrade pip and install the dependencies in the virtual environment
-RUN /app/venv/bin/pip install --upgrade pip
-RUN /app/venv/bin/pip install -r requirements.txt
+# Copy requirements and setup files first for better layer caching
+COPY requirements.txt setup.py MANIFEST.in README.md ./
 
-# Copy the rest of the application code
-COPY . .
+# Install development dependencies
+RUN pip install -r requirements.txt
 
-# Set the entrypoint to use the virtual environment's Python interpreter
-CMD ["python3"]
+# Copy the package source code
+COPY rcpchgrowth/ ./rcpchgrowth/
+
+# Install the package in editable/development mode
+RUN pip install -e .
+
+# Keep container running and allow interactive use
+CMD ["/bin/bash"]

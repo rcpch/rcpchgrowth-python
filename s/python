@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e  # Exit on error
+
+# Run Python REPL inside the container
+docker compose exec rcpchgrowth-python python

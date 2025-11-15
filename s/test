@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e  # Exit on error
+
+# Run pytest inside the container
+# Pass any additional arguments to pytest
+docker compose exec rcpchgrowth-python pytest "$@"
