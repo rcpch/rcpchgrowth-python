@@ -30,7 +30,7 @@ data_directory = resources.files("rcpchgrowth.data_tables")
 who_data_directory = data_directory.joinpath("who")
 
 data_path = Path(
-    who_data_directory, "who_infants.json")  # 2 weeks to 2 years
+    who_data_directory, "who_infants.json")  # 0 to 2 years
 with open(data_path) as json_file:
     WHO_INFANTS_DATA = json.load(json_file)
     json_file.close()
