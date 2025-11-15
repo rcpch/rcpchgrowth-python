@@ -78,7 +78,7 @@ def measurement_from_sds(
     l = lms["l"]
     m = lms["m"]
     s = lms["s"]
-
+    
     observation_value = None
 
     if reference == CDC and measurement_method == BMI:
@@ -759,7 +759,7 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list, interpolation_o
                     parameter_one_above=parameter_one_above["sigma"],
                 )
                 return {"l": l, "m": m, "s": s, "sigma": sigma}
-
+    
     return {"l": l, "m": m, "s": s}
 
 
