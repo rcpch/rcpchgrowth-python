@@ -6,5 +6,7 @@ set -e  # Exit on error
 # scripts may need to be made executable on some platforms before they can be run
 # chmod +x <filename> is the command to do this on unixy systems
 
+# Rebuild the container from scratch
 s/remove-containers-and-images
+s/build
 s/up

@@ -78,7 +78,7 @@ def measurement_from_sds(
     l = lms["l"]
     m = lms["m"]
     s = lms["s"]
-
+    
     observation_value = None
 
     if reference == CDC and measurement_method == BMI:
@@ -633,9 +633,11 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list, interpolation_o
     age_matched_index = nearest_lowest_index(
         lms_value_array_for_measurement, age
     )  # returns nearest LMS for age
-    if round(
-        lms_value_array_for_measurement[age_matched_index]["decimal_age"], 4
-    ) == round(age, 4):
+
+    # test for exact match
+    rounded_age = round(age, 4)
+    matched_age = round(lms_value_array_for_measurement[age_matched_index]["decimal_age"],4)
+    if  rounded_age == matched_age:
         # there is an exact match in the data with the requested age
         l = lms_value_array_for_measurement[age_matched_index]["L"]
         m = lms_value_array_for_measurement[age_matched_index]["M"]
@@ -757,7 +759,7 @@ def fetch_lms(age: float, lms_value_array_for_measurement: list, interpolation_o
                     parameter_one_above=parameter_one_above["sigma"],
                 )
                 return {"l": l, "m": m, "s": s, "sigma": sigma}
-
+    
     return {"l": l, "m": m, "s": s}
 
 
@@ -832,7 +834,7 @@ def lms_value_array_for_measurement_for_reference(
     return lms_value_array_for_measurement
 
 """
-WHO and UK-WHO parse as JSON from daily LMS values
+WHO and UK-WHO parse as JSON from daily LMS values - One time use functions
 """
 
 def create_daily_lms_tables_for_measurement_method_and_sex_uk_who_for_age_group(age_group):

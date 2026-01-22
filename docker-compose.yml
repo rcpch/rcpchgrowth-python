@@ -1,11 +1,19 @@
-version: "3.12"
-
 services:
   rcpchgrowth-python:
     build: .
     volumes:
+      # Mount the entire project directory for live development
       - .:/app
+      # Prevent overwriting installed packages and cache directories
+      - /usr/local/lib/python3.12/site-packages
+      - /app/.pytest_cache
     working_dir: /app
     tty: true # Allocate a pseudo-TTY
     stdin_open: true # Keep stdin open
     container_name: rcpchgrowth-python
+    # Set environment variables for development
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    # Override command to keep container running
+    command: tail -f /dev/null
