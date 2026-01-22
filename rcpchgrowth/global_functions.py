@@ -58,7 +58,7 @@ def measurement_from_sds(
     sex: str,
     age: float,
     default_youngest_reference: bool = False,
-) -> float:
+) -> float | None:
 
     try:
         lms_value_array_for_measurement = lms_value_array_for_measurement_for_reference(
@@ -192,7 +192,7 @@ def sds_for_measurement(
 
 def percentage_median_bmi(
     reference: str, age: float, actual_bmi: float, sex: str
-) -> float:
+) -> float | None:
     """
     public method
     This returns a child"s BMI expressed as a percentage of the median value for age and sex.

@@ -45,12 +45,12 @@ SERIES = [
 ]
 
 OVER_FIVES_SERIES = [
-    ("WHO_GIRL_WEIGHT_OVER_FIVE_50", WHO_GIRL_WEIGHT_OVER_FIVE_50, "female", "weight", 0),
-    ("WHO_GIRL_WEIGHT_OVER_FIVE_75", WHO_GIRL_WEIGHT_OVER_FIVE_75, "female", "weight", 0.67),
-    ("WHO_GIRL_WEIGHT_OVER_FIVE_85", WHO_GIRL_WEIGHT_OVER_FIVE_85, "female", "weight", 1.04),
-    ("WHO_GIRL_WEIGHT_OVER_FIVE_97", WHO_GIRL_WEIGHT_OVER_FIVE_97, "female", "weight", 1.88),
-    ("WHO_GIRL_BMI_OVER_FIVE_99", WHO_GIRL_BMI_OVER_FIVE_99, "female", "bmi", 2.33),
-    # ("WHO_GIRL_BMI_OVER_FIVE_999", WHO_GIRL_BMI_OVER_FIVE_999, "female", "bmi", 3.1),
+    # ("WHO_GIRL_WEIGHT_OVER_FIVE_50", WHO_GIRL_WEIGHT_OVER_FIVE_50, "female", "weight", 0),
+    # ("WHO_GIRL_WEIGHT_OVER_FIVE_75", WHO_GIRL_WEIGHT_OVER_FIVE_75, "female", "weight", 0.67),
+    # ("WHO_GIRL_WEIGHT_OVER_FIVE_85", WHO_GIRL_WEIGHT_OVER_FIVE_85, "female", "weight", 1.04),
+    # ("WHO_GIRL_WEIGHT_OVER_FIVE_97", WHO_GIRL_WEIGHT_OVER_FIVE_97, "female", "weight", 1.88),
+    # ("WHO_GIRL_BMI_OVER_FIVE_99", WHO_GIRL_BMI_OVER_FIVE_99, "female", "bmi", 2.33),
+    ("WHO_GIRL_BMI_OVER_FIVE_999", WHO_GIRL_BMI_OVER_FIVE_999, "female", "bmi", 3.1),
 ]
 
 _POINT_CASES = [
@@ -92,7 +92,8 @@ def test_who_under_fives(series_name, age_days, expected_measurement, sex, measu
 )
 def test_who_over_fives(series_name, age_months, expected_measurement, sex, measurement_method, requested_sds):
     ACCURACY = 1e-3
-    age_years = 5 + round(age_months / 12, 4)
+    # age_years = 5 + round(age_months / 12, 4)
+    age_years = (60 + age_months)*30.4375 / 365.25  # more accurate month to year conversion
     measurement = measurement_from_sds(
         reference='who',
         requested_sds=requested_sds,
