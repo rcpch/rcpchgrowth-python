@@ -96,25 +96,25 @@ def measurement_from_sds(
             p95 = m * (1 + l * s * 1.645)**(1/l) # 95th centile measurement
             centile = stats.norm.cdf(requested_sds) * 100 # convert z-score to centile
             observation_value = stats.norm.ppf((centile - 90)/10) * sigma + p95
-    elif reference == WHO and measurement_method == 'bmi':
-        # WHO BMI references require a different method to calculate the measurement if the requested SDS is below -3 or above +3 SDS
-        # This involves calculating the measurement first to determine if it is below -3 or above +3 SDS
-        is_beyond_three_sds = abs(requested_sds) > 3
-        if is_beyond_three_sds:
-            if requested_sds > 3:
-                sd3pos = measurement_for_z(z=3, l=l, m=m, s=s)
-                sd2pos = measurement_for_z(z=2, l=l, m=m, s=s)
-                observation_value = sd3pos + (requested_sds - 3) * (sd3pos - sd2pos)
-            elif requested_sds < -3:
-                sd3neg = measurement_for_z(z=-3, l=l, m=m, s=s)
-                sd2neg = measurement_for_z(z=-2, l=l, m=m, s=s)
-                observation_value = sd3neg + (requested_sds + 3) * (sd2neg - sd3neg)
-        else:
-            try:
-                observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
-            except Exception as e:
-                print(f"measurement_from_sds exception {e} - age: {age}, l: {l}, m: {m}, s: {s}, requested_sds: {requested_sds} lms: {lms}")
-                return None
+    # elif reference == WHO and measurement_method == 'bmi':
+    #     # WHO BMI references require a different method to calculate the measurement if the requested SDS is below -3 or above +3 SDS
+    #     # This involves calculating the measurement first to determine if it is below -3 or above +3 SDS
+    #     is_beyond_three_sds = abs(requested_sds) > 3
+    #     if is_beyond_three_sds:
+    #         if requested_sds > 3:
+    #             sd3pos = measurement_for_z(z=3, l=l, m=m, s=s)
+    #             sd2pos = measurement_for_z(z=2, l=l, m=m, s=s)
+    #             observation_value = sd3pos + (requested_sds - 3) * (sd3pos - sd2pos)
+    #         elif requested_sds < -3:
+    #             sd3neg = measurement_for_z(z=-3, l=l, m=m, s=s)
+    #             sd2neg = measurement_for_z(z=-2, l=l, m=m, s=s)
+    #             observation_value = sd3neg + (requested_sds + 3) * (sd2neg - sd3neg)
+    #     else:
+    #         try:
+    #             observation_value = measurement_for_z(z=requested_sds, l=l, m=m, s=s)
+    #         except Exception as e:
+    #             print(f"measurement_from_sds exception {e} - age: {age}, l: {l}, m: {m}, s: {s}, requested_sds: {requested_sds} lms: {lms}")
+    #             return None
     else:
         # all other references use the standard method
         try:
