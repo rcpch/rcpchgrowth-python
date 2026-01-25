@@ -47,6 +47,12 @@ MINIMUM_PARENTAL_HEIGHT_CM = 50
 # lower limit to paternal and maternal height here therefore set arbitrarily at 50 cm
 # (this constant was added from the API server `schemas/request_validation_classes.py`)
 
+MAXIMUM_PARENTAL_HEIGHT_CM = 260
+# The tallest person for whom there is irrefutable evidence is
+# Robert Pershing Wadlow who was 2.72m (272 cm) tall at his death in 1940
+# https://en.wikipedia.org/wiki/Robert_Wadlow
+# Setting maximum at 260 cm to allow for measurement errors while still catching impossible values
+
 # These constants are used to determine the range of SDS values that are considered - see discussion in issue #32 in the rcpchgrowth-python repository
 # All previous hard-coded values have been replaced with these constants
 MINIMUM_HEIGHT_WEIGHT_OFC_ADVISORY_SDS = -4
