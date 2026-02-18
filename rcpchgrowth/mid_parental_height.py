@@ -1,4 +1,16 @@
-from .constants import HEIGHT, MALE, FEMALE, UK_WHO, WHO, MINIMUM_PARENTAL_HEIGHT_CM, MAXIMUM_PARENTAL_HEIGHT_CM, REFERENCES, SEXES
+import math
+
+from .constants import (
+    HEIGHT,
+    MALE,
+    FEMALE,
+    UK_WHO,
+    WHO,
+    REFERENCES,
+    SEXES,
+    MINIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS,
+    MAXIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS,
+)
 from .global_functions import sds_for_measurement
 """
 Functions to calculate mid-parental height
@@ -7,6 +19,62 @@ cf
 Tanner JM, Whitehouse RH, Takaishi M. Standards from birth to maturity for height, weight, height velocity, and weight velocity: British children, 1965. I. Arch Dis Child. 1966;41(219):454-471.
 The strengths and limitations of parental heights as a predictor of attained height, Charlotte M Wright, Tim D Cheetham, Arch Dis Child 1999;81:257–260
 """
+
+def _adult_age_for_reference(reference):
+    if reference == WHO:
+        return 19.0
+    return 20.0
+
+
+def _validate_parental_height_input(parent_height, parent_label):
+    if parent_height is None:
+        raise ValueError(f"{parent_label} height cannot be None. Please provide a height in cm.")
+    if isinstance(parent_height, bool) or not isinstance(parent_height, (int, float)):
+        raise ValueError(f"{parent_label} height must be a number, got {type(parent_height).__name__}")
+    if not math.isfinite(parent_height):
+        raise ValueError(f"{parent_label} height must be a finite number, got {parent_height}")
+
+
+def _validated_parental_height_z_scores(maternal_height, paternal_height, reference):
+    _validate_parental_height_input(maternal_height, "Maternal")
+    _validate_parental_height_input(paternal_height, "Paternal")
+
+    adult_age = _adult_age_for_reference(reference)
+
+    maternal_height_z = sds_for_measurement(
+        reference=reference,
+        age=adult_age,
+        measurement_method=HEIGHT,
+        observation_value=maternal_height,
+        sex=FEMALE,
+    )
+    paternal_height_z = sds_for_measurement(
+        reference=reference,
+        age=adult_age,
+        measurement_method=HEIGHT,
+        observation_value=paternal_height,
+        sex=MALE,
+    )
+
+    if maternal_height_z < MINIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS:
+        raise ValueError(
+            f"The maternal height of {maternal_height} cm is below {MINIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS} SD and considered to be an error."
+        )
+    if maternal_height_z > MAXIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS:
+        raise ValueError(
+            f"The maternal height of {maternal_height} cm is above {MAXIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS:+g} SD and considered to be an error."
+        )
+    if paternal_height_z < MINIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS:
+        raise ValueError(
+            f"The paternal height of {paternal_height} cm is below {MINIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS} SD and considered to be an error."
+        )
+    if paternal_height_z > MAXIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS:
+        raise ValueError(
+            f"The paternal height of {paternal_height} cm is above {MAXIMUM_HEIGHT_WEIGHT_OFC_ERROR_SDS:+g} SD and considered to be an error."
+        )
+
+    return maternal_height_z, paternal_height_z
+
 
 def mid_parental_height(maternal_height, paternal_height, sex):
     """
@@ -22,25 +90,11 @@ def mid_parental_height(maternal_height, paternal_height, sex):
     if sex not in SEXES:
         raise ValueError(f"Sex must be '{MALE}' or '{FEMALE}', got '{sex}'")
     
-    # Validate maternal_height
-    if maternal_height is None:
-        raise ValueError("Maternal height cannot be None. Please provide a height in cm.")
-    if not isinstance(maternal_height, (int, float)):
-        raise ValueError(f"Maternal height must be a number, got {type(maternal_height).__name__}")
-    if maternal_height < MINIMUM_PARENTAL_HEIGHT_CM:
-        raise ValueError(f"Maternal height of {maternal_height} cm is below the minimum of {MINIMUM_PARENTAL_HEIGHT_CM} cm and is considered to be an error.")
-    if maternal_height > MAXIMUM_PARENTAL_HEIGHT_CM:
-        raise ValueError(f"Maternal height of {maternal_height} cm is above the maximum of {MAXIMUM_PARENTAL_HEIGHT_CM} cm and is considered to be an error.")
-    
-    # Validate paternal_height
-    if paternal_height is None:
-        raise ValueError("Paternal height cannot be None. Please provide a height in cm.")
-    if not isinstance(paternal_height, (int, float)):
-        raise ValueError(f"Paternal height must be a number, got {type(paternal_height).__name__}")
-    if paternal_height < MINIMUM_PARENTAL_HEIGHT_CM:
-        raise ValueError(f"Paternal height of {paternal_height} cm is below the minimum of {MINIMUM_PARENTAL_HEIGHT_CM} cm and is considered to be an error.")
-    if paternal_height > MAXIMUM_PARENTAL_HEIGHT_CM:
-        raise ValueError(f"Paternal height of {paternal_height} cm is above the maximum of {MAXIMUM_PARENTAL_HEIGHT_CM} cm and is considered to be an error.")
+    _validated_parental_height_z_scores(
+        maternal_height=maternal_height,
+        paternal_height=paternal_height,
+        reference=UK_WHO,
+    )
     
     if sex == MALE:
         return (maternal_height + paternal_height + 13) / 2
@@ -61,33 +115,12 @@ def mid_parental_height_z(maternal_height, paternal_height, reference=UK_WHO):
     if reference not in REFERENCES:
         raise ValueError(f"Reference must be one of {REFERENCES}, got '{reference}'")
     
-    # Validate maternal_height
-    if maternal_height is None:
-        raise ValueError("Maternal height cannot be None. Please provide a height in cm.")
-    if not isinstance(maternal_height, (int, float)):
-        raise ValueError(f"Maternal height must be a number, got {type(maternal_height).__name__}")
-    if maternal_height < MINIMUM_PARENTAL_HEIGHT_CM:
-        raise ValueError(f"Maternal height of {maternal_height} cm is below the minimum of {MINIMUM_PARENTAL_HEIGHT_CM} cm and is considered to be an error.")
-    if maternal_height > MAXIMUM_PARENTAL_HEIGHT_CM:
-        raise ValueError(f"Maternal height of {maternal_height} cm is above the maximum of {MAXIMUM_PARENTAL_HEIGHT_CM} cm and is considered to be an error.")
-    
-    # Validate paternal_height
-    if paternal_height is None:
-        raise ValueError("Paternal height cannot be None. Please provide a height in cm.")
-    if not isinstance(paternal_height, (int, float)):
-        raise ValueError(f"Paternal height must be a number, got {type(paternal_height).__name__}")
-    if paternal_height < MINIMUM_PARENTAL_HEIGHT_CM:
-        raise ValueError(f"Paternal height of {paternal_height} cm is below the minimum of {MINIMUM_PARENTAL_HEIGHT_CM} cm and is considered to be an error.")
-    if paternal_height > MAXIMUM_PARENTAL_HEIGHT_CM:
-        raise ValueError(f"Paternal height of {paternal_height} cm is above the maximum of {MAXIMUM_PARENTAL_HEIGHT_CM} cm and is considered to be an error.")
-    
     # convert parental heights to z-scores
-    adult_age = 20.0
-    if reference == WHO:
-        adult_age = 19.0
-    
-    maternal_height_z = sds_for_measurement(reference=reference, age=adult_age, measurement_method=HEIGHT, observation_value=maternal_height, sex=FEMALE)
-    paternal_height_z = sds_for_measurement(reference=reference, age=adult_age, measurement_method=HEIGHT, observation_value=paternal_height, sex=MALE)
+    maternal_height_z, paternal_height_z = _validated_parental_height_z_scores(
+        maternal_height=maternal_height,
+        paternal_height=paternal_height,
+        reference=reference,
+    )
 
     # take the means of the z-scores and apply the regression coefficient of 0.5 - simplifed: (MatHtz +PatHtz)/4
     mid_parental_height_z_score = (maternal_height_z + paternal_height_z) / 4.0

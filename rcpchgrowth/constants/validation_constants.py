@@ -41,6 +41,8 @@ MAXIMUM_GESTATION_WEEKS = 44
 MAXIMUM_GESTATION_WEEKS_ERROR = f"It is very unlikely that a gestational age of more than {MAXIMUM_GESTATION_WEEKS} weeks is correct"
 
 # PARENTAL HEIGHT CONSTANTS
+# Deprecated: retained for backward compatibility only.
+# Mid-parental-height validation now uses SDS error cut-offs.
 MINIMUM_PARENTAL_HEIGHT_CM = 50
 # the shortest man in the world was 54.6 cm Chandra Bahadur Dangi
 # the shortest woman in the world is Jyoti Kishanji Amge at 62.8 cm
