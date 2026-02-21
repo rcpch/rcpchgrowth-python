@@ -12,26 +12,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml', 'requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install build & test dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install setuptools wheel twine
+          pip install build twine
+          # Install test/dev dependencies (pytest etc.)
           pip install -r requirements.txt
-      - name: Run pytest
-        run: |
-          pytest
+          # Install the project (will pull runtime deps from pyproject)
+          pip install .
 
-      - name: Build and publish
+      - name: Run pytest
+        run: pytest -q
+
+      - name: Build (sdist & wheel)
+        run: python -m build
+
+      - name: Publish to PyPI
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          python setup.py sdist bdist_wheel
-          twine upload dist/*
+        run: twine upload dist/*

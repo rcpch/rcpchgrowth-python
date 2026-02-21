@@ -1,0 +1,20 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[postBuild] Editable install of local package"
+pip install -e .
+
+echo "[postBuild] Prune heavy, non-notebook files"
+rm -rf rcpchgrowth/tests || true
+rm -f  rcpchgrowth/data_tables/bayley-pineau.pdf || true
+rm -f  rcpchgrowth/data_tables/uk-who_resources/GrowthCharts.xls || true
+rm -f  rcpchgrowth/data_tables/uk-who_resources/*.bas || true
+rm -f  rcpchgrowth/data_tables/fenton/*.* || true
+
+echo "[postBuild] Warm up matplotlib font cache"
+python - <<'PY'
+import matplotlib.pyplot as plt
+print("Matplotlib imported; font cache built.")
+PY
+
+echo "[postBuild] Done"

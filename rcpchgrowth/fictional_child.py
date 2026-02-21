@@ -50,8 +50,14 @@ def generate_fictional_child_data(
   birth_date = date(1759, 4, 11)  # YYYY m d
   observation_date = birth_date + timedelta(days=start_chronological_age*365.25)
   
+  # adjust the age for gestation
+  correction = 0.0
+  if gestation_weeks < 40:
+    correction = (((gestation_weeks * 7 + gestation_days)-40*7) / 365.25)  # adjust age for gestation
+
   # set the counters
-  cycle_age = start_chronological_age
+  cycle_age = start_chronological_age + correction  # adjust the age for gestation
+  end_age += correction  # adjust the end age for gestation
   cycle_sds = start_sds 
 
   interval_in_years = end_age-start_chronological_age
@@ -76,7 +82,7 @@ def generate_fictional_child_data(
     drift_amount = drift_range / cycle_number
 
   measurements_array=[]
-
+    
   while cycle_age < end_age:
 
     rawMeasurement = None

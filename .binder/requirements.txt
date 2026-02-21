@@ -1,0 +1,6 @@
+pandas
+matplotlib
+jupyterlab
+ipykernel
+scipy
+python-dateutil

@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rcpchgrowth"
+version = "4.4.0"
+description = "SDS and Centile calculations for UK Growth Data"
+keywords = ["growth charts", "anthropometry", "SDS", "centile", "UK-WHO", "UK90", "Trisomy 21", "Turner", "CDC"]
+license = "AGPL-3.0-or-later"
+authors = [
+  { name = "RCPCH Incubator", email = "incubator@rcpch.ac.uk" },
+]
+maintainers = [
+  { name = "RCPCH Incubator", email = "incubator@rcpch.ac.uk" },
+]
+requires-python = ">=3.8"
+dependencies = [
+  "python-dateutil",
+  "scipy",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+
+[project.urls]
+Homepage = "https://github.com/rcpch/rcpchgrowth-python"
+"Bug Reports" = "https://github.com/rcpch/rcpchgrowth-python/issues"
+"API management" = "https://dev.rcpch.ac.uk"
+Documentation = "https://growth.rcpch.ac.uk/products/python-library/"
+
+[project.optional-dependencies]
+notebook = [
+  "pandas>=1.5",
+  "matplotlib>=3.7",
+  "jupyterlab",
+  "ipykernel",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["rcpchgrowth"]
+exclude = ["notebooks"]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[tool.setuptools.package-data]
+rcpchgrowth = ["data_tables/**/*.csv", "data_tables/**/*.json", "data_tables/**/*.xls", "data_tables/**/*.pdf", "data_tables/**/*.bas", "data_tables/**/*.xlsx"]
