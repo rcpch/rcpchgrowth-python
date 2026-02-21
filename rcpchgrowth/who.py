@@ -76,7 +76,7 @@ def reference_data_absent(
     if measurement_method == WEIGHT and age > TEN_YEARS:
         return True, "WHO weight data does not exist in children over 10 y of age."
     
-    if measurement_method == HEAD_CIRCUMFERENCE and age > FIVE_YEARS:
+    if measurement_method == HEAD_CIRCUMFERENCE and age > WHO_2006_REFERENCE_UPPER_THRESHOLD: # 5 years and above
         return True, "WHO head circumference data does not exist in children over 5 y of age."
 
     else:
@@ -96,21 +96,13 @@ def who_reference(
     The function return the appropriate reference file as json
     """
 
-    if age <= WHO_2006_REFERENCE_UPPER_THRESHOLD:  # 5.00 years and below
-        # Children up to and including 5 years are measured using WHO 2006 data
+    if age <= WHO_2006_REFERENCE_UPPER_THRESHOLD:  # 1856 days or 60.87 mths or 5.07 years and below
+        # Children up to and including 5 years and nearly 1 mth (1856 days) are measured using WHO 2006 data
         if (age == 2.0 and default_youngest_reference) or age < WHO_CHILD_LOWER_THRESHOLD: # 2.0 years
             # If default_youngest_reference is True, the younger reference is used to calculate values
             # This is specifically for the overlap between WHO 2006 lying and standing in centile curve generation
             # WHO 2006 reference is used for children below 2 years or those who are 2 years old and default_youngest_reference is True
             return WHO_INFANTS_DATA
-        elif age == WHO_2006_REFERENCE_UPPER_THRESHOLD:
-                if default_youngest_reference: # 5.00 years
-                    # This is for the overlap between the WHO 2006 and WHO 2007 references in centile curve generation
-                    # If default_youngest_reference is True, the younger reference is used to calculate values
-                    # By default, the older reference is used for children who are exactly 5 years old
-                    return WHO_CHILD_DATA
-                else:
-                    return WHO_2007_DATA
         
         return WHO_CHILD_DATA
         
@@ -190,46 +182,3 @@ def select_reference_data_for_who_chart(
     else:
         raise LookupError(
             f"No data found for {measurement_method} in {sex}s in {who_reference_name}")
-
-def who_csv_reference_data_for_age_and_sex(age_days: float, sex: str, measurement_method: str) -> pd.DataFrame:
-    """
-    Load WHO CSV for given age band, sex, and measurement from rcpchgrowth/data_tables/who/pre_2025/.
-    Filenames:
-      who_2006_{measurement}_{sex}.csv   (<=5y)
-      who_2007_{measurement}_{sex}.csv   (>5y; not available for OFC)
-    """
-    if age_days < 0:
-        raise ValueError("Age cannot be negative")
-
-    sex_key = str(sex).strip().lower()          # "male" | "female"
-    meas_key = str(measurement_method).strip().lower()
-
-    # Map common aliases -> filename token
-    meas_token = {
-        "head_circumference": "ofc",
-        "hc": "ofc",
-        "ofc": "ofc",
-        "height": "height",
-        "length": "height",   # if your files use 'height' for all
-        "weight": "weight",
-        "bmi": "bmi",
-    }.get(meas_key, meas_key)
-
-    if age_days <= 1826:  # <=5 years
-        base = "who_2006"
-    else:
-        if meas_token == "ofc":
-            raise ValueError("Head circumference data is not available for children over 5 years of age.")
-        base = "who_2007"
-
-    filename = f"{base}_{meas_token}_{sex_key}.csv"
-
-    # CSV source directory (pre_2025)
-    csv_dir = data_directory.joinpath("who", "csv")
-    csv_traversable = csv_dir.joinpath(filename)
-
-    with resources.as_file(csv_traversable) as p:
-        pth = Path(p)
-        if not pth.exists():
-            raise FileNotFoundError(f"CSV not found: {pth}")
-        return pd.read_csv(pth)

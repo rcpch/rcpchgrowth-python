@@ -6,7 +6,7 @@ from .chart_functions import create_chart
 from .constants import *
 from .date_calculations import chronological_decimal_age, corrected_decimal_age, chronological_calendar_age, estimated_date_delivery, corrected_gestational_age
 from .dynamic_growth import create_thrive_line, return_correlation, create_thrive_lines
-from .global_functions import centile, sds_for_measurement, measurement_from_sds, percentage_median_bmi, measurement_for_z, cubic_interpolation, linear_interpolation, who_z_for_measurement, create_daily_lms_values_for_uk_who,create_daily_lms_tables_for_measurement_method_and_sex_uk_who_for_age_group, build_who_json
+from .global_functions import centile, sds_for_measurement, measurement_from_sds, percentage_median_bmi, measurement_for_z, cubic_interpolation, linear_interpolation
 from .fictional_child import generate_fictional_child_data
 from .measurement import Measurement
 from .mid_parental_height import mid_parental_height, mid_parental_height_z, expected_height_z_from_mid_parental_height_z, lower_and_upper_limits_of_expected_height_z
