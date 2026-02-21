@@ -1,7 +1,6 @@
 bump2version
 pytest
-python-dateutil
-scipy
-matplotlib
-setuptools
-pandas
+
+# Runtime dependencies (python-dateutil, scipy, matplotlib) are declared in pyproject.toml
+# and installed automatically when installing the package. setuptools is provided
+# via the build-system section, so it is not needed here.
