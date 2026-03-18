@@ -47,7 +47,7 @@ notebook = [
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["rcpchgrowth"]
+include = ["rcpchgrowth*"]
 exclude = ["notebooks"]
 
 [project.readme]
