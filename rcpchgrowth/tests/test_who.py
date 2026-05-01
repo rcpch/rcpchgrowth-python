@@ -4,6 +4,7 @@ import json
 import os
 from pprint import pprint
 import pandas as pd
+from datetime import timedelta
 
 # third-party imports
 import pytest
@@ -192,3 +193,94 @@ def test_under2_gold_csv_row(row_param):
     )
 
     assert sds == pytest.approx(float(requested_z), abs=ACCURACY)
+
+
+def _make_who_measurement_at_age_years(
+    measurement_method: str,
+    age_years: float,
+    observation_value: float,
+    sex: str = "male",
+):
+    """Create a WHO Measurement object at a deterministic decimal age for boundary tests."""
+    birth_date = datetime(2015, 1, 1)
+    observation_date = birth_date + timedelta(days=round(age_years * 365.25))
+    return Measurement(
+        measurement_method=measurement_method,
+        observation_value=observation_value,
+        birth_date=birth_date,
+        observation_date=observation_date,
+        sex=sex,
+        reference="who",
+    )
+
+
+def test_who_boundary_5y_continuity_for_height_and_bmi():
+    """Rationale: verify height and BMI remain valid and continuous across the 5-year WHO 2006->2007 transition."""
+    h_below = _make_who_measurement_at_age_years("height", 4.99, 109.5)
+    h_at = _make_who_measurement_at_age_years("height", 5.00, 110.0)
+    h_above = _make_who_measurement_at_age_years("height", 5.09, 111.0)
+
+    b_below = _make_who_measurement_at_age_years("bmi", 4.99, 15.9)
+    b_at = _make_who_measurement_at_age_years("bmi", 5.00, 16.0)
+    b_above = _make_who_measurement_at_age_years("bmi", 5.09, 16.1)
+
+    for meas in [h_below, h_at, h_above, b_below, b_at, b_above]:
+        sds = meas.measurement.get("measurement_calculated_values", {}).get(
+            "chronological_sds"
+        )
+        err = meas.measurement.get("child_observation_value", {}).get(
+            "observation_value_error"
+        )
+        assert sds is not None
+        assert err is None
+
+
+def test_who_boundary_ofc_break_after_5_years():
+    """Rationale: WHO OFC is valid at 5.0y but must be rejected above the 5y upper threshold."""
+    ofc_at_5 = _make_who_measurement_at_age_years("ofc", 5.00, 50.0)
+    ofc_over_5 = _make_who_measurement_at_age_years("ofc", 5.09, 50.0)
+
+    sds_at_5 = ofc_at_5.measurement.get("measurement_calculated_values", {}).get(
+        "chronological_sds"
+    )
+    err_at_5 = ofc_at_5.measurement.get("child_observation_value", {}).get(
+        "observation_value_error"
+    )
+    assert sds_at_5 is not None
+    assert err_at_5 is None
+
+    sds_over_5 = ofc_over_5.measurement.get("measurement_calculated_values", {}).get(
+        "chronological_sds"
+    )
+    err_over_5 = ofc_over_5.measurement.get("child_observation_value", {}).get(
+        "observation_value_error"
+    )
+    assert sds_over_5 is None
+    assert (
+        err_over_5
+        == "WHO head circumference data does not exist in children over 5 y of age."
+    )
+
+
+def test_who_boundary_weight_break_after_10_years():
+    """Rationale: WHO weight is valid through 10.0y but should be rejected once age is above 10y."""
+    weight_at_10 = _make_who_measurement_at_age_years("weight", 10.00, 30.0)
+    weight_over_10 = _make_who_measurement_at_age_years("weight", 10.02, 30.0)
+
+    sds_at_10 = weight_at_10.measurement.get("measurement_calculated_values", {}).get(
+        "chronological_sds"
+    )
+    err_at_10 = weight_at_10.measurement.get("child_observation_value", {}).get(
+        "observation_value_error"
+    )
+    assert sds_at_10 is not None
+    assert err_at_10 is None
+
+    sds_over_10 = weight_over_10.measurement.get(
+        "measurement_calculated_values", {}
+    ).get("chronological_sds")
+    err_over_10 = weight_over_10.measurement.get("child_observation_value", {}).get(
+        "observation_value_error"
+    )
+    assert sds_over_10 is None
+    assert err_over_10 == "WHO weight data does not exist in children over 10 y of age."
