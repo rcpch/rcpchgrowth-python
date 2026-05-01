@@ -48,11 +48,11 @@ s/down        # Stop container
 ### Running Tests
 
 ```bash
-# Run all measurement validation tests
-s/test rcpchgrowth/tests/test_measurement_class.py -v
+# Run the UK-WHO integration suite
+s/test rcpchgrowth/tests/test_uk_who.py -v
 
 # Run specific test case
-s/test rcpchgrowth/tests/test_measurement_class.py::test_measurement_class_ukwho_data -v
+s/test rcpchgrowth/tests/test_uk_who.py::test_uk_who_reference_integration -v
 
 # Run all tests
 s/test

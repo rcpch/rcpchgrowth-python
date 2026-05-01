@@ -48,8 +48,8 @@ s/test
 # Or run tests in an already-running container
 s/test --running
 
-# Run specific test file
-s/test rcpchgrowth/tests/test_measurement_class.py -v
+# Run the UK-WHO integration suite
+s/test rcpchgrowth/tests/test_uk_who.py -v
 
 # Stop when done
 s/down

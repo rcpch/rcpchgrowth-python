@@ -1,3 +1,10 @@
+"""Integration tests for the UK-WHO reference pipeline.
+
+These tests validate the end-to-end path from input dates and measurements
+through age calculation, gestation correction, UK-WHO reference lookup,
+and final SDS and centile-band outputs.
+"""
+
 # standard imports
 from datetime import datetime
 import json
@@ -24,17 +31,20 @@ def load_valid_data_set():
     Loads in the testing data from JSON file
     """
     with open(
-        os.path.abspath(os.path.dirname(__file__)) + "/sds_age_validation_2021.json"
+        os.path.abspath(os.path.dirname(__file__))
+        + "/sds_age_validation_2021_refactored_2026.json"
     ) as f:
         return json.load(f)
 
 
 @pytest.mark.parametrize("line", load_valid_data_set())
-def test_measurement_class_ukwho_data(line):
+def test_uk_who_reference_integration(line):
     """
-    Test which iterates through a JSON file of 4000 fictional children and known calculated (TC via R)
-      correct SDS values. Compares the output of the Measurement.measurement method with the known
-      correct value.
+        End-to-end regression test for UK-WHO calculations.
+
+        Iterates through a JSON file of fictional children with known SDS values
+        generated externally and compares the full Measurement pipeline output to
+        those expected values.
     """
 
     measurement_object = Measurement(

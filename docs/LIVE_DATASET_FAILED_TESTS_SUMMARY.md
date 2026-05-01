@@ -4,14 +4,14 @@
 
 This report summarizes failures from running:
 
-- `test_measurement_class_ukwho_data`
+- `test_uk_who_reference_integration`
 - against both fixtures in `who-validation`
 - where the failures were only from the live fixture file: `sds_age_validation_2021.json`
 
 Command used:
 
 ```bash
-docker compose exec dev pytest rcpchgrowth/tests/test_measurement_class.py::test_measurement_class_ukwho_data -q
+docker compose exec dev pytest rcpchgrowth/tests/test_uk_who.py::test_uk_who_reference_integration -q
 ```
 
 ## Overall Result
