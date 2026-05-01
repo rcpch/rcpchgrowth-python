@@ -45,6 +45,9 @@ s/down        # Stop container
 - 18 test cases removed during transition (see docs/LIVE_DATASET_FAILED_TESTS_SUMMARY.md)
 - Kept for regression testing if needed
 
+WHO dataset details:
+- `rcpchgrowth/tests/who_test_data/README.md` - Inventory of WHO test files and rationale for `who_under2_gold_192.csv`
+
 ### Running Tests
 
 ```bash

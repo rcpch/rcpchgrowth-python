@@ -51,6 +51,10 @@ s/test --running
 # Run the UK-WHO integration suite
 s/test rcpchgrowth/tests/test_uk_who.py -v
 
+# Reference WHO test datasets and under-2 gold-standard rationale
+# (192 deterministic anthro-generated cases)
+# See rcpchgrowth/tests/who_test_data/README.md
+
 # Stop when done
 s/down
 ```
