@@ -84,6 +84,16 @@ The failures in preterm assessment are likely due to:
 - Possible differences in how WHO LMS values were calculated for the 27-44 week gestation range
 - These differences are **intentional** and reflect improvements in WHO reference data
 
+### Under-2 anthro gold dataset experiment
+
+As an additional validation exercise, we compared requested SDS values from `who_under2_gold_192.csv` (generated via `anthro_measurements`) against SDS recalculated by this Python package for all 192 under-2 rows.
+
+- **Headline max absolute difference**: `1.0980290423567851e-06`
+- **Headline min signed difference**: `-1.0980290423567851e-06`
+- **Headline max signed difference**: `7.938643615812424e-07`
+
+This is substantially tighter than the accepted tolerance of `1e-3` and supports practical numerical equivalence for the scenarios covered by this under-2 matrix.
+
 ## Backward Compatibility
 
 ### API Level
