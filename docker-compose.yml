@@ -1,7 +1,7 @@
 services:
-  dev:
+  rcpchgrowth-python:
     build: .
-    container_name: rcpchgrowth-dev
+    container_name: rcpchgrowth-python
     volumes:
       # Mount the entire project directory for live development
       - .:/app
@@ -21,10 +21,14 @@ services:
         mkdir -p /app/notebooks
         echo '[DEV] Editable install'
         pip install -e /app[notebook]
+        echo '[DEV] Installing test dependencies'
+        pip install pytest
         echo '[DEV] Sanity import'
         echo '[DEV] Register kernel'
         python -m ipykernel install --name rcpchgrowth --display-name 'rcpchgrowth' --sys-prefix
-        echo '[DEV] Launching JupyterLab'
-        exec jupyter lab --ip=0.0.0.0 --no-browser --allow-root \
+        echo '[DEV] Launching JupyterLab in background'
+        jupyter lab --ip=0.0.0.0 --no-browser --allow-root \
           --NotebookApp.token='' --NotebookApp.password='' \
-          --notebook-dir=/app/notebooks
+          --notebook-dir=/app/notebooks &
+        echo '[DEV] Container ready for testing'
+        wait

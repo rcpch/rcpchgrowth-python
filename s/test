@@ -2,6 +2,20 @@
 
 set -e  # Exit on error
 
-# Run pytest inside the container
-# Pass any additional arguments to pytest
-docker compose exec rcpchgrowth-python pytest "$@"
+# Check for --running flag to use an already-running container
+USE_RUNNING=false
+if [[ "$1" == "--running" || "$1" == "-r" ]]; then
+    USE_RUNNING=true
+    shift  # Remove the flag from arguments
+fi
+
+if [ "$USE_RUNNING" = true ]; then
+    # Use existing running container
+    echo "Running tests in existing container..."
+    docker compose exec rcpchgrowth-python pytest "$@"
+else
+    # Start container if needed, run tests, then clean up
+    echo "Starting container and running tests..."
+    docker compose up -d
+    docker compose exec rcpchgrowth-python pytest "$@"
+fi

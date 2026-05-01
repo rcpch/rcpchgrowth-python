@@ -1,0 +1,37 @@
+#!/bin/bash
+
+set -e  # Exit on error
+
+# Check if container is running
+CONTAINER_NAME="rcpchgrowth-python"
+CONTAINER_STATUS=$(docker inspect -f '{{.State.Running}}' $CONTAINER_NAME 2>/dev/null || echo "false")
+
+if [ "$CONTAINER_STATUS" = "false" ]; then
+    echo "Container not running. Starting container..."
+    docker compose up -d
+    echo "Waiting for JupyterLab to start..."
+    sleep 15
+fi
+
+# Get the JupyterLab URL
+JUPYTER_URL="http://localhost:8888/lab"
+
+echo ""
+echo "🎓 JupyterLab is running!"
+echo "Opening: $JUPYTER_URL"
+echo ""
+
+# Try to open in browser (works on macOS, Linux with xdg-open, etc.)
+if command -v open &> /dev/null; then
+    # macOS
+    open "$JUPYTER_URL"
+elif command -v xdg-open &> /dev/null; then
+    # Linux
+    xdg-open "$JUPYTER_URL"
+elif command -v wslview &> /dev/null; then
+    # WSL
+    wslview "$JUPYTER_URL"
+else
+    echo "Please open the URL manually in your browser:"
+    echo "$JUPYTER_URL"
+fi
