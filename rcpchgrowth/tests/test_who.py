@@ -25,20 +25,71 @@ ACCURACY = 1e-3
 
 # --- Per-row parametrized tests --------------------------------------------
 # Create a parametrized test so pytest reports one test (dot) per CSV row.
-CSV_PATH = os.path.abspath(os.path.dirname(__file__)) + "/who_test_data/who_validation_data.csv"
+CSV_PATH = (
+    os.path.abspath(os.path.dirname(__file__))
+    + "/who_test_data/who_validation_data.csv"
+)
 validation_params = []
 validation_ids = []
 if os.path.exists(CSV_PATH):
     import math
+
     vdf = pd.read_csv(CSV_PATH)
     for idx, r in vdf.iterrows():
-        mth = r.get('measurement_method')
-        obs = r.get('observation_value')
+        mth = r.get("measurement_method")
+        obs = r.get("observation_value")
         if pd.isna(mth) or pd.isna(obs):
             continue
         # include minimal fields to avoid large param objects
-        validation_params.append((int(idx), str(mth), float(obs), str(r.get('start_date')), str(r.get('end_date')), r.get('sex'), r.get('requested_z')))
+        validation_params.append(
+            (
+                int(idx),
+                str(mth),
+                float(obs),
+                str(r.get("start_date")),
+                str(r.get("end_date")),
+                r.get("sex"),
+                r.get("requested_z"),
+            )
+        )
         validation_ids.append(f"row-{idx}-{mth}")
+
+
+UNDER2_CSV_PATH = (
+    os.path.abspath(os.path.dirname(__file__))
+    + "/who_test_data/who_under2_gold_192.csv"
+)
+under2_params = []
+under2_ids = []
+if os.path.exists(UNDER2_CSV_PATH):
+    udf = pd.read_csv(UNDER2_CSV_PATH)
+    for idx, r in udf.iterrows():
+        mth = r.get("measurement_method")
+        obs = r.get("observation_value")
+        age_days = r.get("age_days")
+        sex_val = r.get("sex")
+        requested_z = r.get("requested_z")
+
+        if (
+            pd.isna(mth)
+            or pd.isna(obs)
+            or pd.isna(age_days)
+            or pd.isna(sex_val)
+            or pd.isna(requested_z)
+        ):
+            continue
+
+        under2_params.append(
+            (
+                int(idx),
+                str(mth),
+                float(obs),
+                int(age_days),
+                int(sex_val),
+                float(requested_z),
+            )
+        )
+        under2_ids.append(f"under2-row-{idx}-{mth}-d{int(age_days)}")
 
 
 @pytest.mark.parametrize("row_param", validation_params, ids=validation_ids)
@@ -47,14 +98,14 @@ def test_validation_csv_row(row_param):
     idx, mth, obs, start_date, end_date, sex_val, requested_z = row_param
 
     # map methods
-    if mth == 'length':
+    if mth == "length":
         mm = HEIGHT
-    elif mth == 'weight':
+    elif mth == "weight":
         mm = WEIGHT
-    elif mth == 'bmi':
+    elif mth == "bmi":
         mm = BMI
-    elif mth in ('headc', 'headcirc'):
-        mm = 'ofc'
+    elif mth in ("headc", "headcirc"):
+        mm = "ofc"
     else:
         pytest.skip(f"Unknown method {mth} for row {idx}")
 
@@ -70,13 +121,17 @@ def test_validation_csv_row(row_param):
         pytest.skip(f"Missing sex for row {idx}")
     try:
         if isinstance(sex_val, (int, float)):
-            sex = 'male' if int(sex_val) == 1 else 'female' if int(sex_val) == 2 else str(sex_val)
+            sex = (
+                "male"
+                if int(sex_val) == 1
+                else "female" if int(sex_val) == 2 else str(sex_val)
+            )
         else:
             s = str(sex_val).strip().lower()
-            if s in ('1', 'm', 'male', 'man', 'boy'):
-                sex = 'male'
-            elif s in ('2', 'f', 'female', 'woman', 'girl'):
-                sex = 'female'
+            if s in ("1", "m", "male", "man", "boy"):
+                sex = "male"
+            elif s in ("2", "f", "female", "woman", "girl"):
+                sex = "female"
             else:
                 sex = s
     except Exception:
@@ -88,9 +143,52 @@ def test_validation_csv_row(row_param):
         birth_date=bd,
         observation_date=od,
         sex=sex,
-        reference='who'
+        reference="who",
     )
-    sds = meas.measurement.get('measurement_calculated_values', {}).get('chronological_sds')
+    sds = meas.measurement.get("measurement_calculated_values", {}).get(
+        "chronological_sds"
+    )
 
-    assert sds == pytest.approx(float(requested_z), abs=1e-3)
+    assert sds == pytest.approx(float(requested_z), abs=ACCURACY)
 
+
+@pytest.mark.parametrize("row_param", under2_params, ids=under2_ids)
+def test_under2_gold_csv_row(row_param):
+    """Per-row under-2 gold validation against anthro-generated observations."""
+    idx, mth, obs, age_days, sex_val, requested_z = row_param
+
+    if mth == "length":
+        mm = HEIGHT
+    elif mth == "weight":
+        mm = WEIGHT
+    elif mth == "bmi":
+        mm = BMI
+    elif mth in ("headc", "headcirc", "ofc"):
+        mm = "ofc"
+    else:
+        pytest.skip(f"Unknown method {mth} for under2 row {idx}")
+
+    if sex_val == 1:
+        sex = "male"
+    elif sex_val == 2:
+        sex = "female"
+    else:
+        pytest.skip(f"Unknown sex value {sex_val} for under2 row {idx}")
+
+    # Build deterministic dates from age-in-days so we can validate age-dependent SDS.
+    birth_date = datetime(2000, 1, 1)
+    observation_date = birth_date + pd.Timedelta(days=int(age_days))
+
+    meas = Measurement(
+        measurement_method=mm,
+        observation_value=float(obs),
+        birth_date=birth_date,
+        observation_date=observation_date,
+        sex=sex,
+        reference="who",
+    )
+    sds = meas.measurement.get("measurement_calculated_values", {}).get(
+        "chronological_sds"
+    )
+
+    assert sds == pytest.approx(float(requested_z), abs=ACCURACY)
