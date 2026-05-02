@@ -72,7 +72,7 @@ Eliminating interpolation calculations may improve performance, particularly for
 
 ### What Changed
 
-* **Test fixture**: Replaced the original `sds_age_validation_2021.json` calculations (generated from WHO weekly and monthly LMS values from UK-WHO) with `sds_age_validation_2021_refactored_2026` and renamed the original file to `sds_age_validation_2021_deprecated.json`. The new file is identical to the old file but removes 18 items that failed with the new implementation (using daily WHO values instead of the older reference). A summary of the differences is found in [LIVE_DATASET_FAILED_TESTS_SUMMARY.md](LIVE_DATASET_FAILED_TESTS_SUMMARY.md)
+* **Test fixture**: Replaced the original `sds_age_validation_2021_refactored_2026.json` calculations (generated from WHO weekly and monthly LMS values from UK-WHO) with `sds_age_validation_2021_refactored_2026` and renamed the original file to `sds_age_validation_2021_deprecated.json`. The new file is identical to the old file but removes 18 items that failed with the new implementation (using daily WHO values instead of the older reference). A summary of the differences is found in [LIVE_DATASET_FAILED_TESTS_SUMMARY.md](LIVE_DATASET_FAILED_TESTS_SUMMARY.md)
 
 * **Reference data**: Updated LMS tables in `rcpchgrowth/data_tables/` to use WHO daily values
 

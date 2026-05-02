@@ -6,7 +6,7 @@ This report summarizes failures from running:
 
 - `test_uk_who_reference_integration`
 - against both fixtures in `who-validation`
-- where the failures were only from the live fixture file: `sds_age_validation_2021.json`
+- where the failures were only from the live fixture file: `sds_age_validation_2021_refactored_2026.json`
 
 Command used:
 
@@ -19,63 +19,63 @@ docker compose exec dev pytest rcpchgrowth/tests/test_uk_who.py::test_uk_who_ref
 - Total cases run: 7986
 - Passed: 7968
 - Failed: 18
-- All 18 failures were in: `sds_age_validation_2021.json` (live dataset)
+- All 18 failures were in: `sds_age_validation_2021_refactored_2026.json` (live dataset)
 - Failures in `sds_age_validation_2021_refactor_2026.json`: 0
 
 ## Failed Cases (Live Fixture)
 
-1. `sds_age_validation_2021.json:367`
+1. `sds_age_validation_2021_refactored_2026.json:367`
    - expected: `-0.632189989`
    - actual: `-0.6340680481290769`
-2. `sds_age_validation_2021.json:411`
+2. `sds_age_validation_2021_refactored_2026.json:411`
    - expected: `1.078752995`
    - actual: `1.0809072812105682`
-3. `sds_age_validation_2021.json:504`
+3. `sds_age_validation_2021_refactored_2026.json:504`
    - expected: `-1.124135375`
    - actual: `-1.1252545568825487`
-4. `sds_age_validation_2021.json:505`
+4. `sds_age_validation_2021_refactored_2026.json:505`
    - expected: `-1.375826955`
    - actual: `-1.3784736052012738`
-5. `sds_age_validation_2021.json:507`
+5. `sds_age_validation_2021_refactored_2026.json:507`
    - expected: `-1.191470265`
    - actual: `-1.1928066570238767`
-6. `sds_age_validation_2021.json:637`
+6. `sds_age_validation_2021_refactored_2026.json:637`
    - expected: `-2.296421766`
    - actual: `-2.29977886411417`
-7. `sds_age_validation_2021.json:639`
+7. `sds_age_validation_2021_refactored_2026.json:639`
    - expected: `-1.928933501`
    - actual: `-1.9305750145259444`
-8. `sds_age_validation_2021.json:782`
+8. `sds_age_validation_2021_refactored_2026.json:782`
    - expected: `-0.218435228`
    - actual: `-0.21952940858951137`
-9. `sds_age_validation_2021.json:1621`
+9. `sds_age_validation_2021_refactored_2026.json:1621`
    - expected: `-1.44912672`
    - actual: `-1.4503060503173935`
-10. `sds_age_validation_2021.json:1721`
+10. `sds_age_validation_2021_refactored_2026.json:1721`
     - expected: `-6.032728195`
     - actual: `-6.044236751081421`
-11. `sds_age_validation_2021.json:1723`
+11. `sds_age_validation_2021_refactored_2026.json:1723`
     - expected: `-5.535323143`
     - actual: `-5.5426050198074535`
-12. `sds_age_validation_2021.json:1797`
+12. `sds_age_validation_2021_refactored_2026.json:1797`
     - expected: `-3.291125298`
     - actual: `-3.2922979854481627`
-13. `sds_age_validation_2021.json:2375`
+13. `sds_age_validation_2021_refactored_2026.json:2375`
     - expected: `-0.997933209`
     - actual: `-0.9991163887382516`
-14. `sds_age_validation_2021.json:2796`
+14. `sds_age_validation_2021_refactored_2026.json:2796`
     - expected: `-1.894040585`
     - actual: `-1.8953394083040758`
-15. `sds_age_validation_2021.json:2797`
+15. `sds_age_validation_2021_refactored_2026.json:2797`
     - expected: `-2.109273911`
     - actual: `-2.113812295000201`
-16. `sds_age_validation_2021.json:2799`
+16. `sds_age_validation_2021_refactored_2026.json:2799`
     - expected: `-1.908897519`
     - actual: `-1.9115163184972574`
-17. `sds_age_validation_2021.json:3141`
+17. `sds_age_validation_2021_refactored_2026.json:3141`
     - expected: `1.697126865`
     - actual: `1.6959057642336917`
-18. `sds_age_validation_2021.json:3143`
+18. `sds_age_validation_2021_refactored_2026.json:3143`
     - expected: `1.673045874`
     - actual: `1.6772149618716816`
 

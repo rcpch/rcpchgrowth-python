@@ -24,7 +24,10 @@ def load_valid_data_set():
     """
     Loads in the testing data from JSON file
     """
-    with open(os.path.abspath(os.path.dirname(__file__)) + "/sds_age_validation_2021.json") as f:
+    with open(
+        os.path.abspath(os.path.dirname(__file__))
+        + "/sds_age_validation_2021_refactored_2026.json"
+    ) as f:
         return json.load(f)
 
 
@@ -38,10 +41,8 @@ def test_chronological_decimal_age(line):
     if line["birth_date"] is None or line["observation_date"] is None:
         return
     birth_date = datetime.strptime(line["birth_date"], "%d/%m/%Y").date()
-    observation_date = datetime.strptime(
-        line["observation_date"], "%d/%m/%Y").date()
-    age = date_calculations.chronological_decimal_age(
-        birth_date, observation_date)
+    observation_date = datetime.strptime(line["observation_date"], "%d/%m/%Y").date()
+    age = date_calculations.chronological_decimal_age(birth_date, observation_date)
     tim_age = float(line["chronological_age"])
     assert age == pytest.approx(tim_age, abs=ACCURACY)
 
@@ -54,10 +55,13 @@ def test_corrected_decimal_age(line):
     if line["birth_date"] is None or line["observation_date"] is None:
         return
     birth_date = datetime.strptime(line["birth_date"], "%d/%m/%Y").date()
-    observation_date = datetime.strptime(
-        line["observation_date"], "%d/%m/%Y").date()
-    age = date_calculations.corrected_decimal_age(birth_date, observation_date, int(
-        line["gestation_weeks"]), int(line["gestation_days"]))
+    observation_date = datetime.strptime(line["observation_date"], "%d/%m/%Y").date()
+    age = date_calculations.corrected_decimal_age(
+        birth_date,
+        observation_date,
+        int(line["gestation_weeks"]),
+        int(line["gestation_days"]),
+    )
     tim_age = float(line["corrected_age"])
     assert age == pytest.approx(tim_age, abs=ACCURACY)
 
@@ -70,8 +74,13 @@ def test_sds_for_measurement_corrected(line):
     """
     if line["observation_value"] is None or line["corrected_sds"] is None:
         return
-    sds = global_functions.sds_for_measurement("uk-who", float(line["corrected_age"]), str(
-        line["measurement_method"]), float(line["observation_value"]), str(line["sex"]))
+    sds = global_functions.sds_for_measurement(
+        "uk-who",
+        float(line["corrected_age"]),
+        str(line["measurement_method"]),
+        float(line["observation_value"]),
+        str(line["sex"]),
+    )
     tim_sds = float(line["corrected_sds"])
     assert sds == pytest.approx(tim_sds, abs=ACCURACY)
 
@@ -83,7 +92,12 @@ def test_sds_for_measurement_chronological(line):
     """
     if line["observation_value"] is None or line["chronological_sds"] is None:
         return
-    sds = global_functions.sds_for_measurement("uk-who", float(line["chronological_age"]), str(
-        line["measurement_method"]), float(line["observation_value"]), str(line["sex"]))
+    sds = global_functions.sds_for_measurement(
+        "uk-who",
+        float(line["chronological_age"]),
+        str(line["measurement_method"]),
+        float(line["observation_value"]),
+        str(line["sex"]),
+    )
     tim_sds = float(line["chronological_sds"])
     assert sds == pytest.approx(tim_sds, abs=ACCURACY)

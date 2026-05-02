@@ -9,6 +9,7 @@ This document provides context and guidance for AI agents, LLMs, and automated t
 ### Active Branch: `who-validation`
 
 The current development branch is `who-validation`, which:
+
 - Replaces UK-WHO reference data with WHO reference data
 - Maintains backward compatibility at the API level
 - Uses test fixtures generated from WHO's published `anthro` and `anthroplus` R packages (RCPCH forks with enhanced precision)
@@ -36,16 +37,19 @@ s/down        # Stop container
 ### Test Fixtures
 
 **Standard fixture** (new):
-- `rcpchgrowth/tests/sds_age_validation_2021.json` - 3984 test cases generated from WHO data
+
+- `rcpchgrowth/tests/sds_age_validation_2021_refactored_2026.json` - 3984 test cases generated from WHO data
 - All tests pass against this fixture
 - This is the current/target state
 
 **Deprecated fixture** (old):
+
 - `rcpchgrowth/tests/sds_age_validation_2021_deprecated.json` - 4002 test cases from live branch
 - 18 test cases removed during transition (see docs/LIVE_DATASET_FAILED_TESTS_SUMMARY.md)
 - Kept for regression testing if needed
 
 WHO dataset details:
+
 - `rcpchgrowth/tests/who_test_data/README.md` - Inventory of WHO test files and rationale for `who_under2_gold_192.csv`
 
 ### Running Tests
@@ -71,7 +75,7 @@ s/test --running rcpchgrowth/tests/ -v
 | Main library | `rcpchgrowth/` |
 | Measurement calculation | `rcpchgrowth/measurement.py` |
 | Tests | `rcpchgrowth/tests/` |
-| Test data | `rcpchgrowth/tests/sds_age_validation_2021.json` |
+| Test data | `rcpchgrowth/tests/sds_age_validation_2021_refactored_2026.json` |
 | Reference data | `rcpchgrowth/data_tables/` |
 | Documentation | `docs/` |
 
@@ -80,6 +84,7 @@ s/test --running rcpchgrowth/tests/ -v
 ### Test Fixture Strategy
 
 The test fixture is **fixed and finite** (3984 cases). When modifying calculation logic:
+
 1. Run tests to identify failures
 2. Analyze whether failures are expected (intentional algorithm changes) or bugs
 3. Do NOT modify test fixtures without explicit user direction
@@ -88,6 +93,7 @@ The test fixture is **fixed and finite** (3984 cases). When modifying calculatio
 ### Preterm/Early Infant Focus
 
 The 18 removed test cases (from live → who-validation transition) were concentrated in:
+
 - Very early infancy (mostly <0.5 years)
 - Preterm/late preterm births (27+2 to 44+0 weeks gestation)
 - 61% female cases with duplicate age-measurement combinations
@@ -97,6 +103,7 @@ This indicates **largest numerical divergence between UK-WHO and WHO occurs in p
 ### Reference Data
 
 WHO reference data is loaded from `rcpchgrowth/data_tables/`:
+
 - LMS values (Lambda, Mu, Sigma) stored as JSON
 - Age-corrected calculations for preterm infants (up to 2 years)
 - Different handling vs. UK-WHO; be cautious with age correction logic
@@ -132,6 +139,7 @@ WHO reference data is loaded from `rcpchgrowth/data_tables/`:
 ### Environment Issues
 
 If container fails to start or tests don't run:
+
 1. `s/down` then `s/up` to restart
 2. Check `docker compose logs` for errors
 3. Verify pytest installed: `s/test --running --version`
