@@ -1,5 +1,17 @@
 name: Run Pytest on pushes to main branches or PRs to any branch
 
+# Third-party GitHub Actions are pinned to a full 40-character commit SHA
+# (with a `# vX.Y.Z` trailing comment for human readability). This protects
+# against tag re-pointing supply-chain attacks: a tag like `v4` is mutable
+# and can be silently rewritten to malicious code, but a commit SHA is not.
+# Dependabot (see .github/dependabot.yml) recognises this pattern and keeps
+# both the SHA and the version comment in sync when raising update PRs.
+#
+# Convention reference:
+#   https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
+# Tooling that automates the pin/unpin cycle:
+#   https://github.com/mheap/pin-github-action
+
 on:
   pull_request:
     branches:
@@ -19,15 +31,15 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements.txt') }}
