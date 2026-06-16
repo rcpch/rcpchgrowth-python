@@ -1,18 +1,6 @@
 #!/bin/bash
+set -e
 
-set -v  # Enable verbose mode
-set -e  # Exit on error
+# Build (if needed) and start the development container in detached mode.
+docker compose up -d "$@"
 
-# scripts may need to be made executable on some platforms before they can be run
-# chmod +x <filename> is the command to do this on unixy systems
-
-# Build and start the development container in detached mode
-docker compose up -d
-
-echo ""
-echo "Container started! Use these commands:"
-echo "  s/shell  - Enter the container for interactive work"
-echo "  s/test   - Run pytest inside the container"
-echo "  s/python - Run Python REPL inside the container"
-echo "  s/down   - Stop the container"
-echo ""

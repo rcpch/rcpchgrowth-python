@@ -13,22 +13,11 @@ services:
       - PYTHONPATH=/app
     ports:
       - "8888:8888"
-    command:
-      - bash
-      - -lc
-      - |
-        set -e
-        mkdir -p /app/notebooks
-        echo '[DEV] Editable install'
-        pip install -e /app[notebook]
-        echo '[DEV] Installing test dependencies'
-        pip install pytest
-        echo '[DEV] Sanity import'
-        echo '[DEV] Register kernel'
-        python -m ipykernel install --name rcpchgrowth --display-name 'rcpchgrowth' --sys-prefix
-        echo '[DEV] Launching JupyterLab in background'
-        jupyter lab --ip=0.0.0.0 --no-browser --allow-root \
-          --NotebookApp.token='' --NotebookApp.password='' \
-          --notebook-dir=/app/notebooks &
-        echo '[DEV] Container ready for testing'
-        wait
+    # Re-wire the editable install against the bind-mounted source (creates
+    # rcpchgrowth.egg-info on the host on first run), then exec JupyterLab.
+    # All deps and the Jupyter kernel are baked into the image at build time.
+    command: >
+      bash -lc "pip install -e . -q &&
+      exec jupyter lab --ip=0.0.0.0 --no-browser --allow-root
+      --NotebookApp.token='' --NotebookApp.password=''
+      --notebook-dir=/app/notebooks"
