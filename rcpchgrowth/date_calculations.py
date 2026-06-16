@@ -160,3 +160,14 @@ def corrected_gestational_age(
         "corrected_gestation_weeks": corrected_weeks,
         "corrected_gestation_days": corrected_supplementary_days,
     }
+
+def age_in_days(birth_date: date, observation_date: date) -> int:
+    """
+    Returns the age in days between two dates.
+    :param birth_date: date of birth
+    :param observation_date: date observation made
+    """
+    if birth_date > observation_date:
+        raise Exception("Birth date cannot be after the date of observation.")
+    
+    return (observation_date - birth_date).days

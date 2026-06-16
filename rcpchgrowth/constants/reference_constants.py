@@ -35,8 +35,8 @@ WHO_2007_CHILD = "who_2007_child" # WHO 2007 child is the reference name for chi
 WHO_REFERENCES = [WHO_2006_INFANT, WHO_2006_CHILD, WHO_2007_CHILD] # WHO references
 
 WHO_2006_REFERENCE_LOWER_THRESHOLD = ((42 * 7) - (40 * 7)) / 365.25  # 42 weeks as decimal age  # 2 weeks as decimal age
-WHO_2006_REFERENCE_UPPER_THRESHOLD = 5.0  # 5 years as decimal age
-WHO_2007_REFERENCE_LOWER_THRESHOLD = 5.0  # 5 years as decimal age
+WHO_2006_REFERENCE_UPPER_THRESHOLD = 1856/365.25  # 5 years and one month just under as decimal age
+WHO_2007_REFERENCE_LOWER_THRESHOLD = (61/30.4375)/365.25  # 5 years and one month as decimal age (61 mths)
 WHO_2007_REFERENCE_UPPER_THRESHOLD = 19.0  # 19 years as decimal age
 
 # 23 weeks is the lowest decimal age available on the UK90 charts

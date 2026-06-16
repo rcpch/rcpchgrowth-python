@@ -1,57 +1,190 @@
 import pytest
-from rcpchgrowth.constants import UK_90_PRETERM_AGES,WHO_2006_UNDER_TWOS_AGES,UK_WHO_2006_OVER_TWOS_AGES, UK90_AGES, TWENTY_FIVE_WEEKS_GESTATION
+from rcpchgrowth.global_functions import *
+from rcpchgrowth.tests.who_test_data.who_chart_precalculated_centiles import *
 
-from rcpchgrowth.chart_functions import create_chart
+UNDER_FIVES_SERIES = [
+    ("WHO_GIRL_WEIGHT_UNDER_FIVE_50", WHO_GIRL_WEIGHT_UNDER_FIVE_50, "female", "weight", 0),
+    ("WHO_GIRL_WEIGHT_UNDER_FIVE_25", WHO_GIRL_WEIGHT_UNDER_FIVE_25, "female", "weight", -0.67),
+    ("WHO_GIRL_WEIGHT_UNDER_FIVE_10", WHO_GIRL_WEIGHT_UNDER_FIVE_10, "female", "weight", -1.28),
+    ("WHO_GIRL_WEIGHT_UNDER_FIVE_5",  WHO_GIRL_WEIGHT_UNDER_FIVE_5,  "female", "weight", -1.64),
+    # Girls BMI-for-age 0-5y
+    ("WHO_GIRL_BMI_UNDER_FIVE_50", WHO_GIRL_BMI_UNDER_FIVE_50, "female", "bmi", 0),
+    ("WHO_GIRL_BMI_UNDER_FIVE_99", WHO_GIRL_BMI_UNDER_FIVE_99, "female", "bmi", 2.33),
+    ("WHO_GIRL_BMI_UNDER_FIVE_999", WHO_GIRL_BMI_UNDER_FIVE_999, "female", "bmi", 3.0903),
+    ("WHO_GIRL_BMI_UNDER_FIVE_1", WHO_GIRL_BMI_UNDER_FIVE_1, "female", "bmi", -2.33),
+    ("WHO_GIRL_BMI_UNDER_FIVE_001", WHO_GIRL_BMI_UNDER_FIVE_001, "female", "bmi", -3.0903),
+    # # Girls length-for-age 0-5y
+    ("WHO_GIRL_LENGTH_UNDER_FIVE_01", WHO_GIRL_LENGTH_UNDER_FIVE_01, "female", "height", -3.0903),
+    ("WHO_GIRL_LENGTH_UNDER_FIVE_1", WHO_GIRL_LENGTH_UNDER_FIVE_1, "female", "height", -2.33),
+    ("WHO_GIRL_LENGTH_UNDER_FIVE_15", WHO_GIRL_LENGTH_UNDER_FIVE_15, "female", "height", -1.036),
+    ("WHO_GIRL_LENGTH_UNDER_FIVE_25", WHO_GIRL_LENGTH_UNDER_FIVE_25, "female", "height", -0.67),
+    ("WHO_GIRL_LENGTH_UNDER_FIVE_50", WHO_GIRL_LENGTH_UNDER_FIVE_50, "female", "height", 0),
+    ("WHO_GIRL_LENGTH_UNDER_FIVE_75", WHO_GIRL_LENGTH_UNDER_FIVE_75, "female", "height", 0.67),
+    ("WHO_GIRL_LENGTH_UNDER_FIVE_85", WHO_GIRL_LENGTH_UNDER_FIVE_85, "female", "height", 1.036),
+    ("WHO_GIRL_LENGTH_UNDER_FIVE_99", WHO_GIRL_LENGTH_UNDER_FIVE_99, "female", "height", 2.33),
+    ("WHO_GIRL_LENGTH_UNDER_FIVE_999", WHO_GIRL_LENGTH_UNDER_FIVE_999, "female", "height", 3.0903),
+    # # # Girls OFC-for-age 0-5y
+    ("WHO_GIRL_OFC_UNDER_FIVE_01", WHO_GIRL_OFC_UNDER_FIVE_01, "female", "ofc", -3.0903),
+    ("WHO_GIRL_OFC_UNDER_FIVE_1", WHO_GIRL_OFC_UNDER_FIVE_1, "female", "ofc", -2.33),
+    ("WHO_GIRL_OFC_UNDER_FIVE_15", WHO_GIRL_OFC_UNDER_FIVE_15, "female", "ofc", -1.036),
+    ("WHO_GIRL_OFC_UNDER_FIVE_25", WHO_GIRL_OFC_UNDER_FIVE_25, "female", "ofc", -0.67),
+    ("WHO_GIRL_OFC_UNDER_FIVE_50", WHO_GIRL_OFC_UNDER_FIVE_50, "female", "ofc", 0),
+    ("WHO_GIRL_OFC_UNDER_FIVE_75", WHO_GIRL_OFC_UNDER_FIVE_75, "female", "ofc", 0.67),
+    ("WHO_GIRL_OFC_UNDER_FIVE_85", WHO_GIRL_OFC_UNDER_FIVE_85, "female", "ofc", 1.036),
+    ("WHO_GIRL_OFC_UNDER_FIVE_99", WHO_GIRL_OFC_UNDER_FIVE_99, "female", "ofc", 2.33),
+    ("WHO_GIRL_OFC_UNDER_FIVE_999", WHO_GIRL_OFC_UNDER_FIVE_999, "female", "ofc", 3.0903),
+
+    # # # Boys weight-for-age 0-5y
+    ("WHO_BOY_WEIGHT_UNDER_FIVE_01", WHO_BOY_WEIGHT_UNDER_FIVE_01, "male", "weight", -3.0903),
+    ("WHO_BOY_WEIGHT_UNDER_FIVE_1", WHO_BOY_WEIGHT_UNDER_FIVE_1, "male", "weight", -2.33),
+    ("WHO_BOY_WEIGHT_UNDER_FIVE_15", WHO_BOY_WEIGHT_UNDER_FIVE_15, "male", "weight", -1.036),
+    ("WHO_BOY_WEIGHT_UNDER_FIVE_25", WHO_BOY_WEIGHT_UNDER_FIVE_25, "male", "weight", -0.67),
+    ("WHO_BOY_WEIGHT_UNDER_FIVE_50", WHO_BOY_WEIGHT_UNDER_FIVE_50, "male", "weight", 0),
+    ("WHO_BOY_WEIGHT_UNDER_FIVE_75", WHO_BOY_WEIGHT_UNDER_FIVE_75, "male", "weight", 0.67),
+    ("WHO_BOY_WEIGHT_UNDER_FIVE_85", WHO_BOY_WEIGHT_UNDER_FIVE_85, "male", "weight", 1.036),
+    ("WHO_BOY_WEIGHT_UNDER_FIVE_99", WHO_BOY_WEIGHT_UNDER_FIVE_99, "male", "weight", 2.33),
+    ("WHO_BOY_WEIGHT_UNDER_FIVE_999", WHO_BOY_WEIGHT_UNDER_FIVE_999, "male", "weight", 3.0903),
+    # # # Boys length-for-age 0-5y
+    ("WHO_BOY_LENGTH_UNDER_FIVE_01", WHO_BOY_LENGTH_UNDER_FIVE_01, "male", "height", -3.0903),
+    ("WHO_BOY_LENGTH_UNDER_FIVE_1", WHO_BOY_LENGTH_UNDER_FIVE_1, "male", "height", -2.33),
+    ("WHO_BOY_LENGTH_UNDER_FIVE_15", WHO_BOY_LENGTH_UNDER_FIVE_15, "male", "height", -1.036),
+    ("WHO_BOY_LENGTH_UNDER_FIVE_25", WHO_BOY_LENGTH_UNDER_FIVE_25, "male", "height", -0.67),
+    ("WHO_BOY_LENGTH_UNDER_FIVE_50", WHO_BOY_LENGTH_UNDER_FIVE_50, "male", "height", 0),
+    ("WHO_BOY_LENGTH_UNDER_FIVE_75", WHO_BOY_LENGTH_UNDER_FIVE_75, "male", "height", 0.67),
+    ("WHO_BOY_LENGTH_UNDER_FIVE_85", WHO_BOY_LENGTH_UNDER_FIVE_85, "male", "height", 1.036),
+    ("WHO_BOY_LENGTH_UNDER_FIVE_99", WHO_BOY_LENGTH_UNDER_FIVE_99, "male", "height", 2.33),
+    ("WHO_BOY_LENGTH_UNDER_FIVE_999", WHO_BOY_LENGTH_UNDER_FIVE_999, "male", "height", 3.0903),
+    # # # Boys BMI-for-age 0-5y
+    ("WHO_BOY_BMI_UNDER_FIVE_01", WHO_BOY_BMI_UNDER_FIVE_01, "male", "bmi", -3.0903),
+    ("WHO_BOY_BMI_UNDER_FIVE_1", WHO_BOY_BMI_UNDER_FIVE_1, "male", "bmi", -2.33),
+    ("WHO_BOY_BMI_UNDER_FIVE_15", WHO_BOY_BMI_UNDER_FIVE_15, "male", "bmi", -1.036),
+    ("WHO_BOY_BMI_UNDER_FIVE_25", WHO_BOY_BMI_UNDER_FIVE_25, "male", "bmi", -0.67),
+    ("WHO_BOY_BMI_UNDER_FIVE_50", WHO_BOY_BMI_UNDER_FIVE_50, "male", "bmi", 0),
+    ("WHO_BOY_BMI_UNDER_FIVE_75", WHO_BOY_BMI_UNDER_FIVE_75, "male", "bmi", 0.67),
+    ("WHO_BOY_BMI_UNDER_FIVE_85", WHO_BOY_BMI_UNDER_FIVE_85, "male", "bmi", 1.036),
+    ("WHO_BOY_BMI_UNDER_FIVE_99", WHO_BOY_BMI_UNDER_FIVE_99, "male", "bmi", 2.33),
+    ("WHO_BOY_BMI_UNDER_FIVE_999", WHO_BOY_BMI_UNDER_FIVE_999, "male", "bmi", 3.0903),
+    # # # Boys OFC-for-age 0-5y
+    ("WHO_BOY_OFC_UNDER_FIVE_01", WHO_BOY_OFC_UNDER_FIVE_01, "male", "ofc", -3.0903),
+    ("WHO_BOY_OFC_UNDER_FIVE_1", WHO_BOY_OFC_UNDER_FIVE_1, "male", "ofc", -2.33),
+    ("WHO_BOY_OFC_UNDER_FIVE_15", WHO_BOY_OFC_UNDER_FIVE_15, "male", "ofc", -1.036),
+    ("WHO_BOY_OFC_UNDER_FIVE_25", WHO_BOY_OFC_UNDER_FIVE_25, "male", "ofc", -0.67),
+    ("WHO_BOY_OFC_UNDER_FIVE_50", WHO_BOY_OFC_UNDER_FIVE_50, "male", "ofc", 0),
+    ("WHO_BOY_OFC_UNDER_FIVE_75", WHO_BOY_OFC_UNDER_FIVE_75, "male", "ofc", 0.67),
+    ("WHO_BOY_OFC_UNDER_FIVE_85", WHO_BOY_OFC_UNDER_FIVE_85, "male", "ofc", 1.036),
+    ("WHO_BOY_OFC_UNDER_FIVE_99", WHO_BOY_OFC_UNDER_FIVE_99, "male", "ofc", 2.33),
+    ("WHO_BOY_OFC_UNDER_FIVE_999", WHO_BOY_OFC_UNDER_FIVE_999, "male", "ofc", 3.0903),
+]
+
+OVER_FIVES_SERIES = [
+    # Girls weight 5-10y
+    ("WHO_GIRL_WEIGHT_OVER_FIVE_50", WHO_GIRL_WEIGHT_OVER_FIVE_50, "female", "weight", 0),
+    ("WHO_GIRL_WEIGHT_OVER_FIVE_75", WHO_GIRL_WEIGHT_OVER_FIVE_75, "female", "weight", 0.67),
+    ("WHO_GIRL_WEIGHT_OVER_FIVE_85", WHO_GIRL_WEIGHT_OVER_FIVE_85, "female", "weight", 1.04),
+    ("WHO_GIRL_WEIGHT_OVER_FIVE_97", WHO_GIRL_WEIGHT_OVER_FIVE_97, "female", "weight", 1.88),
+    # Girls height 5-19y
+    ("WHO_GIRL_LENGTH_OVER_FIVE_01", WHO_GIRL_LENGTH_OVER_FIVE_01, "female", "height", -3.0903),
+    ("WHO_GIRL_LENGTH_OVER_FIVE_1", WHO_GIRL_LENGTH_OVER_FIVE_1, "female", "height", -2.33),
+    ("WHO_GIRL_LENGTH_OVER_FIVE_15", WHO_GIRL_LENGTH_OVER_FIVE_15, "female", "height", -1.036),
+    ("WHO_GIRL_LENGTH_OVER_FIVE_25", WHO_GIRL_LENGTH_OVER_FIVE_25, "female", "height", -0.67),
+    ("WHO_GIRL_LENGTH_OVER_FIVE_50", WHO_GIRL_LENGTH_OVER_FIVE_50, "female", "height", 0),
+    ("WHO_GIRL_LENGTH_OVER_FIVE_75", WHO_GIRL_LENGTH_OVER_FIVE_75, "female", "height", 0.67),
+    ("WHO_GIRL_LENGTH_OVER_FIVE_85", WHO_GIRL_LENGTH_OVER_FIVE_85, "female", "height", 1.036),
+    ("WHO_GIRL_LENGTH_OVER_FIVE_99", WHO_GIRL_LENGTH_OVER_FIVE_99, "female", "height", 2.33),
+    ("WHO_GIRL_LENGTH_OVER_FIVE_999", WHO_GIRL_LENGTH_OVER_FIVE_999, "female", "height", 3.0903),
+
+    # Girls bmi 5-19y
+    ("WHO_GIRL_BMI_OVER_FIVE_01", WHO_GIRL_BMI_OVER_FIVE_01, "female", "bmi", -3.0903),
+    ("WHO_GIRL_BMI_OVER_FIVE_1", WHO_GIRL_BMI_OVER_FIVE_1, "female", "bmi", -2.33),
+    ("WHO_GIRL_BMI_OVER_FIVE_25", WHO_GIRL_BMI_OVER_FIVE_25, "female", "bmi", -0.67),
+    ("WHO_GIRL_BMI_OVER_FIVE_50", WHO_GIRL_BMI_OVER_FIVE_50, "female", "bmi", 0),
+    ("WHO_GIRL_BMI_OVER_FIVE_75", WHO_GIRL_BMI_OVER_FIVE_75, "female", "bmi", 0.67),
+    ("WHO_GIRL_BMI_OVER_FIVE_85", WHO_GIRL_BMI_OVER_FIVE_85, "female", "bmi", 1.036),
+    ("WHO_GIRL_BMI_OVER_FIVE_99", WHO_GIRL_BMI_OVER_FIVE_99, "female", "bmi", 2.33),
+    ("WHO_GIRL_BMI_OVER_FIVE_999", WHO_GIRL_BMI_OVER_FIVE_999, "female", "bmi", 3.0903),
+
+    # Boys length 5-19y
+    ("WHO_BOY_LENGTH_OVER_FIVE_01", WHO_BOY_LENGTH_OVER_FIVE_01, "male", "height", -3.0903),
+    ("WHO_BOY_LENGTH_OVER_FIVE_1", WHO_BOY_LENGTH_OVER_FIVE_1, "male", "height", -2.33),
+    ("WHO_BOY_LENGTH_OVER_FIVE_25", WHO_BOY_LENGTH_OVER_FIVE_25, "male", "height", -0.67),
+    ("WHO_BOY_LENGTH_OVER_FIVE_50", WHO_BOY_LENGTH_OVER_FIVE_50, "male", "height", 0),
+    ("WHO_BOY_LENGTH_OVER_FIVE_75", WHO_BOY_LENGTH_OVER_FIVE_75, "male", "height", 0.67),
+    ("WHO_BOY_LENGTH_OVER_FIVE_85", WHO_BOY_LENGTH_OVER_FIVE_85, "male", "height", 1.036),
+    ("WHO_BOY_LENGTH_OVER_FIVE_99", WHO_BOY_LENGTH_OVER_FIVE_99, "male", "height", 2.33),
+    ("WHO_BOY_LENGTH_OVER_FIVE_999", WHO_BOY_LENGTH_OVER_FIVE_999, "male", "height", 3.0903),
+    
+    # Boys weight 5-10y
+    ("WHO_BOY_WEIGHT_OVER_FIVE_01", WHO_BOY_WEIGHT_OVER_FIVE_01, "male", "weight", -3.0903),
+    ("WHO_BOY_WEIGHT_OVER_FIVE_1", WHO_BOY_WEIGHT_OVER_FIVE_1, "male", "weight", -2.33),
+    ("WHO_BOY_WEIGHT_OVER_FIVE_25", WHO_BOY_WEIGHT_OVER_FIVE_25, "male", "weight", -0.67),
+    ("WHO_BOY_WEIGHT_OVER_FIVE_50", WHO_BOY_WEIGHT_OVER_FIVE_50, "male", "weight", 0),
+    ("WHO_BOY_WEIGHT_OVER_FIVE_75", WHO_BOY_WEIGHT_OVER_FIVE_75, "male", "weight", 0.67),
+    ("WHO_BOY_WEIGHT_OVER_FIVE_85", WHO_BOY_WEIGHT_OVER_FIVE_85, "male", "weight", 1.036),
+    ("WHO_BOY_WEIGHT_OVER_FIVE_99", WHO_BOY_WEIGHT_OVER_FIVE_99, "male", "weight", 2.33),
+    ("WHO_BOY_WEIGHT_OVER_FIVE_999", WHO_BOY_WEIGHT_OVER_FIVE_999, "male", "weight", 3.0903),
+    
+    # # Boys bmi 5-19y
+    ("WHO_BOY_BMI_OVER_FIVE_01", WHO_BOY_BMI_OVER_FIVE_01, "male", "bmi", -3.0903),
+    ("WHO_BOY_BMI_OVER_FIVE_1", WHO_BOY_BMI_OVER_FIVE_1, "male", "bmi", -2.33),
+    ("WHO_BOY_BMI_OVER_FIVE_25", WHO_BOY_BMI_OVER_FIVE_25, "male", "bmi", -0.67),
+    ("WHO_BOY_BMI_OVER_FIVE_50", WHO_BOY_BMI_OVER_FIVE_50, "male", "bmi", 0),
+    ("WHO_BOY_BMI_OVER_FIVE_75", WHO_BOY_BMI_OVER_FIVE_75, "male", "bmi", 0.67),
+    ("WHO_BOY_BMI_OVER_FIVE_85", WHO_BOY_BMI_OVER_FIVE_85, "male", "bmi", 1.036),
+    ("WHO_BOY_BMI_OVER_FIVE_99", WHO_BOY_BMI_OVER_FIVE_99, "male", "bmi", 2.33),
+    ("WHO_BOY_BMI_OVER_FIVE_999", WHO_BOY_BMI_OVER_FIVE_999, "male", "bmi", 3.0903),
+]
+
+_POINT_CASES = [
+    (series_name, age_days, expected_weight, sex, method, sds)
+    for series_name, values, sex, method, sds in UNDER_FIVES_SERIES
+    for age_days, expected_weight in enumerate(values)
+]
+
+_POINT_CASES_OVER_FIVES = [
+    (series_name, age_months, expected_observation_value, sex, method, sds)
+    for series_name, values, sex, method, sds in OVER_FIVES_SERIES
+    for age_months, expected_observation_value in enumerate(values)
+]
+
 @pytest.mark.parametrize(
-        "sex, measurement_method",
-        [
-            ("male", "height"),
-            ("male", "weight"),
-            ("male", "bmi"),
-            ("male", "ofc"),
-            ("female", "height"),
-            ("female", "weight"),
-            ("female", "bmi"),
-            ("female", "ofc"),
-        ]
+    "series_name,age_days,expected_measurement,sex,measurement_method,requested_sds",
+    _POINT_CASES
 )
-def test_create_uk_who_chart_size(sex, measurement_method):
-    """
-    Tests the size of the charts created
-    """
-    chart = create_chart(reference="uk-who", measurement_method=measurement_method, sex=sex)
+def test_who_under_fives(series_name, age_days, expected_measurement, sex, measurement_method, requested_sds):
+    ACCURACY = 1e-3
+    age_years = round(age_days / 365.25, 4)
+    if age_years > 5.00:
+        pytest.skip("Skipping under-five test for age > 5 years")
+    measurement = measurement_from_sds(
+        reference='who',
+        requested_sds=requested_sds,
+        measurement_method=measurement_method,
+        sex=sex,
+        age=age_years,
+        default_youngest_reference=True
+    )
+    assert measurement == pytest.approx(expected_measurement, rel=ACCURACY), (
+        f"{series_name} day {age_days}: expected {expected_measurement} got {measurement} for {requested_sds} in {sex} and {measurement_method} at {age_years:.3f} years"
+    )
 
-    assert len(chart[0]['uk90_preterm'][sex][measurement_method])==9, f"The 'uk90_preterm' {sex} {measurement_method} chart should have 9 entries, one for each centile."
-    assert len(chart[1]['uk_who_infant'][sex][measurement_method])==9, f"The 'uk_who_infant' {sex} {measurement_method} chart should have 9 entries, one for each centile."
-    assert len(chart[2]['uk_who_child'][sex][measurement_method])==9, f"The 'uk_who_infant' {sex} {measurement_method} chart should have 9 entries, one for each centile."
-    assert len(chart[3]['uk90_child'][sex][measurement_method])==9, f"The 'uk90_child' chart {sex} {measurement_method} should have 9 entries, one for each centile."
-
-    if measurement_method == "bmi":
-        assert len(chart[0]['uk90_preterm'][sex][measurement_method][0]['data'])==0, f"The 'uk90_preterm' {sex} {measurement_method} chart 0.4th centile should have 0 entries, one for each decimal age."
-        assert len(chart[1]['uk_who_infant'][sex][measurement_method][0]['data'])==len(WHO_2006_UNDER_TWOS_AGES)-1, f"The 'uk_who_infant' {sex} {measurement_method} chart 0.4th centile should have {len(WHO_2006_UNDER_TWOS_AGES)-1} entries."
-        assert len(chart[2]['uk_who_child'][sex][measurement_method][0]['data'])==len(UK_WHO_2006_OVER_TWOS_AGES), f"The 'uk_who_infant' {sex} {measurement_method} chart 0.4th centile should have {len(UK_WHO_2006_OVER_TWOS_AGES)} entries."
-        assert len(chart[3]['uk90_child'][sex][measurement_method][0]['data'])==len(UK90_AGES), f"The 'uk90_child' {sex} {measurement_method} chart 0.4th centile should have {len(UK90_AGES)} entries."
-    elif measurement_method == "height":
-        assert len(chart[0]['uk90_preterm'][sex][measurement_method][0]['data'])==len([age for age in UK_90_PRETERM_AGES if age >=TWENTY_FIVE_WEEKS_GESTATION]), f"The 'uk90_preterm' {sex} {measurement_method} chart 0.4th centile should have {len([age for age in UK_90_PRETERM_AGES if age >=TWENTY_FIVE_WEEKS_GESTATION])} entries, one for each decimal age from 25 weeks."
-        assert len(chart[1]['uk_who_infant'][sex][measurement_method][0]['data'])==len(WHO_2006_UNDER_TWOS_AGES), f"The 'uk_who_infant' {sex} {measurement_method} chart 0.4th centile should have {len(WHO_2006_UNDER_TWOS_AGES)} entries."
-        assert len(chart[2]['uk_who_child'][sex][measurement_method][0]['data'])==len(UK_WHO_2006_OVER_TWOS_AGES), f"The 'uk_who_infant' {sex} {measurement_method} chart 0.4th centile should have {len(UK_WHO_2006_OVER_TWOS_AGES)} entries."
-        assert len(chart[3]['uk90_child'][sex][measurement_method][0]['data'])==len(UK90_AGES), f"The 'uk90_child' {sex} {measurement_method} chart 0.4th centile should have {len(UK90_AGES)} entries."
-    elif measurement_method == "weight":
-        assert len(chart[0]['uk90_preterm'][sex][measurement_method][0]['data'])==len(UK_90_PRETERM_AGES)-1, f"The 'uk90_preterm' {sex} {measurement_method} chart 0.4th centile should have {len(UK_90_PRETERM_AGES)-1} entries, one for each decimal age from 25 weeks."
-        assert len(chart[1]['uk_who_infant'][sex][measurement_method][0]['data'])==len(WHO_2006_UNDER_TWOS_AGES), f"The 'uk_who_infant' {sex} {measurement_method} chart 0.4th centile should have {len(WHO_2006_UNDER_TWOS_AGES)} entries."
-        assert len(chart[2]['uk_who_child'][sex][measurement_method][0]['data'])==len(UK_WHO_2006_OVER_TWOS_AGES), f"The 'uk_who_infant' {sex} {measurement_method} chart 0.4th centile should have {len(UK_WHO_2006_OVER_TWOS_AGES)} entries."
-        assert len(chart[3]['uk90_child'][sex][measurement_method][0]['data'])==len(UK90_AGES), f"The 'uk90_child' {sex} {measurement_method} chart 0.4th centile should have {len(UK90_AGES)} entries."
-    elif measurement_method == "ofc":
-        assert len(chart[0]['uk90_preterm'][sex][measurement_method][0]['data'])==len(UK_90_PRETERM_AGES)-1, f"The 'uk90_preterm' {sex} {measurement_method} chart 0.4th centile should have {len(UK_90_PRETERM_AGES)-1} entries, one for each decimal age from 25 weeks."
-        assert len(chart[1]['uk_who_infant'][sex][measurement_method][0]['data'])==len(WHO_2006_UNDER_TWOS_AGES), f"The 'uk_who_infant' {sex} {measurement_method} chart 0.4th centile should have {len(WHO_2006_UNDER_TWOS_AGES)} entries."
-        assert len(chart[2]['uk_who_child'][sex][measurement_method][0]['data'])==len(UK_WHO_2006_OVER_TWOS_AGES), f"The 'uk_who_infant' {sex} {measurement_method} chart 0.4th centile should have {len(UK_WHO_2006_OVER_TWOS_AGES)} entries."
-        if sex == 'female':
-            assert len(chart[3]['uk90_child'][sex][measurement_method][0]['data'])==len([age for age in UK90_AGES if age <=17]), f"The 'uk90_child' {sex} {measurement_method} chart 0.4th centile should have {len([age for age in UK90_AGES if age <=17])} entries."
-        if sex == 'male':
-            assert len(chart[3]['uk90_child'][sex][measurement_method][0]['data'])==len([age for age in UK90_AGES if age <=18]), f"The 'uk90_child' {sex} {measurement_method} chart 0.4th centile should have {len([age for age in UK90_AGES if age <=18])} entries."
-
-    else:
-        assert len(chart[0]['uk90_preterm'][sex][measurement_method][0]['data'])==len(UK_90_PRETERM_AGES), f"The 'uk90_preterm' {sex} {measurement_method} chart 0.4th centile should have {len(UK_90_PRETERM_AGES)} entries, one for each centile."
-        assert len(chart[1]['uk_who_infant'][sex][measurement_method][0]['data'])==len(WHO_2006_UNDER_TWOS_AGES), f"The 'uk_who_infant' {sex} {measurement_method} chart 0.4th centile should have {len(WHO_2006_UNDER_TWOS_AGES)} entries."
-        assert len(chart[2]['uk_who_child'][sex][measurement_method][0]['data'])==len(UK_WHO_2006_OVER_TWOS_AGES), f"The 'uk_who_infant' {sex} {measurement_method} chart 0.4th centile should have {len(UK_WHO_2006_OVER_TWOS_AGES)} entries."
-        assert len(chart[3]['uk90_child'][sex][measurement_method][0]['data'])==len(UK90_AGES), f"The 'uk90_child' {sex} {measurement_method} chart 0.4th centile should have {len(UK90_AGES)} entries."
+@pytest.mark.parametrize(
+    "series_name,age_months,expected_observation_value,sex,measurement_method,requested_sds",
+    _POINT_CASES_OVER_FIVES
+)
+def test_who_over_fives(series_name, age_months, expected_observation_value, sex, measurement_method, requested_sds):
+    ACCURACY = 1e-3
+    # age_years = 5 + round(age_months / 12, 4)
+    age_years = (60 + age_months)*30.4375 / 365.25  # more accurate month to year conversion
+    if age_months == 0:
+        pytest.skip("Skipping over-five test for age 0 months")
+    measurement = measurement_from_sds(
+        reference='who',
+        requested_sds=requested_sds,
+        measurement_method=measurement_method,
+        sex=sex,
+        age=age_years,
+        default_youngest_reference=True if age_months==0 else False  # in reality at 5 years we use the younger reference but we are testing the over five charts here
+    )
+    assert measurement == pytest.approx(expected_observation_value, rel=ACCURACY), (
+        f"{series_name} month {age_months}: expected {expected_observation_value} got {measurement} for {requested_sds} in {sex} and {measurement_method} at {age_years:.2f} years"
+    )

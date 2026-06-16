@@ -26,6 +26,7 @@ reference: reference data
 
 # load the reference data
 data_directory = resources.files("rcpchgrowth.data_tables")
+who_data_directory = Path(data_directory, "who/pre_2025")
 
 # data_path = Path(data_directory,"fenton", "fenton.json")  # 23 weeks to 50 weeks - currently not in the code base
 # with open(data_path) as json_file:
@@ -45,7 +46,7 @@ with open(data_path) as json_file:
 # public functions
 
 data_path = Path(
-    data_directory, "who_infants.json")  # 2 weeks to 2 years
+    who_data_directory, "who_infants.json")  # 2 weeks to 2 years
 with open(data_path) as json_file:
     WHO_INFANTS_DATA = json.load(json_file)
     json_file.close()

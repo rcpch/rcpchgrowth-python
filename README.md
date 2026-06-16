@@ -7,6 +7,8 @@
 [![Binder](https://img.shields.io/badge/Binder-Binder?style=flat-square&labelColor=%2311a7f2&color=%230d0d58&logo=jupyter)](https://mybinder.org/v2/gh/rcpch/rcpchgrowth-python/live?urlpath=lab/tree/notebooks/Quickstart.ipynb)
 [![Codespaces](https://img.shields.io/badge/Codespaces-Open_in_Cloud?style=flat-square&labelColor=%2311a7f2&color=%230d0d58&logo=github&logoColor=white)](https://codespaces.new/rcpch/rcpchgrowth-python?quickstart=1)
 
+**For AI/LLM agents working on this repository:** Please read [AGENTS.md](AGENTS.md) for project context, development workflow, and testing strategy.
+
 Please go to <https://growth.rcpch.ac.uk/products/python-library/> for full documentation.
 
 Issues can be raised here <https://github.com/rcpch/rcpchgrowth-python/issues>
@@ -19,10 +21,42 @@ Issues can be raised here <https://github.com/rcpch/rcpchgrowth-python/issues>
 
 If you want to avoid setting up docker environments, there are shortcut scripts the create a dockerized environment with RCPCHGrowth already installed.
 
-This will generate a container which will launch some Jupyter notebooks in a browser and allow local dev ( with hot reload).
+This will generate a container which will launch some Jupyter notebooks in a browser and allow local dev (with hot reload).
+
+#### Convenience Scripts
+
+The `s/` folder contains helper scripts for common development tasks:
+
+| Script | Purpose |
+|--------|---------|
+| `s/up` | Start the development container |
+| `s/down` | Stop the development container |
+| `s/test` | Run pytest (auto-starts container if needed; use `--running` flag for already-running container) |
+| `s/notebook` | Launch JupyterLab in your browser |
+| `s/shell` | Open an interactive bash shell in the container |
+| `s/python` | Launch Python REPL in the container |
+
+**Quick start:**
 
 ```bash
-s/up
+# Start the container and launch notebooks
+s/notebook
+
+# Run tests (in a separate terminal)
+s/test
+
+# Or run tests in an already-running container
+s/test --running
+
+# Run the UK-WHO integration suite
+s/test rcpchgrowth/tests/test_uk_who.py -v
+
+# Reference WHO test datasets and under-2 gold-standard rationale
+# (192 deterministic anthro-generated cases)
+# See rcpchgrowth/tests/who_test_data/README.md
+
+# Stop when done
+s/down
 ```
 
 ### Minimal installation (without docker) assuming you have a python virtual env setup

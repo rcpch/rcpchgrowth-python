@@ -6,5 +6,13 @@ set -e  # Exit on error
 # scripts may need to be made executable on some platforms before they can be run
 # chmod +x <filename> is the command to do this on unixy systems
 
-# starts all docker compose services - will create a notebooks container and a development container
-docker compose up
+# Build and start the development container in detached mode
+docker compose up -d
+
+echo ""
+echo "Container started! Use these commands:"
+echo "  s/shell  - Enter the container for interactive work"
+echo "  s/test   - Run pytest inside the container"
+echo "  s/python - Run Python REPL inside the container"
+echo "  s/down   - Stop the container"
+echo ""

@@ -6,6 +6,7 @@ Handles WHO reference data selection
 import json
 from importlib import resources
 from pathlib import Path
+import pandas as pd
 
 # rcpch imports
 from .constants import *
@@ -26,21 +27,22 @@ reference: reference data
 
 # load the reference data
 data_directory = resources.files("rcpchgrowth.data_tables")
+who_data_directory = data_directory.joinpath("who")
 
 data_path = Path(
-    data_directory, "who_infants.json")  # 2 weeks to 2 years
+    who_data_directory, "who_infants.json")  # 0 to 2 years
 with open(data_path) as json_file:
     WHO_INFANTS_DATA = json.load(json_file)
     json_file.close()
 
 data_path = Path(
-    data_directory, "who_children.json")  # 2 years to 5 years
+    who_data_directory, "who_children.json")  # 2 years to 5 years
 with open(data_path) as json_file:
     WHO_CHILD_DATA = json.load(json_file)
     json_file.close()
 
 data_path = Path(
-    data_directory, "who_2007_children.json")  # 5 years to 19 years
+    who_data_directory, "who_2007_children.json")  # 5 years to 19 years
 with open(data_path) as json_file:
     WHO_2007_DATA = json.load(json_file)
     json_file.close()
@@ -74,7 +76,7 @@ def reference_data_absent(
     if measurement_method == WEIGHT and age > TEN_YEARS:
         return True, "WHO weight data does not exist in children over 10 y of age."
     
-    if measurement_method == HEAD_CIRCUMFERENCE and age > FIVE_YEARS:
+    if measurement_method == HEAD_CIRCUMFERENCE and age > WHO_2006_REFERENCE_UPPER_THRESHOLD: # 5 years and above
         return True, "WHO head circumference data does not exist in children over 5 y of age."
 
     else:
@@ -94,18 +96,14 @@ def who_reference(
     The function return the appropriate reference file as json
     """
 
-    if age <= WHO_2006_REFERENCE_UPPER_THRESHOLD:
-        # Children up to and including 5 years are measured using WHO 2006 data
-        if (age == 2.0 and default_youngest_reference) or age < WHO_CHILD_LOWER_THRESHOLD:
+    if age <= WHO_2006_REFERENCE_UPPER_THRESHOLD:  # 1856 days or 60.87 mths or 5.07 years and below
+        # Children up to and including 5 years and nearly 1 mth (1856 days) are measured using WHO 2006 data
+        if (age == 2.0 and default_youngest_reference) or age < WHO_CHILD_LOWER_THRESHOLD: # 2.0 years
             # If default_youngest_reference is True, the younger reference is used to calculate values
             # This is specifically for the overlap between WHO 2006 lying and standing in centile curve generation
             # WHO 2006 reference is used for children below 2 years or those who are 2 years old and default_youngest_reference is True
             return WHO_INFANTS_DATA
-        elif age == 5.0:
-            if default_youngest_reference:
-                return WHO_CHILD_DATA
-            else:
-                return WHO_2007_DATA
+        
         return WHO_CHILD_DATA
         
     elif age <= WHO_2007_REFERENCE_UPPER_THRESHOLD:
@@ -123,26 +121,19 @@ def who_lms_array_for_measurement_and_sex(
     default_youngest_reference: bool = False
 ) -> list:
 
-    # selects the correct lms data array from the patchwork of references that make up UK-WHO
-
-    try:
-        selected_reference = who_reference(
-            age=age,
-            default_youngest_reference=default_youngest_reference
-        )
-    except:  #  there is no reference for the age supplied
-        raise LookupError("There is no WHO reference for the age supplied.")
-
-    # Check that the measurement requested has reference data at that age
-
+    # selects the correct lms data array from the patchwork of references that make up WHO
     invalid_data, data_error = reference_data_absent(
         age=age,
         measurement_method=measurement_method,
         sex=sex)
-
+    
     if invalid_data:
         raise LookupError(data_error)
     else:
+        selected_reference = who_reference(
+            age=age,
+            default_youngest_reference=default_youngest_reference
+        )
         return selected_reference["measurement"][measurement_method][sex]
 
 
