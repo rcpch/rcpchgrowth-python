@@ -1,12 +1,9 @@
 #!/bin/bash
+set -e
 
-set -v  # Enable verbose mode
-set -e  # Exit on error
+# Rebuild the container from scratch.
+DIR="$(cd "$(dirname "$0")" && pwd)"
+"$DIR/remove-containers-and-images"
+"$DIR/build"
+"$DIR/up"
 
-# scripts may need to be made executable on some platforms before they can be run
-# chmod +x <filename> is the command to do this on unixy systems
-
-# Rebuild the container from scratch
-s/remove-containers-and-images
-s/build
-s/up

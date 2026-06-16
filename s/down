@@ -1,10 +1,5 @@
 #!/bin/bash
+set -e
 
-set -v  # Enable verbose mode
-set -e  # Exit on error
-
-# scripts may need to be made executable on some platforms before they can be run
-# chmod +x <filename> is the command to do this on unixy systems
-
-# shuts down the Docker Compose setup but does not destroy containers or images
+# Stop the Compose setup (containers and images are preserved).
 docker compose down

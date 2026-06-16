@@ -25,17 +25,13 @@ COPY requirements.txt ./
 # Copy the full source (needed for editable install)
 COPY rcpchgrowth rcpchgrowth
 
-# Upgrade pip/setuptools/wheel first
-RUN pip install --upgrade pip setuptools wheel
-
-# Install runtime + notebook deps first (ensures wheels pulled before editable wiring)
-RUN pip install python-dateutil scipy pandas matplotlib jupyterlab ipykernel
-
-# Install dev/test tools
-RUN pip install -r requirements.txt
-
-# Finally perform editable install (should be fast now; minimal build isolation work)
-RUN pip install -e . || (echo '--- Editable install failed; running pip debug ---' && python -m pip debug && exit 1)
+# Upgrade build tooling, install the package (with notebook extras) editable,
+# and install dev/test deps. Notebook extras (jupyterlab, ipykernel, pandas,
+# matplotlib) and runtime deps (python-dateutil, scipy) come from pyproject.toml.
+RUN pip install --upgrade pip setuptools wheel \
+ && pip install -e .[notebook] \
+ && pip install -r requirements.txt \
+ && python -m ipykernel install --name rcpchgrowth --display-name 'rcpchgrowth' --sys-prefix
 
 # Bring in notebooks only after package install so they are never considered for package discovery
 COPY notebooks notebooks
