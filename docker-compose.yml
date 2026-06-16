@@ -6,7 +6,7 @@ services:
       # Mount the entire project directory for live development
       - .:/app
       # Prevent overwriting installed packages and cache directories
-      - /usr/local/lib/python3.12/site-packages
+      - /usr/local/lib/python3.13/site-packages
       - /app/.pytest_cache
     working_dir: /app
     environment:
