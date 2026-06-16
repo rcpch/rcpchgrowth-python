@@ -13,6 +13,10 @@ name: Run Pytest on pushes to main branches or PRs to any branch
 #   https://github.com/mheap/pin-github-action
 
 on:
+  # Allow this exact test job to be reused by other workflows (e.g. the PyPI
+  # publish workflow) so that a release is gated on the SAME tests that run on
+  # every PR and push - no duplicated, drift-prone test steps.
+  workflow_call:
   pull_request:
     branches:
       - "*"
@@ -23,7 +27,7 @@ on:
       - live
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     # Runs tests on multiple python versions across the range we support
     strategy:
@@ -49,8 +53,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install .[notebook]  # ensure optional extras still work
-          pip install -r requirements.txt
+          pip install .[dev]
 
       - name: Run pytest
         run: pytest -q

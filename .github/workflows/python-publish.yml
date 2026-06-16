@@ -20,7 +20,13 @@ on:
     types: [created]
 
 jobs:
+  # Reuse the EXACT same test job that runs on every PR and push, so a release
+  # can never be published with a dependency/config the PR matrix did not test.
+  test:
+    uses: ./.github/workflows/run-pytest-on-push-and-all-prs.yml
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -31,25 +37,10 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Cache pip
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml', 'requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install build & test dependencies
+      - name: Install build dependencies
         run: |
           python -m pip install --upgrade pip
           pip install build twine
-          # Install test/dev dependencies (pytest etc.)
-          pip install -r requirements.txt
-          # Install the project (will pull runtime deps from pyproject)
-          pip install .
-
-      - name: Run pytest
-        run: pytest -q
 
       - name: Build (sdist & wheel)
         run: python -m build
