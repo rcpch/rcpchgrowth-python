@@ -6,7 +6,6 @@ Handles WHO reference data selection
 import json
 from importlib import resources
 from pathlib import Path
-import pandas as pd
 
 # rcpch imports
 from .constants import *

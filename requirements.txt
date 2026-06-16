@@ -1,6 +1,11 @@
-bump2version
-pytest
-
-# Runtime dependencies (python-dateutil, scipy, matplotlib) are declared in pyproject.toml
-# and installed automatically when installing the package. setuptools is provided
-# via the build-system section, so it is not needed here.
+# Local development / CI convenience installer.
+#
+# Installs the package in editable mode plus the test/dev tooling declared in
+# the [dev] optional-dependencies group in pyproject.toml. Keeping the actual
+# dependency list in pyproject.toml means there is a SINGLE source of truth
+# shared by every environment (local, PR CI, and the PyPI publish workflow),
+# so test dependencies can never drift between them.
+#
+# Runtime dependencies (python-dateutil, scipy) are declared in
+# pyproject.toml [project.dependencies] and installed automatically.
+-e .[dev]

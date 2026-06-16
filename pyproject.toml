@@ -43,6 +43,15 @@ notebook = [
   "jupyterlab",
   "ipykernel",
 ]
+# Everything needed to run the test suite and release tooling. This is the
+# SINGLE source of truth for test dependencies: every environment (local,
+# PR CI, and the PyPI publish workflow) installs `.[dev]` so they cannot
+# drift apart. `pandas` is required by rcpchgrowth/tests/test_who.py.
+dev = [
+  "pytest",
+  "pandas>=1.5",
+  "bump2version",
+]
 
 [tool.setuptools]
 include-package-data = true
