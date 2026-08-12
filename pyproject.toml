@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rcpchgrowth"
-version = "4.5.1"
+version = "4.6.0"
 
 description = "SDS and Centile calculations for UK Growth Data"
 keywords = ["growth charts", "anthropometry", "SDS", "centile", "UK-WHO", "UK90", "Trisomy 21", "Turner", "CDC"]

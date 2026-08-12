@@ -1,5 +1,6 @@
 # standard imports
 from datetime import date
+from importlib.metadata import PackageNotFoundError, version
 from typing import Literal
 
 # rcpch imports
@@ -9,6 +10,14 @@ from .date_calculations import (chronological_decimal_age, corrected_decimal_age
                                 chronological_calendar_age, estimated_date_delivery, corrected_gestational_age)
 from .global_functions import sds_for_measurement, centile, percentage_median_bmi
 from .age_advice_strings import comment_prematurity_correction
+from ._build_info import COMMIT
+
+try:
+    _ENGINE_VERSION = version("rcpchgrowth")
+except PackageNotFoundError:
+    _ENGINE_VERSION = "unknown"
+
+
 class Measurement:
 
     def __init__(
@@ -189,8 +198,16 @@ class Measurement:
             },
         }
 
-        # the final object is made up of these five components
+        # the final object is made up of these components
         self.measurement = {
+            'provenance': {
+                'growth_reference': self.reference,
+                'calculation_engine': {
+                    'name': 'rcpchgrowth',
+                    'version': _ENGINE_VERSION,
+                    'commit': COMMIT,
+                },
+            },
             'birth_data': self.ages_object['birth_data'],
             'measurement_dates': self.ages_object['measurement_dates'],
             'child_observation_value': self.calculated_measurements_object['child_observation_value'],

@@ -45,6 +45,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install build twine
 
+      - name: Stamp build commit SHA
+        run: |
+          echo "COMMIT = \"${GITHUB_SHA}\"" > rcpchgrowth/_build_info.py
+
       - name: Build (sdist & wheel)
         run: python -m build
 
