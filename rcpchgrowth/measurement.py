@@ -369,7 +369,7 @@ class Measurement:
             try:
                 chronological_percentage_median_bmi = percentage_median_bmi(
                     reference=reference,
-                    age=corrected_age,
+                    age=chronological_age,
                     actual_bmi=observation_value,
                     sex=sex
                 )
