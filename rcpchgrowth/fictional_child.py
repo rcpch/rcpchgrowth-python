@@ -53,6 +53,17 @@ def generate_fictional_child_data(
   )
   end_age = _interval_value_to_years(end_age, end_age_interval_type)
 
+  #
+  # Validate the requested age range. The gestation correction applied later
+  # shifts both bounds equally, so it does not affect the span and we can
+  # validate against the converted decimal-year values here.
+  #
+  if end_age <= start_chronological_age:
+      raise ValueError(
+          f"end_age ({end_age} years) must be greater than "
+          f"start_chronological_age ({start_chronological_age} years)."
+      )
+
   """
   This is an unnecessary piece of growth chart trivia included for entertainment. The first published
   growth chart is that of the son of Count Philibert de Montbeillard (1720-1785), François Guéneau de Montbeillard.
@@ -74,7 +85,6 @@ def generate_fictional_child_data(
   end_age += correction  # adjust the end age for gestation
   cycle_sds = start_sds
 
-  interval_in_years = end_age-start_chronological_age
   annualized_interval = 0 # interval between data points
 
   if measurement_interval_type in ['d', 'day', 'days']:
@@ -89,7 +99,21 @@ def generate_fictional_child_data(
       raise ValueError(
           "parameters must be one of 'd', 'day', 'days', 'w', 'week', 'weeks', 'm', 'month', 'months', 'y', 'year' or 'years'")
 
-  cycle_number = math.floor(interval_in_years/annualized_interval) # number of iterations
+  if measurement_interval_number <= 0:
+      raise ValueError(
+          f"measurement_interval_number must be a positive value; "
+          f"received {measurement_interval_number}."
+      )
+
+  span_in_years = end_age - start_chronological_age
+  if span_in_years < annualized_interval:
+      raise ValueError(
+          f"The age range ({span_in_years} years) is smaller than the "
+          f"measurement interval ({annualized_interval} years); no "
+          f"measurements would be generated."
+      )
+
+  cycle_number = math.floor(span_in_years/annualized_interval) # number of iterations
 
   drift_amount = 0.0
   if drift:
