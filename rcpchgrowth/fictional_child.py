@@ -48,6 +48,15 @@ def generate_fictional_child_data(
   # decimal years. When the interval type is 'years' (the historical default) the
   # values pass through unchanged, preserving backward compatibility.
   #
+  # Keep the original unit-typed values for use in error messages so callers see
+  # the quantities they actually passed in, rather than the internal decimal-year
+  # representation.
+  #
+  raw_start_chronological_age = start_chronological_age
+  raw_start_chronological_age_interval_type = start_chronological_age_interval_type
+  raw_end_age = end_age
+  raw_end_age_interval_type = end_age_interval_type
+
   start_chronological_age = _interval_value_to_years(
       start_chronological_age, start_chronological_age_interval_type
   )
@@ -60,8 +69,10 @@ def generate_fictional_child_data(
   #
   if end_age <= start_chronological_age:
       raise ValueError(
-          f"end_age ({end_age} years) must be greater than "
-          f"start_chronological_age ({start_chronological_age} years)."
+          f"end_age ({raw_end_age} {raw_end_age_interval_type}) must be "
+          f"greater than start_chronological_age "
+          f"({raw_start_chronological_age} "
+          f"{raw_start_chronological_age_interval_type})."
       )
 
   """
@@ -92,15 +103,17 @@ def generate_fictional_child_data(
   if measurement_interval_number <= 0:
       raise ValueError(
           f"measurement_interval_number must be a positive value; "
-          f"received {measurement_interval_number}."
+          f"received {measurement_interval_number} {measurement_interval_type}."
       )
 
   span_in_years = end_age - start_chronological_age
   if span_in_years < annualized_interval:
       raise ValueError(
-          f"The age range ({span_in_years} years) is smaller than the "
-          f"measurement interval ({annualized_interval} years); no "
-          f"measurements would be generated."
+          f"The age range ({raw_end_age} {raw_end_age_interval_type} - "
+          f"{raw_start_chronological_age} "
+          f"{raw_start_chronological_age_interval_type}) is smaller than "
+          f"the measurement interval ({measurement_interval_number} "
+          f"{measurement_interval_type}); no measurements would be generated."
       )
 
   cycle_number = math.floor(span_in_years/annualized_interval) # number of iterations
