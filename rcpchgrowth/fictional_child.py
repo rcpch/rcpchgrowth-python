@@ -21,7 +21,9 @@ def generate_fictional_child_data(
     drift_range = -0.05,
     noise = False,
     noise_range = 0.01,
-    reference = "uk-who"
+    reference = "uk-who",
+    start_chronological_age_interval_type: str = "years",
+    end_age_interval_type: str = "years"
 ):
   """
   This function generates an array of meassurement objects based on the params:
@@ -35,12 +37,24 @@ def generate_fictional_child_data(
   drift_range: implemented if drift is true. This is an SDS value and represents the SDS of the final plot, relative to starting SDS.
   noise: a boolean to simulate measurement accuracy
   noise_range: 0-1 - always positive. A typical acceptable error is 1% in measurement accuracy, so supplied as 0.01
+  start_chronological_age_interval_type: unit of `start_chronological_age` (same vocabulary as `measurement_interval_type`); defaults to 'years' for backward compatibility
+  end_age_interval_type: unit of `end_age` (same vocabulary as `measurement_interval_type`); defaults to 'years' for backward compatibility
   """
 
   # set the variables
 
+  #
+  # Convert `start_chronological_age` and `end_age` from their supplied units into
+  # decimal years. When the interval type is 'years' (the historical default) the
+  # values pass through unchanged, preserving backward compatibility.
+  #
+  start_chronological_age = _interval_value_to_years(
+      start_chronological_age, start_chronological_age_interval_type
+  )
+  end_age = _interval_value_to_years(end_age, end_age_interval_type)
+
   """
-  This is an unnecessary piece of growth chart trivia included for entertainment. The first published 
+  This is an unnecessary piece of growth chart trivia included for entertainment. The first published
   growth chart is that of the son of Count Philibert de Montbeillard (1720-1785), François Guéneau de Montbeillard.
   The date of birth used here is that of Francois.
   Acknowledgement:
@@ -49,7 +63,7 @@ def generate_fictional_child_data(
   """
   birth_date = date(1759, 4, 11)  # YYYY m d
   observation_date = birth_date + timedelta(days=start_chronological_age*365.25)
-  
+
   # adjust the age for gestation
   correction = 0.0
   if gestation_weeks < 40:
@@ -58,7 +72,7 @@ def generate_fictional_child_data(
   # set the counters
   cycle_age = start_chronological_age + correction  # adjust the age for gestation
   end_age += correction  # adjust the end age for gestation
-  cycle_sds = start_sds 
+  cycle_sds = start_sds
 
   interval_in_years = end_age-start_chronological_age
   annualized_interval = 0 # interval between data points
@@ -82,7 +96,7 @@ def generate_fictional_child_data(
     drift_amount = drift_range / cycle_number
 
   measurements_array=[]
-    
+
   while cycle_age < end_age:
 
     rawMeasurement = None
@@ -102,7 +116,7 @@ def generate_fictional_child_data(
       # add measurement inaccuracy based on percentage supplied
       degree_error = rawMeasurement * noise_range
       rawMeasurement += random.uniform(-degree_error, degree_error)
-    
+
     if rawMeasurement is not None:
       rawMeasurement = round(rawMeasurement, 1)
 
@@ -118,18 +132,33 @@ def generate_fictional_child_data(
       ).measurement
 
       measurements_array.append(measurement)
-    
+
     # create drift
     if drift:
       cycle_sds += drift_amount
       # round the result
       cycle_sds=round(cycle_sds,3)
-    
+
 
     # increment age
     cycle_age += annualized_interval
     observation_date = observation_date + timedelta(days=annualized_interval*365.25)
-    
+
   return measurements_array
 
-    
+
+def _interval_value_to_years(value, interval_type: str) -> float:
+  """
+  Converts a quantity expressed in `interval_type` units into decimal years.
+  Mirrors the conversion logic used for `measurement_interval_type`.
+  """
+  if interval_type in ['d', 'day', 'days']:
+    return value / 365.25
+  if interval_type in ['w', 'week', 'weeks']:
+    return value / 52
+  if interval_type in ['m', 'month', 'months']:
+    return value / 12
+  if interval_type in ['y', 'year', 'years']:
+    return value
+  raise ValueError(
+      "parameters must be one of 'd', 'day', 'days', 'w', 'week', 'weeks', 'm', 'month', 'months', 'y', 'year' or 'years'")
