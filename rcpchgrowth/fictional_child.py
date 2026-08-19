@@ -85,19 +85,9 @@ def generate_fictional_child_data(
   end_age += correction  # adjust the end age for gestation
   cycle_sds = start_sds
 
-  annualized_interval = 0 # interval between data points
-
-  if measurement_interval_type in ['d', 'day', 'days']:
-    annualized_interval = (measurement_interval_number/365.25)
-  elif measurement_interval_type in ['w', 'week', 'weeks']:
-    annualized_interval = (measurement_interval_number/52)
-  elif measurement_interval_type in ['m', 'month', 'months']:
-    annualized_interval = (measurement_interval_number/12)
-  elif measurement_interval_type in ['y', 'year', 'years']:
-      annualized_interval = measurement_interval_number
-  else:
-      raise ValueError(
-          "parameters must be one of 'd', 'day', 'days', 'w', 'week', 'weeks', 'm', 'month', 'months', 'y', 'year' or 'years'")
+  annualized_interval = _interval_value_to_years(
+      measurement_interval_number, measurement_interval_type
+  )
 
   if measurement_interval_number <= 0:
       raise ValueError(
