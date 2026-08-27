@@ -308,7 +308,7 @@ def generate_centile(
     
     def should_default_to_youngest_reference(age: float, reference_name: str):
         if reference_name == UK90_PRETERM:
-            if age == 0.038329911:
+            if age == FORTY_TWO_WEEKS_GESTATION:
                 return True
         if reference_name == UK_WHO_INFANT:
             if age == 2:
