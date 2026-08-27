@@ -108,7 +108,7 @@ def cdc_reference(age: float, measurement_method, default_youngest_reference: bo
         return CDC_CHILD_DATA 
 
     else:
-        return ValueError("There is no CDC reference data above the age of 20 years.")
+        raise ValueError("There is no CDC reference data above the age of 20 years.")
 
 
 def cdc_lms_array_for_measurement_and_sex(
@@ -130,8 +130,8 @@ def cdc_lms_array_for_measurement_and_sex(
         selected_reference = cdc_reference(
             age=age, measurement_method=measurement_method, default_youngest_reference=default_youngest_reference
         )
-    except:  #  there is no reference for the age supplied
-        return LookupError("There is no CDC reference for the age supplied.")
+    except ValueError as err:  #  there is no reference for the age supplied
+        raise LookupError(str(err)) from err
 
 
     if invalid_data:
