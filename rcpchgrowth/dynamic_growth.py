@@ -300,11 +300,11 @@ def return_correlation(t1, t2, time_interval: Literal["weeks", "months"]):
     cwd = os.path.dirname(__file__)  # current location
     if time_interval == "weeks":
         if t1 > 53 or t2 > 53:
-            return Exception("Data only available below 53 weeks of age")
+            raise ValueError("Data only available below 53 weeks of age")
         file_path = 'data_tables/uk_who_weight_correlation_matrices/weight_correlation_by_week.json'
     else:
         if t1 > 12 or t2 > 12:
-            return Exception("Data only available below 12 months of age")
+            raise ValueError("Data only available below 12 months of age")
         file_path = 'data_tables/uk_who_weight_correlation_matrices/weight_correlation_by_month.json'
 
     final_file_path = os.path.join(cwd, file_path)
