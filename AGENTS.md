@@ -8,7 +8,9 @@ This document provides context and guidance for AI agents, LLMs, and automated t
 
 ### WHO reference migration (completed)
 
-The library previously derived WHO reference L, M, S values by cubic interpolation against a sparse (weekly/monthly) table. [PR #80](https://github.com/rcpch/rcpchgrowth-python/pull/80) replaced this with WHO's officially-published per-day LMS table, aligning with WHO's own `anthro`/`anthroplus` reference implementation. This merged into `live` as part of the 4.5.x releases; there is no separate `who-validation` branch any more. See [docs/WHO_REFERENCE_IMPLEMENTATION.md](docs/WHO_REFERENCE_IMPLEMENTATION.md) for what changed and why, and [docs/LIVE_DATASET_FAILED_TESTS_SUMMARY.md](docs/LIVE_DATASET_FAILED_TESTS_SUMMARY.md) for the 18 fixture cases whose expected values changed in the transition.
+The library previously derived WHO reference L, M, S values by cubic interpolation against a sparse (weekly/monthly) table. [PR #80](https://github.com/rcpch/rcpchgrowth-python/pull/80) replaced this with WHO's officially-published per-day LMS table, aligning with WHO's own `anthro`/`anthroplus` reference implementation. This merged into `live` as part of the 4.5.x releases; there is no separate `who-validation` branch any more. See the [WHO Reference Implementation](https://growth.rcpch.ac.uk/developer/who-reference-implementation/) page in the documentation site for what changed and why, including the 18 fixture cases whose expected values changed in the transition.
+
+Note: this repository does not keep project documentation. Developer, clinician, integrator and researcher docs live in the separate [digital-growth-charts-documentation](https://github.com/rcpch/digital-growth-charts-documentation) repository, published at [growth.rcpch.ac.uk](https://growth.rcpch.ac.uk).
 
 ## Development Workflow
 
@@ -40,7 +42,7 @@ s/down        # Stop container
 **Deprecated fixture** (old):
 
 - `rcpchgrowth/tests/sds_age_validation_2021_deprecated.json` - 4002 test cases from live branch
-- 18 test cases removed during transition (see docs/LIVE_DATASET_FAILED_TESTS_SUMMARY.md)
+- 18 test cases removed during transition (see the [WHO Reference Implementation](https://growth.rcpch.ac.uk/developer/who-reference-implementation/) page)
 - Kept for regression testing if needed
 
 WHO dataset details:
@@ -69,7 +71,7 @@ s/test --running rcpchgrowth/tests/ -v
 | Tests | `rcpchgrowth/tests/` |
 | Test data | `rcpchgrowth/tests/sds_age_validation_2021_refactored_2026.json` |
 | Reference data | `rcpchgrowth/data_tables/` |
-| Documentation | `docs/` |
+| Documentation | Separate repo: [digital-growth-charts-documentation](https://github.com/rcpch/digital-growth-charts-documentation) ([growth.rcpch.ac.uk](https://growth.rcpch.ac.uk)) |
 
 ## Important Considerations for LLM Development
 
@@ -84,7 +86,7 @@ The test fixture is **fixed and finite** (3984 cases). When modifying calculatio
 
 ### Preterm/Early Infant Focus
 
-The 18 removed test cases (from live → who-validation transition) were concentrated in:
+The 18 removed test cases (from the WHO reference migration) were concentrated in:
 
 - Very early infancy (mostly <0.5 years)
 - Preterm/late preterm births (27+2 to 44+0 weeks gestation)
@@ -102,14 +104,13 @@ WHO reference data is loaded from `rcpchgrowth/data_tables/`:
 
 ### Git Branch Context
 
-- **live** (main production branch) - uses UK-WHO data
-- **who-validation** (active development) - uses WHO data, all new tests passing
-- New changes should target `who-validation` for PR review
-- Do not push directly to `live`
+- **live** (main production branch) - the WHO reference migration is merged here; releases are cut from `live`
+- The `who-validation` branch has been retired - do not target it
+- Do not push directly to `live`; open a PR for review
 
 ## Documentation for Developers
 
-- [LIVE_DATASET_FAILED_TESTS_SUMMARY.md](docs/LIVE_DATASET_FAILED_TESTS_SUMMARY.md) - Analysis of 18 removed test cases, including demographics and patterns
+- [WHO Reference Implementation](https://growth.rcpch.ac.uk/developer/who-reference-implementation/) - the WHO daily-LMS migration, the BMI direction asymmetry, the 5-year boundary, and the 18 removed fixture cases
 - [README.md](README.md) - Installation and quick-start (human-focused, but useful context)
 
 ## Common Tasks
@@ -123,7 +124,7 @@ WHO reference data is loaded from `rcpchgrowth/data_tables/`:
 
 ### Debugging a Test Failure
 
-1. Check if it's a known issue in `docs/LIVE_DATASET_FAILED_TESTS_SUMMARY.md`
+1. Check if it's a known issue in the [WHO Reference Implementation](https://growth.rcpch.ac.uk/developer/who-reference-implementation/) page
 2. Run specific test with `-v` flag for full output
 3. Inspect test fixture data for the failing case
 4. Compare old vs. new calculation if transitioning between reference systems
