@@ -39,3 +39,10 @@ def test_younger_who_chart_component_includes_age_two(
     first_centile = component_data[sex][measurement_method][0]["data"]
 
     assert first_centile[-1]["x"] == 2
+
+    for chart_component in chart:
+        component_name, component_data = next(iter(chart_component.items()))
+        if component_name == component:
+            continue
+        first_centile = component_data[sex][measurement_method][0]["data"]
+        assert all(point["x"] != 2 for point in first_centile)
