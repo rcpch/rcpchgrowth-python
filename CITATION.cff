@@ -11,7 +11,7 @@ authors:
     given-names: "Tim"
     orcid: "https://orcid.org/0000-0001-5711-8200"
 title: "rcpchgrowth"
-version: 3.1.17
-doi: 10.5281/zenodo.6301089
-date-released: 2022-05-14
+version: 4.6.0
+doi: 10.5281/zenodo.4852391
+date-released: 2026-08-27
 url: "https://github.com/rcpch/rcpchgrowth-python"
