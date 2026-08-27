@@ -70,9 +70,16 @@ def measurement_from_sds(
     except LookupError as err:
         raise LookupError(err)
 
+    # WHO's daily infant table ends at day 730, fractionally before 2.0 years.
+    # At the chart overlap, keep the point at x=2.0 but calculate it from the
+    # final available row in the explicitly selected younger reference.
+    lms_age = age
+    if reference in (UK_WHO, WHO) and default_youngest_reference and age == TWO_YEARS:
+        lms_age = min(age, lms_value_array_for_measurement[-1]["decimal_age"])
+
     # get LMS values from the reference: check for age match, interpolate if none
     lms = fetch_lms(
-        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement
+        age=lms_age, lms_value_array_for_measurement=lms_value_array_for_measurement
     )
     l = lms["l"]
     m = lms["m"]
