@@ -4,16 +4,11 @@ This document provides context and guidance for AI agents, LLMs, and automated t
 
 ## Project Overview
 
-**rcpchgrowth-python** is a Python library for calculating children's growth measurements against UK and international growth references. The project is currently transitioning from UK-WHO reference data to pure WHO reference data.
+**rcpchgrowth-python** is a Python library for calculating children's growth measurements against UK and international growth references.
 
-### Active Branch: `who-validation`
+### WHO reference migration (completed)
 
-The current development branch is `who-validation`, which:
-
-- Replaces UK-WHO reference data with WHO reference data
-- Maintains backward compatibility at the API level
-- Uses test fixtures generated from WHO's published `anthro` and `anthroplus` R packages (RCPCH forks with enhanced precision)
-- All new tests pass; the branch is ready for validation
+The library previously derived WHO reference L, M, S values by cubic interpolation against a sparse (weekly/monthly) table. [PR #80](https://github.com/rcpch/rcpchgrowth-python/pull/80) replaced this with WHO's officially-published per-day LMS table, aligning with WHO's own `anthro`/`anthroplus` reference implementation. This merged into `live` as part of the 4.5.x releases; there is no separate `who-validation` branch any more. See [docs/WHO_REFERENCE_IMPLEMENTATION.md](docs/WHO_REFERENCE_IMPLEMENTATION.md) for what changed and why, and [docs/LIVE_DATASET_FAILED_TESTS_SUMMARY.md](docs/LIVE_DATASET_FAILED_TESTS_SUMMARY.md) for the 18 fixture cases whose expected values changed in the transition.
 
 ## Development Workflow
 
@@ -57,9 +52,6 @@ WHO dataset details:
 ```bash
 # Run the UK-WHO integration suite
 s/test rcpchgrowth/tests/test_uk_who.py -v
-
-# Run specific test case
-s/test rcpchgrowth/tests/test_uk_who.py::test_uk_who_reference_integration -v
 
 # Run all tests
 s/test
