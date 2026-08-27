@@ -26,7 +26,7 @@ def generate_fictional_child_data(
     end_age_interval_type: str = "years"
 ):
   """
-  This function generates an array of meassurement objects based on the params:
+  This function generates an array of measurement objects based on the params:
   measurement_method: ['height', 'weight', 'ofc', 'bmi']
   sex: ['male', 'female']
   gestation_weeks
