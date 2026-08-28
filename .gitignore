@@ -136,3 +136,6 @@ dmypy.json
 
 # Fenton data is licenced and not to be shared
 rcpchgrowth/data_tables/fenton/*.*
+
+# Private files
+.private

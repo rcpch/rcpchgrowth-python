@@ -50,7 +50,8 @@ notebook = [
 dev = [
   "pytest",
   "pandas>=1.5",
-  "bump2version",
+  "bump-my-version",
+  "build",
 ]
 
 [tool.setuptools]
@@ -66,3 +67,39 @@ content-type = "text/markdown"
 
 [tool.setuptools.package-data]
 rcpchgrowth = ["data_tables/**/*.csv", "data_tables/**/*.json", "data_tables/**/*.xls", "data_tables/**/*.pdf", "data_tables/**/*.bas", "data_tables/**/*.xlsx"]
+
+# Version bumping. `version` above is the single source of truth; this keeps
+# the duplicated version in CITATION.cff (and its release date) in sync so it
+# can never drift again, as it had (stuck at 3.1.17 for years).
+#
+# `s/version++` is the optional automated release-preparation path. To run the
+# underlying bump directly (with the [dev] extra installed):
+#   bump-my-version bump patch   # 4.6.0 -> 4.6.1
+#   bump-my-version bump minor   # 4.6.0 -> 4.7.0
+#   bump-my-version bump major   # 4.6.0 -> 5.0.0
+# Add --dry-run --verbose to preview. commit/tag are left off deliberately so
+# the version bump stays a reviewable change, matching the existing release
+# flow (manual bump commit, then a GitHub Release triggers PyPI publish).
+[tool.bumpversion]
+current_version = "4.6.0"
+allow_dirty = true
+commit = false
+tag = false
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = "version = \"{current_version}\""
+replace = "version = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+filename = "CITATION.cff"
+search = "version: {current_version}"
+replace = "version: {new_version}"
+
+# date-released is not a version number, so match any ISO date and stamp today.
+# Braces in the regex are doubled because search is a format string first.
+[[tool.bumpversion.files]]
+filename = "CITATION.cff"
+regex = true
+search = "date-released: \\d{{4}}-\\d{{2}}-\\d{{2}}"
+replace = "date-released: {now:%Y-%m-%d}"
