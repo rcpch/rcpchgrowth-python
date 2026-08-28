@@ -71,6 +71,14 @@ s/test --running rcpchgrowth/tests/ -v
 
 This collection-time filtering replaced 1,700 runtime skips (1,655 out-of-range under-five cases and 45 month-zero over-five cases) without removing any executed assertions. Do not replace the filters with `pytest.skip`, remove them, or broaden the tested ranges unless the reference-boundary behaviour or source vectors intentionally change. After any such change, run `s/test --running rcpchgrowth/tests/test_chart_functions.py -q -rs` and the full `s/test --running -q -rs`; the suite should report no skipped tests.
 
+### Optional Release Preparation
+
+Use `s/version++ [patch|minor|major]` to prepare a release version bump; it defaults to `patch`. The script is optional, but it is the canonical automated path: from a clean and up-to-date `live` branch it runs the full suite, creates `release/vX.Y.Z`, synchronizes `pyproject.toml` and `CITATION.cff`, validates the package build, commits `chore(release): vX.Y.Z`, pushes the branch, and opens a PR. Use `--dry-run` to preview without changing anything.
+
+The script deliberately does not tag or publish because `live` is protected and the release tag must point to the reviewed PR's exact merge commit. After the PR is merged, follow the terminal runbook printed by the script to resolve that commit and create the GitHub Release; that release event triggers `.github/workflows/python-publish.yml`. Do not push directly to `live` or create the release before the PR merges. See [`s/README.md`](s/README.md) for usage.
+
+The manual post-merge tag and GitHub Release are a documented project-specific exception to the house-style CI auto-tag cascade. They remain necessary while the existing publisher is triggered by `release: created`; do not introduce a second release command or automatic tag path without migrating the publishing workflow as one coherent change.
+
 ## Key Code Locations
 
 | Component | Location |

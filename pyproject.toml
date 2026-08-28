@@ -51,6 +51,7 @@ dev = [
   "pytest",
   "pandas>=1.5",
   "bump-my-version",
+  "build",
 ]
 
 [tool.setuptools]
@@ -71,7 +72,8 @@ rcpchgrowth = ["data_tables/**/*.csv", "data_tables/**/*.json", "data_tables/**/
 # the duplicated version in CITATION.cff (and its release date) in sync so it
 # can never drift again, as it had (stuck at 3.1.17 for years).
 #
-# Usage (run with the [dev] extra installed):
+# `s/version++` is the optional automated release-preparation path. To run the
+# underlying bump directly (with the [dev] extra installed):
 #   bump-my-version bump patch   # 4.6.0 -> 4.6.1
 #   bump-my-version bump minor   # 4.6.0 -> 4.7.0
 #   bump-my-version bump major   # 4.6.0 -> 5.0.0

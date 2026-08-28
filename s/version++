@@ -1,0 +1,238 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Royal College of Paediatrics and Child Health
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Optionally prepare a release version bump from a clean, up-to-date live branch.
+# The script runs the full test suite, updates every configured version field,
+# validates a source/wheel build, commits the result, and opens a release PR.
+# It never tags or publishes: after review and merge it prints the exact manual
+# tag and GitHub Release commands that trigger the existing PyPI workflow.
+#
+# Requires Docker, GitHub CLI authentication, and current dev dependencies in
+# the container. Run `s/rebuild` if the bump/build tool preflight fails.
+
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+bump="patch"
+dry_run=false
+
+usage() {
+  cat <<'EOF'
+Usage: s/version++ [patch|minor|major] [--dry-run]
+
+Prepares a release PR from live. The bump defaults to patch.
+After the PR is merged, the script's terminal runbook explains how to create
+the GitHub Release that triggers publication to PyPI.
+
+Options:
+  --dry-run  Show the proposed version and workflow without changing anything.
+  -h, --help Show this help.
+EOF
+}
+
+while (($#)); do
+  case "$1" in
+    patch|minor|major) bump="$1" ;;
+    --dry-run) dry_run=true ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
+current_version="$(awk -F'"' '/^version = / { print $2; exit }' pyproject.toml)"
+if [[ ! "$current_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+  echo "Could not read a semantic version from pyproject.toml." >&2
+  exit 1
+fi
+
+major="${BASH_REMATCH[1]}"
+minor="${BASH_REMATCH[2]}"
+patch="${BASH_REMATCH[3]}"
+case "$bump" in
+  patch) new_version="${major}.${minor}.$((patch + 1))" ;;
+  minor) new_version="${major}.$((minor + 1)).0" ;;
+  major) new_version="$((major + 1)).0.0" ;;
+esac
+
+release_branch="release/v${new_version}"
+
+if [[ "$dry_run" == true ]]; then
+  cat <<EOF
+Dry run only - no files, branches, commits, tags, releases, or remote state will change.
+
+Current version:  ${current_version}
+Proposed version: ${new_version} (${bump})
+Release branch:   ${release_branch}
+
+An actual run will:
+  1. Require a clean, up-to-date live branch.
+  2. Start the development container and run the full test suite.
+  3. Create ${release_branch}.
+  4. Update pyproject.toml and CITATION.cff with bump-my-version.
+  5. Validate synchronized metadata and build the sdist and wheel.
+  6. Commit chore(release): v${new_version}, push, and open a PR to live.
+  7. Print the manual post-merge GitHub Release and verification runbook.
+EOF
+  exit 0
+fi
+
+for command in git docker gh; do
+  if ! command -v "$command" >/dev/null 2>&1; then
+    echo "Required command not found: ${command}" >&2
+    exit 1
+  fi
+done
+
+if [[ "$(git branch --show-current)" != "live" ]]; then
+  echo "Refusing to prepare a release: checkout live first." >&2
+  exit 1
+fi
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Refusing to prepare a release: the working tree is dirty." >&2
+  exit 1
+fi
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker is not available. Start Docker and retry." >&2
+  exit 1
+fi
+if ! gh auth status >/dev/null 2>&1; then
+  echo "GitHub CLI is not authenticated. Run: gh auth login" >&2
+  exit 1
+fi
+repo="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
+
+echo "Fetching origin/live..."
+git fetch --prune origin live
+if [[ "$(git rev-parse live)" != "$(git rev-parse origin/live)" ]]; then
+  echo "Refusing to prepare a release: local live is not identical to origin/live." >&2
+  echo "Update it with: git pull --ff-only origin live" >&2
+  exit 1
+fi
+if git show-ref --verify --quiet "refs/heads/${release_branch}"; then
+  echo "Refusing to prepare a release: local branch ${release_branch} already exists." >&2
+  exit 1
+fi
+if git ls-remote --exit-code --heads origin "refs/heads/${release_branch}" >/dev/null 2>&1; then
+  echo "Refusing to prepare a release: remote branch ${release_branch} already exists." >&2
+  exit 1
+fi
+if git ls-remote --exit-code --tags origin "refs/tags/v${new_version}" >/dev/null 2>&1; then
+  echo "Refusing to prepare a release: tag v${new_version} already exists." >&2
+  exit 1
+fi
+
+echo "Starting the development container..."
+docker compose up -d
+if ! docker compose exec -T rcpchgrowth-python bump-my-version --version >/dev/null 2>&1; then
+  echo "bump-my-version is not installed in the container. Run: s/rebuild" >&2
+  exit 1
+fi
+if ! docker compose exec -T rcpchgrowth-python python -m build --version >/dev/null 2>&1; then
+  echo "The Python build frontend is not installed in the container. Run: s/rebuild" >&2
+  exit 1
+fi
+
+echo "Running the full pre-release test suite..."
+s/test --running -q -rs
+
+echo "Creating ${release_branch}..."
+git switch -c "$release_branch"
+
+release_started=true
+on_error() {
+  if [[ "${release_started:-false}" == true ]]; then
+    echo >&2
+    echo "Release preparation stopped on ${release_branch}." >&2
+    echo "Inspect the current state with: git status" >&2
+    echo "No tag or GitHub Release has been created." >&2
+    if [[ "$(git log -1 --format=%s)" == "chore(release): v${new_version}" ]]; then
+      echo "The release commit exists. To resume pushing and opening the PR:" >&2
+      echo "  git push -u origin ${release_branch}" >&2
+      echo "  gh pr create --base live --head ${release_branch} --title 'chore(release): v${new_version}'" >&2
+    fi
+  fi
+}
+trap on_error ERR
+
+echo "Bumping ${current_version} to ${new_version}..."
+docker compose exec -T rcpchgrowth-python bump-my-version bump "$bump"
+
+docker compose exec -T rcpchgrowth-python python - "$new_version" <<'PY'
+import datetime
+import pathlib
+import re
+import sys
+import tomllib
+
+expected = sys.argv[1]
+with open("pyproject.toml", "rb") as file:
+    pyproject = tomllib.load(file)
+
+assert pyproject["project"]["version"] == expected
+assert pyproject["tool"]["bumpversion"]["current_version"] == expected
+
+citation = pathlib.Path("CITATION.cff").read_text()
+assert re.search(rf"^version: {re.escape(expected)}$", citation, re.MULTILINE)
+today = datetime.date.today().isoformat()
+assert re.search(rf"^date-released: {today}$", citation, re.MULTILINE)
+print(f"Validated synchronized version {expected} and release date {today}.")
+PY
+
+git diff --check
+echo "Building source distribution and wheel..."
+build_dir="/tmp/rcpchgrowth-release-${new_version}"
+docker compose exec -T rcpchgrowth-python sh -c 'rm -rf "$1" && mkdir -p "$1"' sh "$build_dir"
+docker compose exec -T rcpchgrowth-python python -m build --outdir "$build_dir"
+
+git add pyproject.toml CITATION.cff
+git diff --cached --check
+git commit -m "chore(release): v${new_version}"
+
+echo "Pushing ${release_branch} and opening the release PR..."
+git push -u origin "$release_branch"
+pr_url="$(gh pr create \
+  --base live \
+  --head "$release_branch" \
+  --title "chore(release): v${new_version}" \
+  --body "Prepare v${new_version}: synchronize package/citation metadata, pass the full local test suite, and validate the sdist and wheel build. After merge, tag the PR's exact merge commit and create the GitHub Release to trigger PyPI publication.")"
+
+trap - ERR
+
+cat <<EOF
+
+Release preparation for v${new_version} is complete.
+PR: ${pr_url}
+
+Manual post-automation runbook
+==============================
+Do not create the GitHub Release until the PR is merged.
+
+1. Review CI and merge the release PR with a merge commit, deleting the branch:
+   ${pr_url}
+   gh pr merge "${pr_url}" --merge --delete-branch
+
+2. Update your local live branch after the merge:
+   git switch live
+   git pull --ff-only origin live
+
+3. Verify the PR is merged and resolve its exact merge commit:
+   test "\$(gh pr view "${pr_url}" --json state --jq '.state')" = "MERGED"
+   release_commit=\$(gh pr view "${pr_url}" --json mergeCommit --jq '.mergeCommit.oid')
+   test -n "\$release_commit"
+
+4. Create and atomically push the annotated tag at that exact commit. The push will refuse a conflicting tag:
+   git tag -a "v${new_version}" "\$release_commit" -m "v${new_version}"
+   git push origin "refs/tags/v${new_version}"
+
+5. Create the GitHub Release from the verified tag. This triggers the PyPI workflow:
+   gh release create "v${new_version}" --repo "${repo}" --verify-tag --title "v${new_version}" --generate-notes
+
+6. Confirm the publish workflow succeeds:
+   https://github.com/${repo}/actions/workflows/python-publish.yml
+
+7. Verify the published package and Zenodo archive:
+   https://pypi.org/project/rcpchgrowth/${new_version}/
+   https://doi.org/10.5281/zenodo.4852391
+EOF
