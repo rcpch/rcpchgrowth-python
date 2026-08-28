@@ -134,6 +134,8 @@ OVER_FIVES_SERIES = [
     ("WHO_BOY_BMI_OVER_FIVE_999", WHO_BOY_BMI_OVER_FIVE_999, "male", "bmi", 3.0903),
 ]
 
+# Some source series contain coordinates beyond the under-five reference range.
+# Filter them before parametrization rather than collecting tests that only skip.
 _POINT_CASES = [
     (series_name, age_days, expected_weight, sex, method, sds)
     for series_name, values, sex, method, sds in UNDER_FIVES_SERIES
@@ -141,6 +143,8 @@ _POINT_CASES = [
     if round(age_days / 365.25, 4) <= 5.00
 ]
 
+# Month zero is exactly five years, where the younger reference takes precedence.
+# The over-five tests therefore start at month one.
 _POINT_CASES_OVER_FIVES = [
     (series_name, age_months, expected_observation_value, sex, method, sds)
     for series_name, values, sex, method, sds in OVER_FIVES_SERIES

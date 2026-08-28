@@ -62,6 +62,15 @@ s/test
 s/test --running rcpchgrowth/tests/ -v
 ```
 
+### WHO Chart Test Range Filtering
+
+`rcpchgrowth/tests/test_chart_functions.py` filters published chart coordinates while building its parametrized cases. Some under-five source series contain coordinates beyond five years, and the over-five series include month zero even though the younger reference takes precedence at exactly five years. These coordinates are intentionally excluded before pytest collection:
+
+- Under-five cases include only ages whose existing rounded year conversion is at most `5.00`.
+- Over-five cases begin at month `1`; month `0` is the five-year overlap governed by the younger reference.
+
+This collection-time filtering replaced 1,700 runtime skips (1,655 out-of-range under-five cases and 45 month-zero over-five cases) without removing any executed assertions. Do not replace the filters with `pytest.skip`, remove them, or broaden the tested ranges unless the reference-boundary behaviour or source vectors intentionally change. After any such change, run `s/test --running rcpchgrowth/tests/test_chart_functions.py -q -rs` and the full `s/test --running -q -rs`; the suite should report no skipped tests.
+
 ## Key Code Locations
 
 | Component | Location |
