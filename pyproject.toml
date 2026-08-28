@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rcpchgrowth"
-version = "4.6.0"
+version = "4.6.1"
 
 description = "SDS and Centile calculations for UK Growth Data"
 keywords = ["growth charts", "anthropometry", "SDS", "centile", "UK-WHO", "UK90", "Trisomy 21", "Turner", "CDC"]
@@ -81,7 +81,7 @@ rcpchgrowth = ["data_tables/**/*.csv", "data_tables/**/*.json", "data_tables/**/
 # the version bump stays a reviewable change, matching the existing release
 # flow (manual bump commit, then a GitHub Release triggers PyPI publish).
 [tool.bumpversion]
-current_version = "4.6.0"
+current_version = "4.6.1"
 allow_dirty = true
 commit = false
 tag = false
