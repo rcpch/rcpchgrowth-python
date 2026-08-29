@@ -134,16 +134,22 @@ OVER_FIVES_SERIES = [
     ("WHO_BOY_BMI_OVER_FIVE_999", WHO_BOY_BMI_OVER_FIVE_999, "male", "bmi", 3.0903),
 ]
 
+# Some source series contain coordinates beyond the under-five reference range.
+# Filter them before parametrization rather than collecting tests that only skip.
 _POINT_CASES = [
     (series_name, age_days, expected_weight, sex, method, sds)
     for series_name, values, sex, method, sds in UNDER_FIVES_SERIES
     for age_days, expected_weight in enumerate(values)
+    if round(age_days / 365.25, 4) <= 5.00
 ]
 
+# Month zero is exactly five years, where the younger reference takes precedence.
+# The over-five tests therefore start at month one.
 _POINT_CASES_OVER_FIVES = [
     (series_name, age_months, expected_observation_value, sex, method, sds)
     for series_name, values, sex, method, sds in OVER_FIVES_SERIES
     for age_months, expected_observation_value in enumerate(values)
+    if age_months > 0
 ]
 
 @pytest.mark.parametrize(
@@ -153,8 +159,6 @@ _POINT_CASES_OVER_FIVES = [
 def test_who_under_fives(series_name, age_days, expected_measurement, sex, measurement_method, requested_sds):
     ACCURACY = 1e-3
     age_years = round(age_days / 365.25, 4)
-    if age_years > 5.00:
-        pytest.skip("Skipping under-five test for age > 5 years")
     measurement = measurement_from_sds(
         reference='who',
         requested_sds=requested_sds,
@@ -173,17 +177,14 @@ def test_who_under_fives(series_name, age_days, expected_measurement, sex, measu
 )
 def test_who_over_fives(series_name, age_months, expected_observation_value, sex, measurement_method, requested_sds):
     ACCURACY = 1e-3
-    # age_years = 5 + round(age_months / 12, 4)
     age_years = (60 + age_months)*30.4375 / 365.25  # more accurate month to year conversion
-    if age_months == 0:
-        pytest.skip("Skipping over-five test for age 0 months")
     measurement = measurement_from_sds(
         reference='who',
         requested_sds=requested_sds,
         measurement_method=measurement_method,
         sex=sex,
         age=age_years,
-        default_youngest_reference=True if age_months==0 else False  # in reality at 5 years we use the younger reference but we are testing the over five charts here
+        default_youngest_reference=False
     )
     assert measurement == pytest.approx(expected_observation_value, rel=ACCURACY), (
         f"{series_name} month {age_months}: expected {expected_observation_value} got {measurement} for {requested_sds} in {sex} and {measurement_method} at {age_years:.2f} years"

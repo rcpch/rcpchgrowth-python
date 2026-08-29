@@ -4,16 +4,13 @@ This document provides context and guidance for AI agents, LLMs, and automated t
 
 ## Project Overview
 
-**rcpchgrowth-python** is a Python library for calculating children's growth measurements against UK and international growth references. The project is currently transitioning from UK-WHO reference data to pure WHO reference data.
+**rcpchgrowth-python** is a Python library for calculating children's growth measurements against UK and international growth references.
 
-### Active Branch: `who-validation`
+### WHO reference migration (completed)
 
-The current development branch is `who-validation`, which:
+The library previously derived WHO reference L, M, S values by cubic interpolation against a sparse (weekly/monthly) table. [PR #80](https://github.com/rcpch/rcpchgrowth-python/pull/80) replaced this with WHO's officially-published per-day LMS table, aligning with WHO's own `anthro`/`anthroplus` reference implementation. This merged into `live` as part of the 4.5.x releases; there is no separate `who-validation` branch any more. See the [WHO Reference Implementation](https://growth.rcpch.ac.uk/developer/who-reference-implementation/) page in the documentation site for what changed and why, including the 18 fixture cases whose expected values changed in the transition.
 
-- Replaces UK-WHO reference data with WHO reference data
-- Maintains backward compatibility at the API level
-- Uses test fixtures generated from WHO's published `anthro` and `anthroplus` R packages (RCPCH forks with enhanced precision)
-- All new tests pass; the branch is ready for validation
+Note: this repository does not keep project documentation. Developer, clinician, integrator and researcher docs live in the separate [digital-growth-charts-documentation](https://github.com/rcpch/digital-growth-charts-documentation) repository, published at [growth.rcpch.ac.uk](https://growth.rcpch.ac.uk).
 
 ## Development Workflow
 
@@ -45,7 +42,7 @@ s/down        # Stop container
 **Deprecated fixture** (old):
 
 - `rcpchgrowth/tests/sds_age_validation_2021_deprecated.json` - 4002 test cases from live branch
-- 18 test cases removed during transition (see docs/LIVE_DATASET_FAILED_TESTS_SUMMARY.md)
+- 18 test cases removed during transition (see the [WHO Reference Implementation](https://growth.rcpch.ac.uk/developer/who-reference-implementation/) page)
 - Kept for regression testing if needed
 
 WHO dataset details:
@@ -58,15 +55,29 @@ WHO dataset details:
 # Run the UK-WHO integration suite
 s/test rcpchgrowth/tests/test_uk_who.py -v
 
-# Run specific test case
-s/test rcpchgrowth/tests/test_uk_who.py::test_uk_who_reference_integration -v
-
 # Run all tests
 s/test
 
 # In an already-running container
 s/test --running rcpchgrowth/tests/ -v
 ```
+
+### WHO Chart Test Range Filtering
+
+`rcpchgrowth/tests/test_chart_functions.py` filters published chart coordinates while building its parametrized cases. Some under-five source series contain coordinates beyond five years, and the over-five series include month zero even though the younger reference takes precedence at exactly five years. These coordinates are intentionally excluded before pytest collection:
+
+- Under-five cases include only ages whose existing rounded year conversion is at most `5.00`.
+- Over-five cases begin at month `1`; month `0` is the five-year overlap governed by the younger reference.
+
+This collection-time filtering replaced 1,700 runtime skips (1,655 out-of-range under-five cases and 45 month-zero over-five cases) without removing any executed assertions. Do not replace the filters with `pytest.skip`, remove them, or broaden the tested ranges unless the reference-boundary behaviour or source vectors intentionally change. After any such change, run `s/test --running rcpchgrowth/tests/test_chart_functions.py -q -rs` and the full `s/test --running -q -rs`; the suite should report no skipped tests.
+
+### Optional Release Preparation
+
+Use `s/version++ [patch|minor|major]` to prepare a release version bump; it defaults to `patch`. The script is optional, but it is the canonical automated path: from a clean and up-to-date `live` branch it runs the full suite, creates `release/vX.Y.Z`, synchronizes `pyproject.toml` and `CITATION.cff`, validates the package build, commits `chore(release): vX.Y.Z`, pushes the branch, and opens a PR. Use `--dry-run` to preview without changing anything.
+
+The script deliberately does not tag or publish because `live` is protected and the release tag must point to the reviewed PR's exact merge commit. After the PR is merged, follow the terminal runbook printed by the script to resolve that commit and create the GitHub Release; that release event triggers `.github/workflows/python-publish.yml`. Do not push directly to `live` or create the release before the PR merges. See [`s/README.md`](s/README.md) for usage.
+
+The manual post-merge tag and GitHub Release are a documented project-specific exception to the house-style CI auto-tag cascade. They remain necessary while the existing publisher is triggered by `release: created`; do not introduce a second release command or automatic tag path without migrating the publishing workflow as one coherent change.
 
 ## Key Code Locations
 
@@ -77,7 +88,7 @@ s/test --running rcpchgrowth/tests/ -v
 | Tests | `rcpchgrowth/tests/` |
 | Test data | `rcpchgrowth/tests/sds_age_validation_2021_refactored_2026.json` |
 | Reference data | `rcpchgrowth/data_tables/` |
-| Documentation | `docs/` |
+| Documentation | Separate repo: [digital-growth-charts-documentation](https://github.com/rcpch/digital-growth-charts-documentation) ([growth.rcpch.ac.uk](https://growth.rcpch.ac.uk)) |
 
 ## Important Considerations for LLM Development
 
@@ -92,7 +103,7 @@ The test fixture is **fixed and finite** (3984 cases). When modifying calculatio
 
 ### Preterm/Early Infant Focus
 
-The 18 removed test cases (from live → who-validation transition) were concentrated in:
+The 18 removed test cases (from the WHO reference migration) were concentrated in:
 
 - Very early infancy (mostly <0.5 years)
 - Preterm/late preterm births (27+2 to 44+0 weeks gestation)
@@ -110,14 +121,13 @@ WHO reference data is loaded from `rcpchgrowth/data_tables/`:
 
 ### Git Branch Context
 
-- **live** (main production branch) - uses UK-WHO data
-- **who-validation** (active development) - uses WHO data, all new tests passing
-- New changes should target `who-validation` for PR review
-- Do not push directly to `live`
+- **live** (main production branch) - the WHO reference migration is merged here; releases are cut from `live`
+- The `who-validation` branch has been retired - do not target it
+- Do not push directly to `live`; open a PR for review
 
 ## Documentation for Developers
 
-- [LIVE_DATASET_FAILED_TESTS_SUMMARY.md](docs/LIVE_DATASET_FAILED_TESTS_SUMMARY.md) - Analysis of 18 removed test cases, including demographics and patterns
+- [WHO Reference Implementation](https://growth.rcpch.ac.uk/developer/who-reference-implementation/) - the WHO daily-LMS migration, the BMI direction asymmetry, the 5-year boundary, and the 18 removed fixture cases
 - [README.md](README.md) - Installation and quick-start (human-focused, but useful context)
 
 ## Common Tasks
@@ -131,7 +141,7 @@ WHO reference data is loaded from `rcpchgrowth/data_tables/`:
 
 ### Debugging a Test Failure
 
-1. Check if it's a known issue in `docs/LIVE_DATASET_FAILED_TESTS_SUMMARY.md`
+1. Check if it's a known issue in the [WHO Reference Implementation](https://growth.rcpch.ac.uk/developer/who-reference-implementation/) page
 2. Run specific test with `-v` flag for full output
 3. Inspect test fixture data for the failing case
 4. Compare old vs. new calculation if transitioning between reference systems
