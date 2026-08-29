@@ -70,9 +70,15 @@ def measurement_from_sds(
     except LookupError as err:
         raise LookupError(err)
 
+    lms_age = _age_for_lms_lookup(
+        reference=reference,
+        age=age,
+        lms_value_array_for_measurement=lms_value_array_for_measurement,
+    )
+
     # get LMS values from the reference: check for age match, interpolate if none
     lms = fetch_lms(
-        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement
+        age=lms_age, lms_value_array_for_measurement=lms_value_array_for_measurement
     )
     l = lms["l"]
     m = lms["m"]
@@ -153,8 +159,15 @@ def sds_for_measurement(
     # get LMS values from the reference: check for age match.
     # There will always be an age match in the under 5s WHO, or under 4s UK-WHO and therefore no interpolation is required
     # However, for WHO references above 5 years, interpolation will be linear, whereas for all others interpolation will be cubic
+    lms_age = _age_for_lms_lookup(
+        reference=reference,
+        age=age,
+        lms_value_array_for_measurement=lms_value_array_for_measurement,
+    )
     lms = fetch_lms(
-        age=age, lms_value_array_for_measurement=lms_value_array_for_measurement, interpolation_override=reference==WHO
+        age=lms_age,
+        lms_value_array_for_measurement=lms_value_array_for_measurement,
+        interpolation_override=reference == WHO,
     )
     l = lms["l"]
     m = lms["m"]
@@ -219,8 +232,14 @@ def percentage_median_bmi(
 
     # get LMS values from the reference: check for age match, interpolate if none
     try:
+        lms_age = _age_for_lms_lookup(
+            reference=reference,
+            age=age,
+            lms_value_array_for_measurement=lms_value_array_for_measurement,
+        )
         lms = fetch_lms(
-            age=age, lms_value_array_for_measurement=lms_value_array_for_measurement
+            age=lms_age,
+            lms_value_array_for_measurement=lms_value_array_for_measurement,
         )
     except LookupError as err:
         print(f"percentage median BMI lookup exception: {err}")
@@ -573,6 +592,20 @@ def nearest_lowest_index(lms_array: list, age: float) -> int:
             if lms_element["decimal_age"] < age:
                 lowest_index = num
     return lowest_index
+
+
+def _age_for_lms_lookup(
+    reference: str,
+    age: float,
+    lms_value_array_for_measurement: list,
+) -> float:
+    """Map the exact two-year WHO boundary to the selected daily table endpoint."""
+    if reference not in (UK_WHO, WHO) or age != TWO_YEARS:
+        return age
+
+    first_age = lms_value_array_for_measurement[0]["decimal_age"]
+    last_age = lms_value_array_for_measurement[-1]["decimal_age"]
+    return min(max(age, first_age), last_age)
 
 
 def fetch_lms(age: float, lms_value_array_for_measurement: list, interpolation_override: bool=False):
