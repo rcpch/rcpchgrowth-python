@@ -74,7 +74,7 @@ def test_provenance_calculation_engine_is_always_present(reference):
     ).measurement
 
     engine = measurement["provenance"]["calculation_engine"]
-    assert engine["name"] == "rcpchgrowth"
+    assert engine["name"] == "rcpch/rcpchgrowth-python"
     assert isinstance(engine["version"], str) and engine["version"] != ""
     assert isinstance(engine["commit"], str) and engine["commit"] != ""
 
@@ -146,4 +146,7 @@ def test_fictional_child_measurements_carry_provenance(reference):
     assert len(measurements) > 0
     for measurement in measurements:
         assert measurement["provenance"]["growth_reference"] == reference
-        assert measurement["provenance"]["calculation_engine"]["name"] == "rcpchgrowth"
+        assert (
+            measurement["provenance"]["calculation_engine"]["name"]
+            == "rcpch/rcpchgrowth-python"
+        )

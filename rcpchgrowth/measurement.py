@@ -203,7 +203,7 @@ class Measurement:
             'provenance': {
                 'growth_reference': self.reference,
                 'calculation_engine': {
-                    'name': 'rcpchgrowth',
+                    'name': 'rcpch/rcpchgrowth-python',
                     'version': _ENGINE_VERSION,
                     'commit': COMMIT,
                 },
