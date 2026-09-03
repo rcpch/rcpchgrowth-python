@@ -14,6 +14,10 @@ The `s/` directory contains convenience scripts that standardise repeated develo
 - `s/notebook` - start JupyterLab and open it in a browser.
 - `s/test [pytest arguments]` - start the container if needed and run pytest.
 - `s/test --running [pytest arguments]` - run pytest in an already-running container.
+- `s/lint [Ruff arguments]` - run the adopted blocking Ruff rules in the development container.
+- `s/lint --audit` - report the broader proposed Ruff rule set without failing.
+- `s/test-wheel [wheel path]` - build or accept a wheel, inspect it, install it outside the source tree, and run package smoke tests.
+- `s/test-downstream-wheel <wheel> <server commit>` - test an exact wheel against an immutable compatible server revision.
 - `s/remove-containers-and-images` - stop the Compose stack and remove locally built images.
 
 ## Optional Release Preparation
