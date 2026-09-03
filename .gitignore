@@ -139,3 +139,11 @@ rcpchgrowth/data_tables/fenton/*.*
 
 # Private files
 .private
+
+# Disposable agent and browser-automation output
+.claude/
+.playwright-mcp/
+.playwright/
+playwright-report/
+blob-report/
+test-results/

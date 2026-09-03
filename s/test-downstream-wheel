@@ -78,6 +78,7 @@ with ZipFile(sys.argv[1]) as archive:
     print(ast.literal_eval(assignment.value))
 PY
 )"
+python "$root/tests/distribution/check-wheel.py" "$wheel"
 if [[ ! "$candidate_commit" =~ ^[0-9a-f]{40}$ ]]; then
   echo "Candidate wheel has no immutable build commit: $candidate_commit" >&2
   exit 1

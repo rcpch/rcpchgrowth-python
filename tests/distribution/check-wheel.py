@@ -47,12 +47,15 @@ def main() -> None:
         for name in members
         if "__pycache__" in name
         or name.endswith((".pyc", ".pyo"))
-        or name.startswith("notebooks/")
+        or "notebooks" in Path(name).parts
     )
     assert not missing, f"Required runtime files missing from wheel: {missing}"
     assert not forbidden, f"Generated or notebook files found in wheel: {forbidden}"
     assert metadata["Name"] == "rcpchgrowth"
     assert metadata["Version"]
+    assert wheel.name.startswith(f"rcpchgrowth-{metadata['Version']}-"), (
+        f"Wheel filename and metadata version differ: {wheel.name}, {metadata['Version']}"
+    )
     print(
         f"Validated {wheel.name}: rcpchgrowth {metadata['Version']}, {len(members)} files"
     )

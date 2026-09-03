@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Exercise every runtime data family from an installed wheel."""
 
+import os
 from datetime import date, timedelta
 from importlib.metadata import version
 from pathlib import Path
 
 import rcpchgrowth
+from rcpchgrowth._build_info import COMMIT
 
 REFERENCE_CASES = {
     "uk-who": ("female", 5.0),
@@ -32,7 +34,9 @@ SERVER_ROOT_IMPORTS = {
 def main() -> None:
     module_path = Path(rcpchgrowth.__file__).resolve()
     assert "site-packages" in module_path.parts, module_path
-    assert version("rcpchgrowth")
+    assert rcpchgrowth.__version__ == version("rcpchgrowth")
+    if expected_commit := os.environ.get("EXPECTED_COMMIT"):
+        assert COMMIT == expected_commit
     assert all(hasattr(rcpchgrowth, name) for name in SERVER_ROOT_IMPORTS)
 
     birth_date = date(2015, 1, 1)
@@ -46,6 +50,10 @@ def main() -> None:
             sex=sex,
         ).measurement
         assert measurement["provenance"]["growth_reference"] == reference
+        assert (
+            measurement["provenance"]["calculation_engine"]["version"]
+            == rcpchgrowth.__version__
+        )
         assert (
             measurement["measurement_calculated_values"]["chronological_sds"]
             is not None

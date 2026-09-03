@@ -36,6 +36,6 @@ else
 fi
 
 docker compose exec -T rcpchgrowth-python python /app/tests/distribution/check-wheel.py "$wheel_path"
-docker compose exec -T rcpchgrowth-python python -m venv --system-site-packages "$work_dir/venv"
-docker compose exec -T rcpchgrowth-python "$work_dir/venv/bin/python" -m pip install --force-reinstall --no-deps "$wheel_path"
+docker compose exec -T rcpchgrowth-python python -m venv "$work_dir/venv"
+docker compose exec -T rcpchgrowth-python sh -c 'cd "$1" && exec env -u PYTHONPATH "$2" -m pip install "$3"' sh "$work_dir" "$work_dir/venv/bin/python" "$wheel_path"
 docker compose exec -T -e PYTHONPATH= rcpchgrowth-python sh -c 'cd "$1" && exec "$2" /app/tests/distribution/installed-wheel-smoke.py' sh "$work_dir" "$work_dir/venv/bin/python"

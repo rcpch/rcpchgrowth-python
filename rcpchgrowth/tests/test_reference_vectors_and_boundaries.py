@@ -1,5 +1,7 @@
 """Characterization vectors and boundaries for the supported references."""
 
+import math
+
 import pytest
 
 from rcpchgrowth import cdc, trisomy_21_aap, uk_who, who
@@ -11,6 +13,7 @@ from rcpchgrowth.constants import (
     HEAD_CIRCUMFERENCE,
     HEIGHT,
     MALE,
+    TWENTY_THREE_WEEKS_GESTATION,
     TRISOMY_21,
     TRISOMY_21_AAP,
     TURNERS,
@@ -69,12 +72,12 @@ def test_published_reference_vectors(reference, age, method, sex, sds, expected)
 @pytest.mark.parametrize(
     ("reference", "valid_age", "invalid_age", "method", "sex", "message"),
     [
-        (UK_WHO, 20, 20.0001, HEIGHT, MALE, "above the age of 20 years"),
-        (WHO, 19, 19.0001, HEIGHT, MALE, "above 19 years"),
-        (CDC, 20, 20.0001, HEIGHT, MALE, "above the age of 20 years"),
-        (TURNERS, 20, 20.0001, HEIGHT, FEMALE, "above 20 years"),
-        (TRISOMY_21, 20, 20.0001, HEIGHT, MALE, "over the age of 20y"),
-        (TRISOMY_21_AAP, 20, 20.0001, HEIGHT, MALE, "over the age of 20y"),
+        (UK_WHO, 20, math.nextafter(20, math.inf), HEIGHT, MALE, "above the age of 20 years"),
+        (WHO, 19, math.nextafter(19, math.inf), HEIGHT, MALE, "above 19 years"),
+        (CDC, 20, math.nextafter(20, math.inf), HEIGHT, MALE, "above the age of 20 years"),
+        (TURNERS, 20, math.nextafter(20, math.inf), HEIGHT, FEMALE, "above 20 years"),
+        (TRISOMY_21, 20, math.nextafter(20, math.inf), HEIGHT, MALE, "over the age of 20y"),
+        (TRISOMY_21_AAP, 20, math.nextafter(20, math.inf), HEIGHT, MALE, "over the age of 20y"),
     ],
 )
 def test_every_reference_includes_its_upper_boundary_and_rejects_above_it(
@@ -88,12 +91,12 @@ def test_every_reference_includes_its_upper_boundary_and_rejects_above_it(
 @pytest.mark.parametrize(
     ("reference", "valid_age", "invalid_age", "method", "sex", "message"),
     [
-        (UK_WHO, 0, -1, WEIGHT, MALE, "below 23 weeks gestation"),
-        (WHO, 0, -0.0001, HEIGHT, MALE, "below term"),
-        (CDC, 0, -0.0001, HEIGHT, MALE, "below 40 weeks"),
-        (TURNERS, 1, 0.9999, HEIGHT, FEMALE, "below 1 year"),
-        (TRISOMY_21, 0, -0.0001, HEIGHT, MALE, "below 40 weeks"),
-        (TRISOMY_21_AAP, 0, -0.0001, WEIGHT, MALE, "below 40 weeks"),
+        (UK_WHO, TWENTY_THREE_WEEKS_GESTATION, math.nextafter(TWENTY_THREE_WEEKS_GESTATION, -math.inf), WEIGHT, MALE, "below 23 weeks gestation"),
+        (WHO, 0, math.nextafter(0, -math.inf), HEIGHT, MALE, "below term"),
+        (CDC, 0, math.nextafter(0, -math.inf), HEIGHT, MALE, "below 40 weeks"),
+        (TURNERS, 1, math.nextafter(1, -math.inf), HEIGHT, FEMALE, "below 1 year"),
+        (TRISOMY_21, 0, math.nextafter(0, -math.inf), HEIGHT, MALE, "below 40 weeks"),
+        (TRISOMY_21_AAP, 0, math.nextafter(0, -math.inf), WEIGHT, MALE, "below 40 weeks"),
     ],
 )
 def test_every_reference_includes_its_lower_boundary_and_rejects_below_it(
@@ -153,11 +156,10 @@ def test_turner_rejects_unsupported_measurements_and_sex(method, sex, message):
         measurement_from_sds(TURNERS, 0, method, sex, 10)
 
 
-def test_aap_declared_one_month_cutoff_precedes_first_height_lms_row():
-    """The current 0.083 cutoff admits ages below the first 0.083333333 source row, where interpolation leaks ValueError rather than a domain LookupError."""
+def test_aap_one_month_cutoff_matches_first_height_lms_row():
     invalid, _ = trisomy_21_aap.reference_data_absent(0.083, HEIGHT, MALE)
-    assert invalid is False
-    with pytest.raises(ValueError):
+    assert invalid is True
+    with pytest.raises(LookupError, match="below 1 month"):
         measurement_from_sds(TRISOMY_21_AAP, 0, HEIGHT, MALE, 0.083)
 
 
