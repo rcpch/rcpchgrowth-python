@@ -1,0 +1,162 @@
+name: Release merged version PR
+
+on:
+  pull_request:
+    branches: [live]
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Historical merged release PR to validate without publishing
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: release-cascade-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate merged release PR
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/v'))
+    runs-on: ubuntu-latest
+    outputs:
+      merge_sha: ${{ steps.validate.outputs.merge_sha }}
+      tag: ${{ steps.validate.outputs.tag }}
+      version: ${{ steps.validate.outputs.version }}
+    steps:
+      - name: Resolve merged PR
+        env:
+          EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          pr_number="${EVENT_PR_NUMBER:-$INPUT_PR_NUMBER}"
+          [[ "$pr_number" =~ ^[1-9][0-9]*$ ]]
+          gh api "repos/${REPOSITORY}/pulls/${pr_number}" > "$RUNNER_TEMP/pr.json"
+          gh api --paginate "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" | jq -s add > "$RUNNER_TEMP/files.json"
+
+      - name: Read merge commit
+        id: merge
+        run: echo "sha=$(jq -r .merge_commit_sha "$RUNNER_TEMP/pr.json")" >> "$GITHUB_OUTPUT"
+
+      - name: Check out release validator
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: validator
+          persist-credentials: false
+
+      - name: Check out exact release merge
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.merge.outputs.sha }}
+          fetch-depth: 0
+          path: release-source
+          persist-credentials: false
+
+      - name: Validate release policy and metadata
+        id: validate
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          python validator/.github/scripts/validate-release.py \
+            --pr-json "$RUNNER_TEMP/pr.json" \
+            --files-json "$RUNNER_TEMP/files.json" \
+            --repository "$REPOSITORY" \
+            --repo release-source \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Summarize dry run
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          MERGE_SHA: ${{ steps.validate.outputs.merge_sha }}
+          TAG: ${{ steps.validate.outputs.tag }}
+        run: |
+          {
+            echo "## Release cascade dry run"
+            echo "Validated \`$TAG\` at exact merge commit \`$MERGE_SHA\`."
+            echo "Tag creation, GitHub Release creation, and PyPI publication are disabled for workflow dispatch."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: Create or verify tag and GitHub Release
+    if: github.event_name == 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      url: ${{ steps.release.outputs.url }}
+    steps:
+      - name: Create or verify annotated tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MERGE_SHA: ${{ needs.validate.outputs.merge_sha }}
+          REPOSITORY: ${{ github.repository }}
+          TAG: ${{ needs.validate.outputs.tag }}
+        run: |
+          if tag_ref="$(gh api "repos/${REPOSITORY}/git/ref/tags/${TAG}" 2>/dev/null)"; then
+            test "$(jq -r .object.type <<< "$tag_ref")" = "tag"
+            tag_object_sha="$(jq -r .object.sha <<< "$tag_ref")"
+            existing_sha="$(gh api "repos/${REPOSITORY}/git/tags/${tag_object_sha}" --jq .object.sha)"
+            if [[ "$existing_sha" != "$MERGE_SHA" ]]; then
+              echo "Refusing to overwrite $TAG at $existing_sha; expected $MERGE_SHA." >&2
+              exit 1
+            fi
+            echo "Reusing annotated $TAG at $MERGE_SHA."
+          else
+            tag_object_sha="$(gh api --method POST "repos/${REPOSITORY}/git/tags" \
+              -f tag="$TAG" -f message="$TAG" -f object="$MERGE_SHA" -f type=commit --jq .sha)"
+            gh api --method POST "repos/${REPOSITORY}/git/refs" \
+              -f ref="refs/tags/${TAG}" -f sha="$tag_object_sha" >/dev/null
+            echo "Created annotated $TAG at $MERGE_SHA."
+          fi
+
+      - name: Create or verify GitHub Release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TAG: ${{ needs.validate.outputs.tag }}
+        run: |
+          if release="$(gh api "repos/${REPOSITORY}/releases/tags/${TAG}" 2>/dev/null)"; then
+            test "$(jq -r .draft <<< "$release")" = "false"
+            test "$(jq -r .prerelease <<< "$release")" = "false"
+            url="$(jq -r .html_url <<< "$release")"
+            echo "Reusing $url."
+          else
+            url="$(gh release create "$TAG" --repo "$REPOSITORY" --verify-tag --title "$TAG" --generate-notes)"
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+  publish-production:
+    name: Test, build, and publish
+    if: github.event_name == 'pull_request'
+    needs: [validate, release]
+    permissions:
+      contents: read
+      id-token: write
+    uses: $/.github/workflows/python-publish.yml
+    with:
+      ref: ${{ needs.validate.outputs.merge_sha }}
+      version: ${{ needs.validate.outputs.version }}
+      publish: true
+
+  verify-dry-run:
+    name: Test and build without publishing
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate
+    permissions:
+      contents: read
+    uses: $/.github/workflows/python-publish.yml
+    with:
+      ref: ${{ needs.validate.outputs.merge_sha }}
+      version: ${{ needs.validate.outputs.version }}
+      publish: false
