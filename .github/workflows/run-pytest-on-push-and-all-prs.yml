@@ -26,6 +26,9 @@ on:
       - staging
       - live
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -36,6 +39,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -57,3 +62,22 @@ jobs:
 
       - name: Run pytest
         run: pytest -q
+
+      - name: Run adopted Ruff checks
+        if: matrix.python-version == '3.13'
+        run: python -m ruff check .
+
+      - name: Build and test the installed wheel
+        run: |
+          wheel_dir="$(mktemp -d)"
+          python -m build --wheel --outdir "$wheel_dir"
+          wheels=("$wheel_dir"/*.whl)
+          test "${#wheels[@]}" -eq 1
+          wheel_path="${wheels[0]}"
+          python tests/distribution/check-wheel.py "$wheel_path"
+          python -m venv --system-site-packages "$wheel_dir/venv"
+          "$wheel_dir/venv/bin/python" -m pip install --force-reinstall --no-deps "$wheel_path"
+          (
+            cd "$wheel_dir"
+            env -u PYTHONPATH "$wheel_dir/venv/bin/python" "$GITHUB_WORKSPACE/tests/distribution/installed-wheel-smoke.py"
+          )

@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Build and test an installed wheel in the development container. Pass an
+# existing host wheel path to test those exact bytes instead. The smoke test
+# runs outside /app with PYTHONPATH removed to prevent source-tree imports.
+
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker is not available. Start Docker and retry." >&2
+  exit 1
+fi
+
+docker compose up -d
+work_dir="/tmp/rcpchgrowth-wheel-$$"
+docker compose exec -T rcpchgrowth-python rm -rf "$work_dir"
+docker compose exec -T rcpchgrowth-python mkdir -p "$work_dir/dist"
+trap 'docker compose exec -T rcpchgrowth-python rm -rf "$work_dir" >/dev/null 2>&1 || true' EXIT
+
+if (($# > 1)); then
+  echo "Usage: s/test-wheel [wheel path]" >&2
+  exit 2
+fi
+if (($#)); then
+  if [[ ! -f "$1" ]]; then
+    echo "Wheel not found: $1" >&2
+    exit 1
+  fi
+  host_wheel="$(realpath "$1")"
+  wheel_name="$(basename "$host_wheel")"
+  docker compose cp "$host_wheel" "rcpchgrowth-python:$work_dir/dist/$wheel_name" >/dev/null
+  wheel_path="$work_dir/dist/$wheel_name"
+else
+  docker compose exec -T rcpchgrowth-python python -m build --wheel --outdir "$work_dir/dist"
+  wheel_path="$(docker compose exec -T rcpchgrowth-python sh -c 'set -- "$1"/*.whl; test "$#" -eq 1; printf "%s" "$1"' sh "$work_dir/dist")"
+fi
+
+docker compose exec -T rcpchgrowth-python python /app/tests/distribution/check-wheel.py "$wheel_path"
+docker compose exec -T rcpchgrowth-python python -m venv --system-site-packages "$work_dir/venv"
+docker compose exec -T rcpchgrowth-python "$work_dir/venv/bin/python" -m pip install --force-reinstall --no-deps "$wheel_path"
+docker compose exec -T -e PYTHONPATH= rcpchgrowth-python sh -c 'cd "$1" && exec "$2" /app/tests/distribution/installed-wheel-smoke.py' sh "$work_dir" "$work_dir/venv/bin/python"
