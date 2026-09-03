@@ -13,6 +13,7 @@ from datetime import date, timedelta
 
 # third-party imports
 import pytest
+import rcpchgrowth
 
 # rcpch imports
 from rcpchgrowth import Measurement, generate_fictional_child_data
@@ -75,6 +76,7 @@ def test_provenance_calculation_engine_is_always_present(reference):
 
     engine = measurement["provenance"]["calculation_engine"]
     assert engine["name"] == "rcpch/rcpchgrowth-python"
+    assert engine["version"] == rcpchgrowth.__version__
     assert isinstance(engine["version"], str) and engine["version"] != ""
     assert isinstance(engine["commit"], str) and engine["commit"] != ""
 

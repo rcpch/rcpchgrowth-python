@@ -42,6 +42,7 @@ notebook = [
   "matplotlib>=3.7",
   "jupyterlab",
   "ipykernel",
+  "nbconvert==7.17.1",
 ]
 # Everything needed to run the test suite and release tooling. This is the
 # SINGLE source of truth for test dependencies: every environment (local,
@@ -95,8 +96,8 @@ rcpchgrowth = ["data_tables/**/*.csv", "data_tables/**/*.json", "data_tables/**/
 #   bump-my-version bump minor   # 4.6.0 -> 4.7.0
 #   bump-my-version bump major   # 4.6.0 -> 5.0.0
 # Add --dry-run --verbose to preview. commit/tag are left off deliberately so
-# the version bump stays a reviewable change, matching the existing release
-# flow (manual bump commit, then a GitHub Release triggers PyPI publish).
+# the version bump stays reviewable on release/vX.Y.Z. Merging that PR with a
+# merge commit triggers the validated tag, GitHub Release, and publish cascade.
 [tool.bumpversion]
 current_version = "4.6.2"
 allow_dirty = true
