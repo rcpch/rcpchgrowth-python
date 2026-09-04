@@ -1,6 +1,12 @@
 import unittest
 from datetime import date
-from ..date_calculations import chronological_decimal_age, corrected_decimal_age, estimated_date_delivery
+from ..date_calculations import (
+    age_in_days,
+    chronological_calendar_age,
+    chronological_decimal_age,
+    corrected_decimal_age,
+    estimated_date_delivery,
+)
 
 
 # TODO: #92 TestDecimalAge needs to be converted to use PyTest
@@ -64,6 +70,24 @@ class TestDecimalAge(unittest.TestCase):
         birth_date = date(2010, 12, 3)
         edd = estimated_date_delivery(birth_date, 27, 0)
         self.assertEqual(edd, date(2011, 3, 4))
+
+    def test_corrected_decimal_age_rejects_birth_after_observation(self):
+        with self.assertRaisesRegex(
+            ValueError, "Birth date cannot be after the date of observation."
+        ):
+            corrected_decimal_age(date(2025, 1, 2), date(2025, 1, 1), 40, 0)
+
+    def test_chronological_calendar_age_rejects_birth_after_observation(self):
+        with self.assertRaisesRegex(
+            ValueError, "Birth date cannot be after the date of observation."
+        ):
+            chronological_calendar_age(date(2025, 1, 2), date(2025, 1, 1))
+
+    def test_age_in_days_rejects_birth_after_observation(self):
+        with self.assertRaisesRegex(
+            ValueError, "Birth date cannot be after the date of observation."
+        ):
+            age_in_days(date(2025, 1, 2), date(2025, 1, 1))
 
 
 if __name__ == '__main__':
