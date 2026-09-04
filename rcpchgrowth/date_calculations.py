@@ -40,7 +40,7 @@ def corrected_decimal_age(
     """
 
     if birth_date > observation_date:
-        raise Exception("Birth date cannot be after the date of observation.")
+        raise ValueError("Birth date cannot be after the date of observation.")
 
     correction_days = 0
     pregnancy_length_days = TERM_PREGNANCY_LENGTH_DAYS
@@ -65,7 +65,7 @@ def chronological_calendar_age(birth_date: date, observation_date: date) -> str:
     """
 
     if birth_date > observation_date:
-        raise Exception("Birth date cannot be after the date of observation.")
+        raise ValueError("Birth date cannot be after the date of observation.")
 
     difference = relativedelta.relativedelta(observation_date, birth_date)
     years = difference.years
@@ -168,6 +168,6 @@ def age_in_days(birth_date: date, observation_date: date) -> int:
     :param observation_date: date observation made
     """
     if birth_date > observation_date:
-        raise Exception("Birth date cannot be after the date of observation.")
-    
+        raise ValueError("Birth date cannot be after the date of observation.")
+
     return (observation_date - birth_date).days
