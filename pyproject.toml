@@ -18,7 +18,7 @@ maintainers = [
 requires-python = ">=3.10"
 dependencies = [
   "python-dateutil",
-  "scipy",
+  "scipy>=1.15",
 ]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -38,8 +38,8 @@ Documentation = "https://growth.rcpch.ac.uk/products/python-library/"
 
 [project.optional-dependencies]
 notebook = [
-  "pandas>=1.5",
-  "matplotlib>=3.7",
+  "pandas>=2.2",
+  "matplotlib>=3.10",
   "jupyterlab",
   "ipykernel",
   "nbconvert==7.17.1",
@@ -50,7 +50,7 @@ notebook = [
 # drift apart. `pandas` is required by rcpchgrowth/tests/test_who.py.
 dev = [
   "pytest",
-  "pandas>=1.5",
+  "pandas>=2.2",
   "bump-my-version",
   "build",
   "ruff>=0.16.5",
