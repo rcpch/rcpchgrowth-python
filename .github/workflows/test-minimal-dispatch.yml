@@ -7,9 +7,7 @@ permissions:
   contents: read
 
 jobs:
-  call-publish:
-    uses: ./.github/workflows/python-publish.yml
+  level1:
+    uses: ./.github/workflows/test-nested-level.yml
     with:
-      ref: "3b94d92602160116e1ec9ca80e05100d69395d42"
-      version: "4.6.3"
-      publish: false
+      ref: ""

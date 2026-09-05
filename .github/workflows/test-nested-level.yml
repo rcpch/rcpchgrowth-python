@@ -1,0 +1,17 @@
+name: Test nested level
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  level2:
+    uses: ./.github/workflows/run-pytest-on-push-and-all-prs.yml
+    with:
+      ref: ${{ inputs.ref }}
