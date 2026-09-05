@@ -14,6 +14,10 @@ The `s/` directory contains convenience scripts that standardise repeated develo
 - `s/notebook` - start JupyterLab and open it in a browser.
 - `s/test [pytest arguments]` - start the container if needed and run pytest.
 - `s/test --running [pytest arguments]` - run pytest in an already-running container.
+- `s/lint [Ruff arguments]` - run the adopted blocking Ruff rules in the development container.
+- `s/lint --audit` - report the broader proposed Ruff rule set without failing.
+- `s/test-wheel [wheel path]` - build or accept a wheel, inspect it, install it outside the source tree, and run package smoke tests.
+- `s/test-downstream-wheel <wheel> <server commit>` - test an exact wheel against an immutable compatible server revision.
 - `s/remove-containers-and-images` - stop the Compose stack and remove locally built images.
 
 ## Optional Release Preparation
@@ -26,6 +30,6 @@ The `s/` directory contains convenience scripts that standardise repeated develo
 - `s/version++ major` - prepare a major bump.
 - `s/version++ minor --dry-run` - preview the proposed version and workflow without changing anything.
 
-The script does not tag or publish. After the release PR is merged, it prints a runbook containing commands that resolve the PR's exact merge commit and create the GitHub Release from that commit. The release event triggers the existing PyPI workflow; the runbook also provides links for checking GitHub Actions, PyPI, and Zenodo.
+The script does not tag or publish. Review CI and merge the release PR using a merge commit; that merge is the final human release action. `.github/workflows/release-on-merge.yml` then validates the same-repository PR, its permitted files, supported version bump, synchronized metadata, and exact two-parent merge commit before creating or reusing the annotated tag and GitHub Release. It directly invokes `.github/workflows/python-publish.yml`, avoiding `GITHUB_TOKEN` event anti-recursion, and publishes only the exact commit-stamped artifacts that passed package checks and an isolated installed-wheel smoke test.
 
-This is a project-specific exception to the house-style CI auto-tag cascade. The existing publisher is intentionally triggered by a manually reviewed GitHub Release, so the post-merge tag and Release remain explicit runbook steps until the publishing workflow is migrated to an auto-tag and `workflow_call` design.
+To exercise the complete validation, Python 3.10-3.13 test matrix, build, and artifact checks without creating a tag, GitHub Release, or PyPI publication, manually run the `Release merged version PR` workflow with the number of a merged release PR. Manual dispatch is always non-publishing. The first end-to-end historical dispatch can only run after this workflow has merged to `live`; use a release PR whose exact commit satisfies the current quality gates.

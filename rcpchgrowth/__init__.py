@@ -1,3 +1,4 @@
+from ._version import __version__
 from .age_advice_strings import comment_prematurity_correction
 from .bmi_functions import bmi_from_height_weight, weight_for_bmi_height
 from .cdc import select_reference_data_for_cdc_chart

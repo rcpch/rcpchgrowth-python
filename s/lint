@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Run the adopted Ruff checks in the project container. Use --audit to report
+# the broader candidate rule set without turning inherited findings into a
+# blocking failure. Run `s/rebuild` after changing development dependencies.
+
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+use_running=false
+audit=false
+if [[ "${1:-}" == "--running" || "${1:-}" == "-r" ]]; then
+  use_running=true
+  shift
+fi
+if [[ "${1:-}" == "--audit" ]]; then
+  audit=true
+  shift
+fi
+
+if [[ "$use_running" == false ]]; then
+  docker compose up -d
+fi
+if ! docker compose exec -T rcpchgrowth-python python -m ruff --version >/dev/null 2>&1; then
+  echo "Ruff is not installed in the development container. Run: s/rebuild" >&2
+  exit 1
+fi
+
+if [[ "$audit" == true ]]; then
+  exec docker compose exec -T rcpchgrowth-python python -m ruff check --select E4,E7,E9,F,I,B,UP --statistics --exit-zero "$@" .
+fi
+exec docker compose exec -T rcpchgrowth-python python -m ruff check "$@" .

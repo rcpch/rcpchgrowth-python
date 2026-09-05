@@ -5,8 +5,8 @@
 # Optionally prepare a release version bump from a clean, up-to-date live branch.
 # The script runs the full test suite, updates every configured version field,
 # validates a source/wheel build, commits the result, and opens a release PR.
-# It never tags or publishes: after review and merge it prints the exact manual
-# tag and GitHub Release commands that trigger the existing PyPI workflow.
+# It never tags or publishes. Merging the validated release PR with a merge
+# commit triggers the release cascade, so the merge is the final human action.
 #
 # Requires Docker, GitHub CLI authentication, and current dev dependencies in
 # the container. Run `s/rebuild` if the bump/build tool preflight fails.
@@ -22,8 +22,7 @@ usage() {
 Usage: s/version++ [patch|minor|major] [--dry-run]
 
 Prepares a release PR from live. The bump defaults to patch.
-After the PR is merged, the script's terminal runbook explains how to create
-the GitHub Release that triggers publication to PyPI.
+Merging the validated PR with a merge commit triggers tagging and publication.
 
 Options:
   --dry-run  Show the proposed version and workflow without changing anything.
@@ -73,7 +72,7 @@ An actual run will:
   4. Update pyproject.toml and CITATION.cff with bump-my-version.
   5. Validate synchronized metadata and build the sdist and wheel.
   6. Commit chore(release): v${new_version}, push, and open a PR to live.
-  7. Print the manual post-merge GitHub Release and verification runbook.
+  7. Print the final merge command and automated-release verification links.
 EOF
   exit 0
 fi
@@ -196,7 +195,7 @@ pr_url="$(gh pr create \
   --base live \
   --head "$release_branch" \
   --title "chore(release): v${new_version}" \
-  --body "Prepare v${new_version}: synchronize package/citation metadata, pass the full local test suite, and validate the sdist and wheel build. After merge, tag the PR's exact merge commit and create the GitHub Release to trigger PyPI publication.")"
+  --body "Prepare v${new_version}: synchronize package/citation metadata, pass the full local test suite, and validate the sdist and wheel build. Merge this PR with a merge commit to trigger the validated tag, GitHub Release, artifact checks, and PyPI publication cascade.")"
 
 trap - ERR
 
@@ -205,34 +204,17 @@ cat <<EOF
 Release preparation for v${new_version} is complete.
 PR: ${pr_url}
 
-Manual post-automation runbook
-==============================
-Do not create the GitHub Release until the PR is merged.
+Final release action
+====================
 
-1. Review CI and merge the release PR with a merge commit, deleting the branch:
+1. Review CI and merge the release PR with a merge commit, deleting the branch. This is the final human release action:
    ${pr_url}
    gh pr merge "${pr_url}" --merge --delete-branch
 
-2. Update your local live branch after the merge:
-   git switch live
-   git pull --ff-only origin live
+2. Confirm the merge-triggered cascade succeeds. It validates the exact merge commit, creates or reuses its annotated tag and GitHub Release, tests Python 3.10-3.13, builds and smoke-checks one artifact set, then publishes that set:
+   https://github.com/${repo}/actions/workflows/release-on-merge.yml
 
-3. Verify the PR is merged and resolve its exact merge commit:
-   test "\$(gh pr view "${pr_url}" --json state --jq '.state')" = "MERGED"
-   release_commit=\$(gh pr view "${pr_url}" --json mergeCommit --jq '.mergeCommit.oid')
-   test -n "\$release_commit"
-
-4. Create and atomically push the annotated tag at that exact commit. The push will refuse a conflicting tag:
-   git tag -a "v${new_version}" "\$release_commit" -m "v${new_version}"
-   git push origin "refs/tags/v${new_version}"
-
-5. Create the GitHub Release from the verified tag. This triggers the PyPI workflow:
-   gh release create "v${new_version}" --repo "${repo}" --verify-tag --title "v${new_version}" --generate-notes
-
-6. Confirm the publish workflow succeeds:
-   https://github.com/${repo}/actions/workflows/python-publish.yml
-
-7. Verify the published package and Zenodo archive:
+3. Verify the published package and Zenodo archive:
    https://pypi.org/project/rcpchgrowth/${new_version}/
    https://doi.org/10.5281/zenodo.4852391
 EOF
