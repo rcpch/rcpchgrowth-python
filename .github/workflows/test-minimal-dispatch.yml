@@ -1,0 +1,13 @@
+name: Minimal dispatch test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  call-pytest:
+    uses: ./.github/workflows/run-pytest-on-push-and-all-prs.yml
+    with:
+      ref: ""
