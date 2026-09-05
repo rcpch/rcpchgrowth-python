@@ -11,3 +11,118 @@ on:
         description: Expected package version without the v prefix
         required: true
         type: string
+      publish:
+        description: Publish the verified artifacts to PyPI
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    uses: ./.github/workflows/run-pytest-on-push-and-all-prs.yml
+    with:
+      ref: ${{ inputs.ref }}
+
+  build:
+    name: Build and verify exact artifacts
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Verify exact release commit
+        env:
+          EXPECTED_SHA: ${{ inputs.ref }}
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          python - <<'PY'
+          import os
+          import pathlib
+          import re
+
+          expected = os.environ["EXPECTED_VERSION"]
+          pyproject = pathlib.Path("pyproject.toml").read_text()
+          match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
+          assert match and match.group(1) == expected
+          PY
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install package tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[dev] twine
+
+      - name: Stamp exact build commit
+        env:
+          RELEASE_SHA: ${{ inputs.ref }}
+        run: printf 'COMMIT = "%s"\n' "$RELEASE_SHA" > rcpchgrowth/_build_info.py
+
+      - name: Build source distribution and wheel once
+        run: python -m build
+
+      - name: Check and smoke-test exact artifacts
+        env:
+          EXPECTED_COMMIT: ${{ inputs.ref }}
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: |
+          sdists=(dist/*.tar.gz)
+          wheels=(dist/*.whl)
+          test "${#sdists[@]}" -eq 1
+          test "${#wheels[@]}" -eq 1
+          [[ "${sdists[0]}" == "dist/rcpchgrowth-${EXPECTED_VERSION}.tar.gz" ]]
+          [[ "${wheels[0]}" == "dist/rcpchgrowth-${EXPECTED_VERSION}-"*.whl ]]
+          python -m twine check dist/*
+          python tests/distribution/check-wheel.py "${wheels[0]}"
+          python -m venv /tmp/release-wheel-venv
+          wheel_path="$PWD/${wheels[0]}"
+          (
+            cd /tmp
+            env -u PYTHONPATH /tmp/release-wheel-venv/bin/python -m pip install "$wheel_path"
+          )
+          (
+            cd /tmp
+            env -u PYTHONPATH /tmp/release-wheel-venv/bin/python "$GITHUB_WORKSPACE/tests/distribution/installed-wheel-smoke.py"
+          )
+          sha256sum dist/* > artifact-sha256.txt
+
+      - name: Retain verified artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: python-package-${{ inputs.ref }}
+          path: |
+            dist/*
+            artifact-sha256.txt
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish verified artifacts to PyPI
+    if: inputs.publish
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Download verified artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: python-package-${{ inputs.ref }}
+
+      - name: Verify retained artifact checksums
+        run: sha256sum --check artifact-sha256.txt
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          skip-existing: true
