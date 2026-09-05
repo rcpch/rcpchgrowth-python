@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rcpchgrowth"
-version = "4.6.3"
+version = "4.6.4"
 
 description = "SDS and Centile calculations for UK Growth Data"
 keywords = ["growth charts", "anthropometry", "SDS", "centile", "UK-WHO", "UK90", "Trisomy 21", "Turner", "CDC"]
@@ -99,7 +99,7 @@ rcpchgrowth = ["data_tables/**/*.csv", "data_tables/**/*.json", "data_tables/**/
 # the version bump stays reviewable on release/vX.Y.Z. Merging that PR with a
 # merge commit triggers the validated tag, GitHub Release, and publish cascade.
 [tool.bumpversion]
-current_version = "4.6.3"
+current_version = "4.6.4"
 allow_dirty = true
 commit = false
 tag = false
