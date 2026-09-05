@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   level2:
-    uses: ./.github/workflows/run-pytest-on-push-and-all-prs.yml
+    uses: ./.github/workflows/python-publish.yml
     with:
-      ref: ${{ inputs.ref }}
+      ref: "3b94d92602160116e1ec9ca80e05100d69395d42"
+      version: "4.6.3"
+      publish: false
