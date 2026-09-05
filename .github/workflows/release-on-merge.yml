@@ -155,6 +155,7 @@ jobs:
     needs: validate
     permissions:
       contents: read
+      id-token: write
     uses: ./.github/workflows/python-publish.yml
     with:
       ref: ${{ needs.validate.outputs.merge_sha }}
