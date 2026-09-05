@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   test:
-    uses: $/.github/workflows/run-pytest-on-push-and-all-prs.yml
+    uses: ./.github/workflows/run-pytest-on-push-and-all-prs.yml
     with:
       ref: ${{ inputs.ref }}
 
