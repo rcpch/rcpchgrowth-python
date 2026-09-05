@@ -20,10 +20,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: python-package-${{ inputs.ref }}-${{ inputs.publish }}
-  cancel-in-progress: false
-
 jobs:
   test:
     uses: ./.github/workflows/run-pytest-on-push-and-all-prs.yml
