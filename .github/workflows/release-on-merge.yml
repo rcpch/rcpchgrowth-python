@@ -143,7 +143,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: $/.github/workflows/python-publish.yml
+    uses: ./.github/workflows/python-publish.yml
     with:
       ref: ${{ needs.validate.outputs.merge_sha }}
       version: ${{ needs.validate.outputs.version }}
@@ -155,7 +155,7 @@ jobs:
     needs: validate
     permissions:
       contents: read
-    uses: $/.github/workflows/python-publish.yml
+    uses: ./.github/workflows/python-publish.yml
     with:
       ref: ${{ needs.validate.outputs.merge_sha }}
       version: ${{ needs.validate.outputs.version }}
