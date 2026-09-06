@@ -7,9 +7,14 @@ on:
   workflow_dispatch:
     inputs:
       pr_number:
-        description: Historical merged release PR to validate without publishing
+        description: Historical merged release PR to validate or recover
         required: true
         type: string
+      recover_pypi_publication:
+        description: Publish a validated historical release whose PyPI upload failed
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -74,7 +79,7 @@ jobs:
             --github-output "$GITHUB_OUTPUT"
 
       - name: Summarize dry run
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && !inputs.recover_pypi_publication
         env:
           MERGE_SHA: ${{ steps.validate.outputs.merge_sha }}
           TAG: ${{ steps.validate.outputs.tag }}
@@ -87,7 +92,7 @@ jobs:
 
   release:
     name: Create or verify tag and GitHub Release
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || inputs.recover_pypi_publication
     needs: validate
     runs-on: ubuntu-latest
     permissions:
@@ -136,28 +141,45 @@ jobs:
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
-  publish-production:
-    name: Test, build, and publish
-    if: github.event_name == 'pull_request'
+  build-production:
+    name: Test and build release artifacts
+    if: github.event_name == 'pull_request' || inputs.recover_pypi_publication
     needs: [validate, release]
     permissions:
       contents: read
-      id-token: write
     uses: ./.github/workflows/python-publish.yml
     with:
       ref: ${{ needs.validate.outputs.merge_sha }}
       version: ${{ needs.validate.outputs.version }}
-      publish: true
+
+  publish-production:
+    name: Publish verified artifacts to PyPI
+    if: github.event_name == 'pull_request' || inputs.recover_pypi_publication
+    needs: [validate, release, build-production]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Download verified artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: python-package-${{ needs.validate.outputs.merge_sha }}
+
+      - name: Verify retained artifact checksums
+        run: sha256sum --check artifact-sha256.txt
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          skip-existing: true
 
   verify-dry-run:
     name: Test and build without publishing
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && !inputs.recover_pypi_publication
     needs: validate
     permissions:
       contents: read
-      id-token: write
     uses: ./.github/workflows/python-publish.yml
     with:
       ref: ${{ needs.validate.outputs.merge_sha }}
       version: ${{ needs.validate.outputs.version }}
-      publish: false
