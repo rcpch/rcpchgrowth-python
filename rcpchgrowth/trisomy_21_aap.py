@@ -53,7 +53,7 @@ def reference_data_absent(
     if age < 0: # lower threshold of trisomy_21 data
         return True, "No Trisomy 21 (AAP) reference data exists below 40 weeks gestation"
     
-    if age < 0.083 and measurement_method in ['height', 'ofc']: # lower threshold of trisomy_21 data
+    if age < TRISOMY_21_AAP_INFANT_AGES[0] and measurement_method in ['height', 'ofc']: # lower threshold of trisomy_21 data
         return True, "No Trisomy 21 (AAP) reference data exists below 1 month of age for height or head circumference."
     
     if age < 2 and measurement_method == 'bmi': # lower threshold of trisomy_21 data

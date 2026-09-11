@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# Test an exact candidate wheel against an immutable server revision. The
+# server revision must contain the regression and pinned React compatibility
+# suites introduced by digital-growth-charts-server PR #280.
+
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+root="$PWD"
+
+if [[ $# -ne 2 || ! "$2" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "Usage: s/test-downstream-wheel <wheel path> <40-character server commit>" >&2
+  exit 2
+fi
+for command in docker git; do
+  if ! command -v "$command" >/dev/null 2>&1; then
+    echo "Required command not found: $command" >&2
+    exit 1
+  fi
+done
+
+server_revision="$2"
+server_repository="${RCPCHGROWTH_SERVER_REPOSITORY:-https://github.com/rcpch/digital-growth-charts-server.git}"
+if [[ ! -f "$1" ]]; then
+  echo "Wheel not found: $1" >&2
+  exit 1
+fi
+wheel="$(realpath "$1")"
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker is not available. Start Docker and retry." >&2
+  exit 1
+fi
+
+work_dir="$(mktemp -d)"
+host_user="$(id -u):$(id -g)"
+cleanup() {
+  docker compose --project-directory "$work_dir/server" exec -T growth-api chown -R "$host_user" /app >/dev/null 2>&1 || true
+  docker compose --project-directory "$work_dir/server" down >/dev/null 2>&1 || true
+  rm -rf "$work_dir"
+}
+trap cleanup EXIT
+
+git clone --quiet --filter=blob:none --no-checkout "$server_repository" "$work_dir/server"
+git -C "$work_dir/server" fetch --quiet --depth=1 origin "$server_revision"
+git -C "$work_dir/server" checkout --quiet --detach FETCH_HEAD
+
+if [[ ! -x "$work_dir/server/s/compatibility-test" ]] || [[ ! -d "$work_dir/server/tests/regression/golden" ]]; then
+  echo "Server commit $server_revision does not contain the required regression and compatibility suites." >&2
+  echo "Use an immutable live commit containing server PR #280." >&2
+  exit 1
+fi
+
+candidate_version="$(python - "$wheel" <<'PY'
+from email.parser import Parser
+import sys
+from zipfile import ZipFile
+
+with ZipFile(sys.argv[1]) as archive:
+    name = next(item for item in archive.namelist() if item.endswith('.dist-info/METADATA'))
+    print(Parser().parsestr(archive.read(name).decode())['Version'])
+PY
+)"
+candidate_commit="$(python - "$wheel" <<'PY'
+import ast
+import sys
+from zipfile import ZipFile
+
+with ZipFile(sys.argv[1]) as archive:
+    module = ast.parse(archive.read('rcpchgrowth/_build_info.py').decode())
+    assignment = next(
+        node
+        for node in module.body
+        if isinstance(node, ast.Assign)
+        and any(
+            isinstance(target, ast.Name) and target.id == 'COMMIT'
+            for target in node.targets
+        )
+    )
+    print(ast.literal_eval(assignment.value))
+PY
+)"
+python "$root/tests/distribution/check-wheel.py" "$wheel"
+if [[ ! "$candidate_commit" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "Candidate wheel has no immutable build commit: $candidate_commit" >&2
+  exit 1
+fi
+
+golden_dir="$work_dir/server/tests/regression/golden"
+golden_backup="$work_dir/golden-original"
+cp -a "$golden_dir" "$golden_backup"
+python "$root/tests/distribution/normalize-downstream-provenance.py" "$golden_dir" "$candidate_version" "$candidate_commit"
+
+GITHUB_SHA="$server_revision" docker compose --project-directory "$work_dir/server" up --build -d growth-api
+wheel_name="$(basename "$wheel")"
+docker compose --project-directory "$work_dir/server" cp "$wheel" "growth-api:/tmp/$wheel_name" >/dev/null
+host_wheel_sha="$(sha256sum "$wheel" | cut -d' ' -f1)"
+container_wheel_sha="$(docker compose --project-directory "$work_dir/server" exec -T growth-api sha256sum "/tmp/$wheel_name" | cut -d' ' -f1)"
+if [[ "$host_wheel_sha" != "$container_wheel_sha" ]]; then
+  echo "Candidate wheel hash changed while copying into the server container." >&2
+  exit 1
+fi
+docker compose --project-directory "$work_dir/server" exec -T growth-api python -m pip install --force-reinstall --no-deps "/tmp/$wheel_name"
+docker compose --project-directory "$work_dir/server" exec -T \
+  -e EXPECTED_VERSION="$candidate_version" \
+  -e EXPECTED_COMMIT="$candidate_commit" \
+  growth-api python -c 'import os, pathlib; from importlib.metadata import version; import rcpchgrowth; from rcpchgrowth._build_info import COMMIT; assert version("rcpchgrowth") == os.environ["EXPECTED_VERSION"]; assert COMMIT == os.environ["EXPECTED_COMMIT"]; assert "/site-packages/" in pathlib.Path(rcpchgrowth.__file__).as_posix()'
+docker compose --project-directory "$work_dir/server" restart growth-api
+docker compose --project-directory "$work_dir/server" exec -T growth-api pytest -q
+(
+  cd "$work_dir/server"
+  COMPONENT_REPOSITORY_PATH=/does-not-exist s/compatibility-test --reuse-api
+)
+rm -rf "$golden_dir"
+mv "$golden_backup" "$golden_dir"
+git -C "$work_dir/server" diff --exit-code

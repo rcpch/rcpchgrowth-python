@@ -40,15 +40,13 @@ WHO_2006_CHILD = "who_2006_child" # WHO 2006 child is the reference name for chi
 WHO_2007_CHILD = "who_2007_child" # WHO 2007 child is the reference name for children 5-19 years
 WHO_REFERENCES = [WHO_2006_INFANT, WHO_2006_CHILD, WHO_2007_CHILD] # WHO references
 
-WHO_2006_REFERENCE_LOWER_THRESHOLD = ((42 * 7) - (40 * 7)) / 365.25  # 42 weeks as decimal age  # 2 weeks as decimal age
+WHO_2006_REFERENCE_LOWER_THRESHOLD = FORTY_TWO_WEEKS_GESTATION
 WHO_2006_REFERENCE_UPPER_THRESHOLD = 1856/365.25  # 5 years and one month just under as decimal age
 WHO_2007_REFERENCE_LOWER_THRESHOLD = (61/30.4375)/365.25  # 5 years and one month as decimal age (61 mths)
 WHO_2007_REFERENCE_UPPER_THRESHOLD = 19.0  # 19 years as decimal age
 
 # 23 weeks is the lowest decimal age available on the UK90 charts
-UK90_REFERENCE_LOWER_THRESHOLD = (
-    (23 * 7) - (40 * 7)
-) / 365.25  # 23 weeks as decimal age
+UK90_REFERENCE_LOWER_THRESHOLD = TWENTY_THREE_WEEKS_GESTATION
 
 # The WHO references change from measuring infants in the lying position to measuring children in the standing position at 2.0 years.
 WHO_CHILD_LOWER_THRESHOLD = 2.0  # 2 years as decimal age
@@ -62,9 +60,7 @@ WHO_CHILD_LOWER_THRESHOLD = 2.0  # 2 years as decimal age
 # 3 weeks of life
 
 WHO_CHILDREN_UPPER_THRESHOLD = 4.0
-UK_WHO_INFANT_LOWER_THRESHOLD = (
-    (42 * 7) - (40 * 7)
-) / 365.25  # 42 weeks as decimal age
+UK_WHO_INFANT_LOWER_THRESHOLD = FORTY_TWO_WEEKS_GESTATION
 UK90_UPPER_THRESHOLD = 20
 
 WHO_NEWBORN_LOWER_THRESHOLD = 0.0

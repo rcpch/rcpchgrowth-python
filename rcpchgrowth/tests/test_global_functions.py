@@ -20,6 +20,11 @@ from rcpchgrowth import global_functions, date_calculations
 ACCURACY = 1e-3
 
 
+def test_centile_preserves_specific_exception_type():
+    with pytest.raises(TypeError):
+        global_functions.centile("not-a-z-score")
+
+
 def load_valid_data_set():
     """
     Loads in the testing data from JSON file

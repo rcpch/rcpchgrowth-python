@@ -1,6 +1,5 @@
 # standard imports
 from datetime import date
-from importlib.metadata import PackageNotFoundError, version
 from typing import Literal
 
 # rcpch imports
@@ -11,11 +10,7 @@ from .date_calculations import (chronological_decimal_age, corrected_decimal_age
 from .global_functions import sds_for_measurement, centile, percentage_median_bmi
 from .age_advice_strings import comment_prematurity_correction
 from ._build_info import COMMIT
-
-try:
-    _ENGINE_VERSION = version("rcpchgrowth")
-except PackageNotFoundError:
-    _ENGINE_VERSION = "unknown"
+from ._version import __version__
 
 
 class Measurement:
@@ -203,8 +198,8 @@ class Measurement:
             'provenance': {
                 'growth_reference': self.reference,
                 'calculation_engine': {
-                    'name': 'rcpchgrowth',
-                    'version': _ENGINE_VERSION,
+                    'name': 'rcpch/rcpchgrowth-python',
+                    'version': __version__,
                     'commit': COMMIT,
                 },
             },
