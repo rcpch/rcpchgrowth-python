@@ -9,7 +9,6 @@ rm -rf rcpchgrowth/tests || true
 rm -f  rcpchgrowth/data_tables/bayley-pineau.pdf || true
 rm -f  rcpchgrowth/data_tables/uk-who_resources/GrowthCharts.xls || true
 rm -f  rcpchgrowth/data_tables/uk-who_resources/*.bas || true
-rm -f  rcpchgrowth/data_tables/fenton/*.* || true
 
 echo "[postBuild] Warm up matplotlib font cache"
 python - <<'PY'
