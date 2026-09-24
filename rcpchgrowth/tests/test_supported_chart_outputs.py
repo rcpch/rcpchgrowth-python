@@ -12,6 +12,7 @@ from rcpchgrowth.constants import (
     REFERENCES,
     TRISOMY_21,
     TRISOMY_21_AAP,
+    TWENTY_FIVE_WEEKS_GESTATION,
     TURNERS,
     UK_WHO,
     WHO,
@@ -23,9 +24,7 @@ CHART_CASES = [
         HEIGHT,
         MALE,
         [
-            # The nominal 25-week grid value is fractionally below the exact
-            # validation threshold, so the first emitted height point is 26 weeks.
-            ("uk90_preterm", -0.2683, 0.0383),
+            ("uk90_preterm", round(TWENTY_FIVE_WEEKS_GESTATION, 4), 0.0383),
             ("uk_who_infant", 0.0383, 2),
             ("uk_who_child", 2, 4),
             ("uk90_child", 4, 20),
