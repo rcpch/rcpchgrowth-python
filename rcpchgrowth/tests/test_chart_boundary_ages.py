@@ -19,6 +19,7 @@ from rcpchgrowth.constants import (
     UK_WHO,
     UK_WHO_CHILD,
     UK_WHO_INFANT,
+    TURNERS,
     WEIGHT,
 )
 
@@ -90,4 +91,29 @@ def test_observation_below_reference_floor_remains_plottable_without_sds():
     assert point["centile"] is None
     assert point["observation_value_error"] == (
         "There is no UK90 reference data below 23 weeks gestation"
+    )
+
+
+def test_turner_observation_before_one_year_remains_plottable_without_sds():
+    measurement = Measurement(
+        birth_date=date(2025, 1, 1),
+        observation_date=date(2025, 7, 1),
+        measurement_method=HEIGHT,
+        observation_value=60.0,
+        reference=TURNERS,
+        sex="female",
+    ).measurement
+    point = measurement["plottable_data"]["centile_data"][
+        "chronological_decimal_age_data"
+    ]
+
+    assert point["x"] == measurement["measurement_dates"][
+        "chronological_decimal_age"
+    ]
+    assert point["x"] < 1
+    assert point["y"] == 60.0
+    assert point["sds"] is None
+    assert point["centile"] is None
+    assert point["observation_value_error"] == (
+        "There is no reference data below 1 year."
     )
