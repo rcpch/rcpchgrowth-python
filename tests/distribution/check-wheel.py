@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Validate the minimum wheel structure needed by runtime consumers."""
+"""Validate the exact wheel structure needed by runtime consumers."""
 
 import sys
 from email.parser import Parser
 from pathlib import Path
 from zipfile import ZipFile
 
-REQUIRED_FILES = {
+REQUIRED_PYTHON_FILES = {
     "rcpchgrowth/__init__.py",
     "rcpchgrowth/_build_info.py",
+}
+RUNTIME_RESOURCES = {
     "rcpchgrowth/data_tables/cdc2-20.json",
     "rcpchgrowth/data_tables/cdc_infants.json",
     "rcpchgrowth/data_tables/trisomy_21.json",
@@ -25,6 +27,7 @@ REQUIRED_FILES = {
     "rcpchgrowth/data_tables/who/who_children.json",
     "rcpchgrowth/data_tables/who/who_infants.json",
 }
+REQUIRED_FILES = REQUIRED_PYTHON_FILES | RUNTIME_RESOURCES
 
 
 def main() -> None:
@@ -42,15 +45,27 @@ def main() -> None:
         metadata = Parser().parsestr(archive.read(metadata_names[0]).decode())
 
     missing = sorted(REQUIRED_FILES - members)
+    package_resources = {
+        name
+        for name in members
+        if name.startswith("rcpchgrowth/")
+        and not name.endswith((".py", "/"))
+    }
+    unexpected_resources = sorted(package_resources - RUNTIME_RESOURCES)
     forbidden = sorted(
         name
         for name in members
         if "__pycache__" in name
         or name.endswith((".pyc", ".pyo"))
         or "notebooks" in Path(name).parts
+        or name.startswith("rcpchgrowth/tests/")
+        or "fenton" in name.casefold()
     )
     assert not missing, f"Required runtime files missing from wheel: {missing}"
-    assert not forbidden, f"Generated or notebook files found in wheel: {forbidden}"
+    assert not unexpected_resources, (
+        f"Unapproved package resources found in wheel: {unexpected_resources}"
+    )
+    assert not forbidden, f"Forbidden files found in wheel: {forbidden}"
     assert metadata["Name"] == "rcpchgrowth"
     assert metadata["Version"]
     assert wheel.name.startswith(f"rcpchgrowth-{metadata['Version']}-"), (

@@ -26,6 +26,3 @@ dist/
 .private/
 .playwright/
 .playwright-mcp/
-
-# Licensed data - Fenton chart data must not be shared
-rcpchgrowth/data_tables/fenton/*.*

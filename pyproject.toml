@@ -73,18 +73,34 @@ select = ["E9", "F63", "F7", "F82"]
 "rcpchgrowth/dynamic_growth.py" = ["F821"]
 
 [tool.setuptools]
-include-package-data = true
+include-package-data = false
 
 [tool.setuptools.packages.find]
 include = ["rcpchgrowth*"]
-exclude = ["notebooks"]
+exclude = ["notebooks", "rcpchgrowth.tests", "rcpchgrowth.tests.*"]
 
 [project.readme]
 file = "README.md"
 content-type = "text/markdown"
 
 [tool.setuptools.package-data]
-rcpchgrowth = ["data_tables/**/*.csv", "data_tables/**/*.json", "data_tables/**/*.xls", "data_tables/**/*.pdf", "data_tables/**/*.bas", "data_tables/**/*.xlsx"]
+rcpchgrowth = [
+  "data_tables/cdc2-20.json",
+  "data_tables/cdc_infants.json",
+  "data_tables/trisomy_21.json",
+  "data_tables/trisomy_21_aap_children.json",
+  "data_tables/trisomy_21_aap_infants.json",
+  "data_tables/turner.json",
+  "data_tables/uk90_child.json",
+  "data_tables/uk90_preterm.json",
+  "data_tables/uk90_term.json",
+  "data_tables/uk_who_weight_correlation_matrices/weight_correlation_by_month.json",
+  "data_tables/uk_who_weight_correlation_matrices/weight_correlation_by_week.json",
+  "data_tables/who/pre_2025/who_infants.json",
+  "data_tables/who/who_2007_children.json",
+  "data_tables/who/who_children.json",
+  "data_tables/who/who_infants.json",
+]
 
 # Version bumping. `version` above is the single source of truth; this keeps
 # the duplicated version in CITATION.cff (and its release date) in sync so it
