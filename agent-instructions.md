@@ -1,0 +1,214 @@
+# Agent Instructions
+
+This vendor-neutral file is the source of truth for AI coding agents working in `rcpchgrowth-python`. `AGENTS.md` and `CLAUDE.md` point here; keep tool-specific instruction files as short pointers.
+
+## Read First
+
+- [README.md](README.md) - package purpose and quick start.
+- [spec/roadmap.md](spec/roadmap.md) - current maintenance work and open follow-ups.
+- [rcpchgrowth/tests/who_test_data/README.md](rcpchgrowth/tests/who_test_data/README.md) - test-data inventory and provenance.
+- [Five-Repository Upgrade Runbook](https://growth.rcpch.ac.uk/developer/five-repository-upgrade-runbook/) - cross-repository changes, compatibility, release and rollback workflow. Its source is `docs/developer/five-repository-upgrade-runbook.md` in the sibling documentation repository.
+- [House-style index](https://github.com/pacharanero/house-style/blob/main/AGENTS.md) - read the relevant engineering standard before CI, distribution, documentation, licensing or other cross-cutting changes.
+
+## Project Overview
+
+**rcpchgrowth-python** is a Python library for calculating children's growth measurements against UK and international growth references.
+
+### WHO reference migration (completed)
+
+The library previously derived WHO reference L, M, S values by cubic interpolation against a sparse (weekly/monthly) table. [PR #80](https://github.com/rcpch/rcpchgrowth-python/pull/80) replaced this with WHO's officially-published per-day LMS table, aligning with WHO's own `anthro`/`anthroplus` reference implementation. This merged into `live` as part of the 4.5.x releases; there is no separate `who-validation` branch any more. See the [WHO Reference Implementation](https://growth.rcpch.ac.uk/developer/who-reference-implementation/) page in the documentation site for what changed and why, including the 18 fixture cases whose expected values changed in the transition.
+
+Note: this repository does not keep project documentation. Developer, clinician, integrator and researcher docs live in the separate [digital-growth-charts-documentation](https://github.com/rcpch/digital-growth-charts-documentation) repository, published at [growth.rcpch.ac.uk](https://growth.rcpch.ac.uk).
+
+## Development Workflow
+
+### Container-Based Development
+
+The project uses Docker for a consistent development environment. Always use the convenience scripts in the `s/` folder:
+
+```bash
+s/up          # Start container
+s/notebook    # Launch JupyterLab
+s/test        # Run pytest (auto-starts container if needed)
+s/test --running  # Run pytest in already-running container
+s/shell       # Interactive bash in container
+s/down        # Stop container
+```
+
+**Key Point**: The container runs JupyterLab in the background, enabling both interactive notebook development AND command-line test execution simultaneously.
+
+## Cross-Repository Impact
+
+This package is the calculation engine in a five-repository product chain:
+
+1. `rcpchgrowth-python` - calculations and reference data.
+2. `digital-growth-charts-server` - HTTP API and provenance.
+3. `digital-growth-charts-react-component-library` - chart rendering.
+4. `digital-growth-charts-react-client` - demo client and browser E2E harness.
+5. `digital-growth-charts-documentation` - integration, safety, compatibility and release documentation.
+
+Not every change affects all five repositories. Before implementing a change, identify whether it can alter calculated values, chart coordinates, errors, exported Python names, serialized `Measurement` fields, package contents or supported versions. Record affected and unaffected repositories, with reasons, in the PR or upgrade record. Use the runbook above for coordinated changes; do not assume a passing Python suite proves downstream compatibility.
+
+| Change in this repository | Downstream validation to consider |
+| --- | --- |
+| Calculation results, supported ages, boundaries, errors or `Measurement` response shape | Test the exact candidate package/commit in the API regression suite and run the server's `s/compatibility-test` against its supported chart-component profiles. Review API response/golden changes. |
+| Chart-line coordinates or reference ownership | Check the server API response and the React component's handling of the actual response; review component tests and visual stories where rendering changes. |
+| Public imports, packaging, dependencies or provenance | Run installed-wheel/sdist checks and the server's compatibility suite against the exact candidate artifact. |
+| Change visible in the demo workflow | Run the client repository's `s/e2e-local` against the intended local Python, API and component revisions; use `--serve` for manual browser review when useful. Run it from the client checkout. |
+| Supported behavior, response contracts, installation, migration or safety guidance changes | Update the documentation repository and run its documented lint, link/build and review checks. |
+
+Test against exact candidate revisions or artifacts, not an assumed local checkout. Confirm what each harness actually selected. Use fictional data only. A green test is evidence, not clinical, safety, security or accessibility approval.
+
+## Testing Strategy
+
+### Test Fixtures
+
+**Standard fixture** (new):
+
+- `rcpchgrowth/tests/sds_age_validation_2021_refactored_2026.json` - 3984 test cases generated from WHO data
+- All tests pass against this fixture
+- This is the current/target state
+
+**Deprecated fixture** (old):
+
+- `rcpchgrowth/tests/sds_age_validation_2021_deprecated.json` - 4002 test cases from live branch
+- 18 test cases removed during transition (see the [WHO Reference Implementation](https://growth.rcpch.ac.uk/developer/who-reference-implementation/) page)
+- Kept for regression testing if needed
+
+WHO dataset details:
+
+- `rcpchgrowth/tests/who_test_data/README.md` - Inventory of WHO test files and rationale for `who_under2_gold_192.csv`
+
+### Running Tests
+
+```bash
+# Run the UK-WHO integration suite
+s/test rcpchgrowth/tests/test_uk_who.py -v
+
+# Run all tests
+s/test
+
+# In an already-running container
+s/test --running rcpchgrowth/tests/ -v
+
+# Lint and validate the installed wheel when packaging is changed
+s/lint
+s/test-wheel
+```
+
+Before committing, run `s/lint` and `s/test --running -q -rs` (or `s/test` if the container is not running). The test command should report no skipped tests. For packaging changes, also run `s/test-wheel`. CI additionally tests Python 3.10-3.13, runs Ruff and executes notebooks on Python 3.13, then builds and smoke-tests an installed wheel.
+
+## Git Workflow
+
+- Use a descriptive branch and pull request into `live`; it is protected. Do not push directly to `live`, force-push, or bypass required review or CI.
+- Commit and push each validated coherent parcel so the PR and CI reflect the reviewed state.
+- Follow the repository's merge-commit and release conventions in the optional release-preparation section below. A merge to `live` can trigger the automated GitHub release and PyPI publication cascade.
+
+## Approval Required
+
+Ask the maintainer before publishing or deploying, changing secrets or repository settings, bypassing branch protection, deleting branches or published records, or rewriting history. Cross-repository fixture changes and externally visible API or chart-contract changes require coordination with the owning repositories.
+
+### WHO Chart Test Range Filtering
+
+`rcpchgrowth/tests/test_chart_functions.py` filters published chart coordinates while building its parametrized cases. Some under-five source series contain coordinates beyond five years, and the over-five series include month zero even though the younger reference takes precedence at exactly five years. These coordinates are intentionally excluded before pytest collection:
+
+- Under-five cases include only ages whose existing rounded year conversion is at most `5.00`.
+- Over-five cases begin at month `1`; month `0` is the five-year overlap governed by the younger reference.
+
+This collection-time filtering replaced 1,700 runtime skips (1,655 out-of-range under-five cases and 45 month-zero over-five cases) without removing any executed assertions. Do not replace the filters with `pytest.skip`, remove them, or broaden the tested ranges unless the reference-boundary behaviour or source vectors intentionally change. After any such change, run `s/test --running rcpchgrowth/tests/test_chart_functions.py -q -rs` and the full `s/test --running -q -rs`; the suite should report no skipped tests.
+
+### Optional Release Preparation
+
+Use `s/version++ [patch|minor|major]` to prepare a release version bump; it defaults to `patch`. The script is optional, but it is the canonical automated path: from a clean and up-to-date `live` branch it runs the full suite, creates `release/vX.Y.Z`, synchronizes `pyproject.toml` and `CITATION.cff`, validates the package build, commits `chore(release): vX.Y.Z`, pushes the branch, and opens a PR. Use `--dry-run` to preview without changing anything.
+
+The script deliberately does not tag or publish because `live` is protected and the release tag must point to the reviewed PR's exact merge commit. Review CI and merge the release PR using a merge commit; that merge is the final human release action. `.github/workflows/release-on-merge.yml` validates the PR and exact merge commit, creates or reuses the annotated tag and GitHub Release without overwriting conflicts, invokes `.github/workflows/python-publish.yml` to test and build, and publishes the verified artifacts from its own top-level job. Do not push directly to `live`, manually create release tags, or use squash/rebase merging for release PRs. See [`s/README.md`](s/README.md) for usage and the historical dry-run/recovery dispatch.
+
+Release PRs may change only `pyproject.toml` and `CITATION.cff`, must carry exactly one supported patch, minor, or major bump, and must be merged from the same repository into `live` with a merge commit. Repository settings may disable squash/rebase globally, but the release workflow enforces merge-commit policy independently. Keep PyPI Trusted Publishing bound to `.github/workflows/release-on-merge.yml`; PyPI does not support a nested reusable workflow as the trusted identity. Introducing a protected environment requires a coordinated PyPI trusted-publisher update.
+
+## Key Code Locations
+
+| Component | Location |
+|-----------|----------|
+| Main library | `rcpchgrowth/` |
+| Measurement calculation | `rcpchgrowth/measurement.py` |
+| Tests | `rcpchgrowth/tests/` |
+| Test data | `rcpchgrowth/tests/sds_age_validation_2021_refactored_2026.json` |
+| Reference data | `rcpchgrowth/data_tables/` |
+| Documentation | Separate repo: [digital-growth-charts-documentation](https://github.com/rcpch/digital-growth-charts-documentation) ([growth.rcpch.ac.uk](https://growth.rcpch.ac.uk)) |
+
+## Important Considerations for LLM Development
+
+### Licensed Reference Data
+
+Fenton growth-chart data, LMS tables, chart images, and copies of source publications must not be added to this repository, its Git history, build context, wheel, or source distribution unless a documented licence explicitly permits repository and PyPI redistribution. Public availability or publication of an article is not permission to redistribute it. Do not copy Fenton material from private workspaces or other repositories. Keep the package-data declaration as an explicit runtime allowlist, and keep distribution tests fail-closed against Fenton-named content and unapproved resources; `.gitignore` is not a distribution control.
+
+Licensed source data and clinical reference material are also distributed across the upstream reference-data and documentation repositories. Do not move or duplicate such material across repository boundaries without checking its provenance and redistribution permission.
+
+### Test Fixture Strategy
+
+The test fixture is **fixed and finite** (3984 cases). When modifying calculation logic:
+
+1. Run tests to identify failures
+2. Analyze whether failures are expected (intentional algorithm changes) or bugs
+3. Do NOT modify test fixtures without explicit user direction
+4. Document any intentional test failures in PR comments
+
+### Preterm/Early Infant Focus
+
+The 18 removed test cases (from the WHO reference migration) were concentrated in:
+
+- Very early infancy (mostly <0.5 years)
+- Preterm/late preterm births (27+2 to 44+0 weeks gestation)
+- 61% female cases with duplicate age-measurement combinations
+
+This indicates **largest numerical divergence between UK-WHO and WHO occurs in preterm/early infant assessment**. When debugging calculation differences, prioritize these scenarios.
+
+### Reference Data
+
+WHO reference data is loaded from `rcpchgrowth/data_tables/`:
+
+- LMS values (Lambda, Mu, Sigma) stored as JSON
+- Age-corrected calculations for preterm infants (up to 2 years)
+- Different handling vs. UK-WHO; be cautious with age correction logic
+
+### Git Branch Context
+
+- **live** (main production branch) - the WHO reference migration is merged here; releases are cut from `live`
+- The `who-validation` branch has been retired - do not target it
+- Do not push directly to `live`; open a PR for review
+
+## Documentation for Developers
+
+- [WHO Reference Implementation](https://growth.rcpch.ac.uk/developer/who-reference-implementation/) - the WHO daily-LMS migration, the BMI direction asymmetry, the 5-year boundary, and the 18 removed fixture cases
+- [README.md](README.md) - Installation and quick-start (human-focused, but useful context)
+
+## Common Tasks
+
+### Adding a New Feature
+
+1. Write test cases in `rcpchgrowth/tests/`
+2. Implement feature in appropriate module
+3. Run `s/test` to validate
+4. If test fixture needs updating, document justification
+
+### Debugging a Test Failure
+
+1. Check if it's a known issue in the [WHO Reference Implementation](https://growth.rcpch.ac.uk/developer/who-reference-implementation/) page
+2. Run specific test with `-v` flag for full output
+3. Inspect test fixture data for the failing case
+4. Compare old vs. new calculation if transitioning between reference systems
+
+### Environment Issues
+
+If container fails to start or tests don't run:
+
+1. `s/down` then `s/up` to restart
+2. Check `docker compose logs` for errors
+3. Verify pytest installed: `s/test --running --version`
+4. See docker-compose.yml for setup command
+
+## Contact & Issues
+
+- Issues: https://github.com/rcpch/rcpchgrowth-python/issues
+- Repository: https://github.com/rcpch/rcpchgrowth-python
+- Documentation: https://growth.rcpch.ac.uk/products/python-library/
