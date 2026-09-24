@@ -51,6 +51,27 @@ def test_rejects_nested_notebook_content(tmp_path):
     assert "demo.ipynb" in result.stderr
 
 
+def test_rejects_unapproved_package_resource(tmp_path):
+    extra = "rcpchgrowth/data_tables/who/csv/who_2006_weight_male.csv"
+    result = check(make_wheel(tmp_path, extra=(extra,)))
+    assert result.returncode != 0
+    assert extra in result.stderr
+
+
+def test_rejects_packaged_test_module(tmp_path):
+    extra = "rcpchgrowth/tests/test_reference.py"
+    result = check(make_wheel(tmp_path, extra=(extra,)))
+    assert result.returncode != 0
+    assert extra in result.stderr
+
+
+def test_rejects_fenton_path_case_insensitively(tmp_path):
+    extra = "rcpchgrowth/data_tables/FENTON/reference.py"
+    result = check(make_wheel(tmp_path, extra=(extra,)))
+    assert result.returncode != 0
+    assert extra in result.stderr
+
+
 def test_rejects_filename_metadata_version_mismatch(tmp_path):
     wheel = make_wheel(tmp_path)
     mismatched = wheel.with_name("rcpchgrowth-4.6.1-py3-none-any.whl")

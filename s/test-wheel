@@ -31,7 +31,14 @@ if (($#)); then
   docker compose cp "$host_wheel" "rcpchgrowth-python:$work_dir/dist/$wheel_name" >/dev/null
   wheel_path="$work_dir/dist/$wheel_name"
 else
-  docker compose exec -T rcpchgrowth-python python -m build --wheel --outdir "$work_dir/dist"
+  docker compose exec -T rcpchgrowth-python cp -a /app "$work_dir/source"
+  docker compose exec -T rcpchgrowth-python rm -rf \
+    "$work_dir/source/build" \
+    "$work_dir/source/dist" \
+    "$work_dir/source/rcpchgrowth.egg-info"
+  docker compose exec -T rcpchgrowth-python sh -c \
+    'cd "$1" && exec python -m build --wheel --outdir "$2"' \
+    sh "$work_dir/source" "$work_dir/dist"
   wheel_path="$(docker compose exec -T rcpchgrowth-python sh -c 'set -- "$1"/*.whl; test "$#" -eq 1; printf "%s" "$1"' sh "$work_dir/dist")"
 fi
 

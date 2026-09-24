@@ -92,6 +92,10 @@ Release PRs may change only `pyproject.toml` and `CITATION.cff`, must carry exac
 
 ## Important Considerations for LLM Development
 
+### Licensed Reference Data
+
+Fenton growth-chart data, LMS tables, chart images, and copies of source publications must not be added to this repository, its Git history, build context, wheel, or source distribution unless a documented licence explicitly permits repository and PyPI redistribution. Public availability or publication of an article is not permission to redistribute it. Do not copy Fenton material from private workspaces or other repositories. Keep the package-data declaration as an explicit runtime allowlist, and keep distribution tests fail-closed against Fenton-named content and unapproved resources; `.gitignore` is not a distribution control.
+
 ### Test Fixture Strategy
 
 The test fixture is **fixed and finite** (3984 cases). When modifying calculation logic:

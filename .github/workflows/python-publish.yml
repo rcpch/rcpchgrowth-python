@@ -78,6 +78,7 @@ jobs:
           [[ "${sdists[0]}" == "dist/rcpchgrowth-${EXPECTED_VERSION}.tar.gz" ]]
           [[ "${wheels[0]}" == "dist/rcpchgrowth-${EXPECTED_VERSION}-"*.whl ]]
           python -m twine check dist/*
+          python tests/distribution/check-sdist.py "${sdists[0]}"
           python tests/distribution/check-wheel.py "${wheels[0]}"
           python -m venv /tmp/release-wheel-venv
           wheel_path="$PWD/${wheels[0]}"
