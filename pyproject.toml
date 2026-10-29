@@ -42,7 +42,7 @@ notebook = [
   "matplotlib>=3.10",
   "jupyterlab",
   "ipykernel",
-  "nbconvert==7.17.1",
+  "nbconvert==7.17.2",
 ]
 # Everything needed to run the test suite and release tooling. This is the
 # SINGLE source of truth for test dependencies: every environment (local,
